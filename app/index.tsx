@@ -2,7 +2,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Card, FAB, Menu, Searchbar, Text } from 'react-native-paper';
+import { Button, Card, FAB, IconButton, Menu, Searchbar, Text } from 'react-native-paper';
 
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -136,9 +136,18 @@ export default function HomeScreen() {
       >
         <Card mode="contained" style={styles.totalCard}>
           <Card.Content>
-            <Text variant="labelLarge" style={styles.totalLabel}>
-              {labels.currentDailyCost}
-            </Text>
+            <View style={styles.totalHeader}>
+              <Text variant="labelLarge" style={styles.totalLabel}>
+                {labels.currentDailyCost}
+              </Text>
+              <IconButton
+                icon="cog-outline"
+                iconColor="#FFFFFF"
+                size={22}
+                onPress={() => router.push('/settings')}
+                style={styles.settingsButton}
+              />
+            </View>
             <Text variant="displaySmall" style={styles.totalValue}>
               {formatCurrency(currentDailyCost)}
             </Text>
@@ -274,6 +283,14 @@ const styles = StyleSheet.create({
   },
   totalLabel: {
     color: '#E0E7FF'
+  },
+  totalHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  settingsButton: {
+    margin: 0
   },
   totalValue: {
     color: '#FFFFFF',

@@ -57,6 +57,12 @@ export default function RootLayout() {
               title: '\u6570\u636e\u7edf\u8ba1'
             }}
           />
+          <Stack.Screen
+            name="settings"
+            options={{
+              title: '\u8bbe\u7f6e'
+            }}
+          />
         </Stack>
       </PaperProvider>
     </SafeAreaProvider>
