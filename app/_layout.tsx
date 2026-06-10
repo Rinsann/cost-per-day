@@ -28,26 +28,33 @@ export default function RootLayout() {
           <Stack.Screen
             name="index"
             options={{
-              title: 'Cost Per Day'
+              title: 'Cost Per Day',
+              headerBackVisible: false
             }}
           />
           <Stack.Screen
             name="add"
             options={{
-              title: '添加消费品',
+              title: '\u65b0\u589e\u6d88\u8d39\u54c1',
               presentation: 'card'
             }}
           />
           <Stack.Screen
             name="product/[id]"
             options={{
-              title: '消费品详情'
+              title: '\u6d88\u8d39\u54c1\u8be6\u60c5'
+            }}
+          />
+          <Stack.Screen
+            name="product/[id]/edit"
+            options={{
+              title: '\u7f16\u8f91\u6d88\u8d39\u54c1'
             }}
           />
           <Stack.Screen
             name="stats"
             options={{
-              title: '数据统计'
+              title: '\u6570\u636e\u7edf\u8ba1'
             }}
           />
         </Stack>

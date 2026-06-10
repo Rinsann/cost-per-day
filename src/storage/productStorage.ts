@@ -49,6 +49,33 @@ export async function getProductById(id: string) {
   return products.find((product) => product.id === id);
 }
 
+export async function updateProduct(
+  id: string,
+  input: Omit<Product, 'id' | 'createdAt' | 'updatedAt'>
+) {
+  const products = await getProducts();
+  const productIndex = products.findIndex((product) => product.id === id);
+
+  if (productIndex === -1) {
+    return null;
+  }
+
+  const updatedProduct: Product = {
+    ...products[productIndex],
+    ...input,
+    id,
+    createdAt: products[productIndex].createdAt,
+    updatedAt: new Date().toISOString()
+  };
+
+  const nextProducts = [...products];
+  nextProducts[productIndex] = updatedProduct;
+
+  await saveProducts(nextProducts);
+
+  return updatedProduct;
+}
+
 export async function deleteProductById(id: string) {
   const products = await getProducts();
   const nextProducts = products.filter((product) => product.id !== id);

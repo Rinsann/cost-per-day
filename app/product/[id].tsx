@@ -39,7 +39,9 @@ const labels = {
   valueHint: '\u7ee7\u7eed\u4f7f\u7528\u4f1a\u8fdb\u4e00\u6b65\u644a\u8584\u8d2d\u4e70\u6210\u672c\uff0c\u5e2e\u52a9\u4f60\u5224\u65ad\u8fd9\u7b14\u6d88\u8d39\u662f\u5426\u503c\u5f97\u3002',
   notFound: '\u672a\u627e\u5230\u8be5\u6d88\u8d39\u54c1',
   backHome: '\u8fd4\u56de\u9996\u9875',
-  deleteTitle: '\u786e\u5b9a\u5220\u9664\u8be5\u6d88\u8d39\u54c1\uff1f',
+  edit: '\u7f16\u8f91',
+  deleteTitle: '\u786e\u5b9a\u5220\u9664\uff1a',
+  deleteHint: '\u5220\u9664\u540e\u65e0\u6cd5\u6062\u590d\u3002',
   cancel: '\u53d6\u6d88',
   delete: '\u5220\u9664'
 };
@@ -132,7 +134,7 @@ export default function ProductDetailScreen() {
     await deleteProductById(productId);
     setDeleting(false);
     setDeleteDialogVisible(false);
-    router.replace('/');
+    router.dismissTo('/');
   }
 
   return (
@@ -142,11 +144,19 @@ export default function ProductDetailScreen() {
           title: product?.name ?? labels.detailTitle,
           headerRight: product
             ? () => (
-                <IconButton
-                  icon="delete-outline"
-                  iconColor={colors.danger}
-                  onPress={() => setDeleteDialogVisible(true)}
-                />
+                <View style={styles.headerActions}>
+                  <IconButton
+                    icon="pencil-outline"
+                    iconColor={colors.primary}
+                    accessibilityLabel={labels.edit}
+                    onPress={() => router.push(`/product/${productId}/edit`)}
+                  />
+                  <IconButton
+                    icon="delete-outline"
+                    iconColor={colors.danger}
+                    onPress={() => setDeleteDialogVisible(true)}
+                  />
+                </View>
               )
             : undefined
         }}
@@ -250,6 +260,14 @@ export default function ProductDetailScreen() {
       <Portal>
         <Dialog visible={deleteDialogVisible} onDismiss={() => setDeleteDialogVisible(false)}>
           <Dialog.Title>{labels.deleteTitle}</Dialog.Title>
+          <Dialog.Content>
+            <Text variant="titleMedium" style={styles.deleteProductName}>
+              {product?.name}
+            </Text>
+            <Text variant="bodyMedium" style={styles.deleteHint}>
+              {labels.deleteHint}
+            </Text>
+          </Dialog.Content>
           <Dialog.Actions>
             <Button onPress={() => setDeleteDialogVisible(false)} disabled={deleting}>
               {labels.cancel}
@@ -270,6 +288,9 @@ export default function ProductDetailScreen() {
 }
 
 const styles = StyleSheet.create({
+  headerActions: {
+    flexDirection: 'row'
+  },
   content: {
     gap: spacing.md
   },
@@ -349,5 +370,13 @@ const styles = StyleSheet.create({
   },
   homeButton: {
     borderRadius: radius.lg
+  },
+  deleteProductName: {
+    color: colors.text,
+    fontWeight: '800'
+  },
+  deleteHint: {
+    color: colors.textSecondary,
+    marginTop: spacing.xs
   }
 });
