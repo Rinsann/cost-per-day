@@ -1,4 +1,6 @@
+import { File, Paths } from 'expo-file-system';
 import { useFocusEffect } from 'expo-router';
+import * as Sharing from 'expo-sharing';
 import { useCallback, useState } from 'react';
 import { Alert, StyleSheet } from 'react-native';
 import { Card, List, Text } from 'react-native-paper';
@@ -12,6 +14,8 @@ import { spacing } from '@/theme/spacing';
 const labels = {
   data: '\u6570\u636e',
   productCount: '\u6d88\u8d39\u54c1\u6570\u91cf',
+  exportData: '\u5bfc\u51fa\u6570\u636e',
+  json: 'JSON',
   app: '\u5e94\u7528',
   currentVersion: '\u5f53\u524d\u7248\u672c',
   techStack: '\u6280\u672f\u6808',
@@ -22,10 +26,16 @@ const labels = {
   author: '\u4f5c\u8005',
   github: 'Github \u4ed3\u5e93',
   comingSoon: 'Coming Soon',
-  version: 'V1.1-B',
+  noExportData: '\u6682\u65e0\u53ef\u5bfc\u51fa\u7684\u6d88\u8d39\u54c1\u6570\u636e\u3002',
+  exportFailed: '\u5bfc\u51fa\u5931\u8d25',
+  exportFailedHint: '\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002',
+  exportDialogTitle: '\u5bfc\u51fa Cost Per Day \u5907\u4efd',
+  version: 'V1.1-C',
   authorName: 'Rinsann',
   stack: 'React Native\nExpo\nTypeScript'
 };
+
+const EXPORT_FILE_NAME = 'cost-per-day-backup.json';
 
 export default function SettingsScreen() {
   const [productCount, setProductCount] = useState(0);
@@ -46,6 +56,41 @@ export default function SettingsScreen() {
     }, [])
   );
 
+  async function handleExportData() {
+    try {
+      const products = await getProducts();
+
+      if (products.length === 0) {
+        Alert.alert(labels.exportData, labels.noExportData);
+        return;
+      }
+
+      const sharingAvailable = await Sharing.isAvailableAsync();
+
+      if (!sharingAvailable) {
+        throw new Error('Sharing is not available on this device.');
+      }
+
+      const backup = {
+        app: labels.appName,
+        version: labels.version,
+        exportedAt: new Date().toISOString(),
+        products
+      };
+
+      const backupFile = new File(Paths.document, EXPORT_FILE_NAME);
+      backupFile.create({ overwrite: true });
+      backupFile.write(JSON.stringify(backup, null, 2));
+
+      await Sharing.shareAsync(backupFile.uri, {
+        mimeType: 'application/json',
+        dialogTitle: labels.exportDialogTitle
+      });
+    } catch {
+      Alert.alert(labels.exportFailed, labels.exportFailedHint);
+    }
+  }
+
   return (
     <Screen>
       <Card mode="contained" style={styles.card}>
@@ -56,6 +101,16 @@ export default function SettingsScreen() {
           <List.Item
             title={labels.productCount}
             right={() => <Text style={styles.valueText}>{productCount}</Text>}
+          />
+          <List.Item
+            title={labels.exportData}
+            right={(props) => (
+              <>
+                <Text style={styles.valueText}>{labels.json}</Text>
+                <List.Icon {...props} icon="chevron-right" />
+              </>
+            )}
+            onPress={handleExportData}
           />
         </Card.Content>
       </Card>
