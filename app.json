@@ -1,0 +1,21 @@
+{
+  "expo": {
+    "name": "Cost Per Day",
+    "slug": "cost-per-day",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "costperday",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFFFF"
+      },
+      "package": "com.costperday.app"
+    },
+    "plugins": ["expo-router"]
+  }
+}
