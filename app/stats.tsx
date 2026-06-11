@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Card, List, Text } from 'react-native-paper';
 
 import { Screen } from '@/components/layout/Screen';
+import { messages } from '@/constants/messages';
 import { getProducts } from '@/storage/productStorage';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -13,8 +14,6 @@ import { formatCurrency } from '@/utils/cost';
 import { CategoryStatsItem, getProductStats, ProductStatsItem } from '@/utils/stats';
 
 const labels = {
-  noStatsTitle: '\u6682\u65e0\u7edf\u8ba1\u6570\u636e',
-  noStatsHint: '\u8bf7\u5148\u6dfb\u52a0\u4f60\u7684\u7b2c\u4e00\u4ef6\u6d88\u8d39\u54c1\u3002',
   add: '\u53bb\u6dfb\u52a0',
   overview: '\u603b\u89c8',
   productCount: '\u6d88\u8d39\u54c1\u603b\u6570',
@@ -137,10 +136,10 @@ export default function StatsScreen() {
         <Card mode="contained" style={styles.card}>
           <Card.Content style={styles.emptyContent}>
             <Text variant="titleLarge" style={styles.emptyTitle}>
-              {labels.noStatsTitle}
+              {messages.empty.statsTitle}
             </Text>
             <Text variant="bodyMedium" style={styles.emptyHint}>
-              {labels.noStatsHint}
+              {messages.empty.statsDescription}
             </Text>
             <Button mode="contained" onPress={() => router.push('/add')} style={styles.addButton}>
               {labels.add}

@@ -4,6 +4,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Button, Card, FAB, IconButton, Menu, Searchbar, Text } from 'react-native-paper';
 
+import { messages } from '@/constants/messages';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
@@ -34,8 +35,6 @@ const labels = {
   days: '\u5929',
   emptyTitle: '\u6ca1\u6709\u627e\u5230\u6d88\u8d39\u54c1',
   emptyHint: '\u6362\u4e2a\u5173\u952e\u8bcd\u8bd5\u8bd5\u3002',
-  firstItemTitle: '\ud83d\udce6 \u8fd8\u6ca1\u6709\u6d88\u8d39\u54c1',
-  firstItemHint: '\u70b9\u51fb\u53f3\u4e0b\u89d2 +\n\u6dfb\u52a0\u7b2c\u4e00\u4ef6\u6d88\u8d39\u54c1',
   sortDailyCostDesc: '\u65e5\u5747\u6210\u672c\u9ad8\u5230\u4f4e',
   sortDailyCostAsc: '\u65e5\u5747\u6210\u672c\u4f4e\u5230\u9ad8',
   sortPurchaseDateDesc: '\u8d2d\u4e70\u65e5\u671f\u6700\u65b0',
@@ -282,10 +281,10 @@ export default function HomeScreen() {
             <Card mode="contained" style={styles.emptyCard}>
               <Card.Content>
                 <Text variant="titleMedium" style={styles.emptyTitle}>
-                  {products.length === 0 ? labels.firstItemTitle : labels.emptyTitle}
+                  {products.length === 0 ? messages.empty.productsTitle : labels.emptyTitle}
                 </Text>
                 <Text variant="bodyMedium" style={styles.emptyText}>
-                  {products.length === 0 ? labels.firstItemHint : labels.emptyHint}
+                  {products.length === 0 ? messages.empty.productsDescription : labels.emptyHint}
                 </Text>
               </Card.Content>
             </Card>

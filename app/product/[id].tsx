@@ -13,6 +13,7 @@ import {
 
 import { Screen } from '@/components/layout/Screen';
 import { getCategoryName } from '@/constants/categories';
+import { messages } from '@/constants/messages';
 import { deleteProductById, getProductById } from '@/storage/productStorage';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -46,11 +47,8 @@ const labels = {
   targetReachedHint: '\u5f53\u524d\u65e5\u5747\u6210\u672c\u5df2\u4f4e\u4e8e\u76ee\u6807\u3002',
   targetNotSet: '\u672a\u8bbe\u7f6e\u76ee\u6807\u65e5\u5747\u6210\u672c',
   targetNotSetHint: '\u7f16\u8f91\u6d88\u8d39\u54c1\u540e\u53ef\u8bbe\u7f6e\u76ee\u6807\u6210\u672c\u3002',
-  notFound: '\u672a\u627e\u5230\u8be5\u6d88\u8d39\u54c1',
   backHome: '\u8fd4\u56de\u9996\u9875',
   edit: '\u7f16\u8f91',
-  deleteTitle: '\u5220\u9664\u6d88\u8d39\u54c1\uff1f',
-  deleteHint: '\u5220\u9664\u540e\u65e0\u6cd5\u6062\u590d\u3002',
   cancel: '\u53d6\u6d88',
   delete: '\u5220\u9664'
 };
@@ -185,7 +183,7 @@ export default function ProductDetailScreen() {
         <Card mode="contained" style={styles.card}>
           <Card.Content style={styles.emptyContent}>
             <Text variant="titleLarge" style={styles.emptyTitle}>
-              {labels.notFound}
+              {messages.empty.productNotFound}
             </Text>
             <Button mode="contained" onPress={() => router.replace('/')} style={styles.homeButton}>
               {labels.backHome}
@@ -326,13 +324,15 @@ export default function ProductDetailScreen() {
           onDismiss={() => setDeleteDialogVisible(false)}
           style={styles.deleteDialog}
         >
-          <Dialog.Title style={styles.deleteDialogTitle}>{labels.deleteTitle}</Dialog.Title>
+          <Dialog.Title style={styles.deleteDialogTitle}>
+            {messages.confirm.deleteTitle}
+          </Dialog.Title>
           <Dialog.Content style={styles.deleteContent}>
             <Text variant="titleMedium" style={styles.deleteProductName}>
               {product?.name}
             </Text>
             <Text variant="bodyMedium" style={styles.deleteHint}>
-              {labels.deleteHint}
+              {messages.confirm.deleteDescription}
             </Text>
           </Dialog.Content>
           <View style={styles.deleteActions}>
