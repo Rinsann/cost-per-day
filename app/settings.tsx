@@ -1,20 +1,26 @@
-import { File, Paths } from 'expo-file-system';
-import { useFocusEffect } from 'expo-router';
+import * as DocumentPicker from 'expo-document-picker';
+import { EncodingType, File, Paths } from 'expo-file-system';
+import { readAsStringAsync } from 'expo-file-system/legacy';
+import { router, useFocusEffect } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import { useCallback, useState } from 'react';
 import { Alert, StyleSheet } from 'react-native';
 import { Card, List, Text } from 'react-native-paper';
 
 import { Screen } from '@/components/layout/Screen';
-import { getProducts } from '@/storage/productStorage';
+import { getProducts, saveProducts } from '@/storage/productStorage';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
+import { parseCostPerDayBackup } from '@/utils/backup';
 
 const labels = {
   data: '\u6570\u636e',
   productCount: '\u6d88\u8d39\u54c1\u6570\u91cf',
   exportData: '\u5bfc\u51fa\u6570\u636e',
+  importData: '\u5bfc\u5165\u6570\u636e',
+  importFromFile: '\u4ece\u6587\u4ef6\u5bfc\u5165\uff08\u5b9e\u9a8c\u6027\uff09',
+  importFromPaste: '\u7c98\u8d34 JSON \u5bfc\u5165\uff08\u63a8\u8350\uff09',
   json: 'JSON',
   app: '\u5e94\u7528',
   currentVersion: '\u5f53\u524d\u7248\u672c',
@@ -30,12 +36,32 @@ const labels = {
   exportFailed: '\u5bfc\u51fa\u5931\u8d25',
   exportFailedHint: '\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002',
   exportDialogTitle: '\u5bfc\u51fa Cost Per Day \u5907\u4efd',
-  version: 'V1.1-C',
+  importFailed: '\u5bfc\u5165\u5931\u8d25',
+  invalidFormat: '\u6587\u4ef6\u683c\u5f0f\u4e0d\u6b63\u786e\u3002',
+  readFailedUsePaste:
+    '\u5f53\u524d Android + Expo Go \u73af\u5883\u4e0b\u6587\u4ef6\u5bfc\u5165\u53ef\u80fd\u4e0d\u7a33\u5b9a\uff0c\u8bf7\u4f7f\u7528\u201c\u7c98\u8d34 JSON \u5bfc\u5165\u201d\u3002',
+  importFailedHint: '\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002',
+  invalidJson: '\u6587\u4ef6\u4e0d\u662f\u6709\u6548\u7684 JSON\u3002',
+  importConfirmTitle: '\u786e\u5b9a\u5bfc\u5165\u6570\u636e\uff1f',
+  importConfirmBody:
+    '\u5f53\u524d\u672c\u5730\u6570\u636e\u5c06\u88ab\u8986\u76d6\u3002\n\n\u5907\u4efd\u6587\u4ef6\u5305\u542b\uff1a\n{count} \u4ef6\u6d88\u8d39\u54c1',
+  cancel: '\u53d6\u6d88',
+  confirmImport: '\u786e\u8ba4\u5bfc\u5165',
+  importSuccess: '\u5bfc\u5165\u6210\u529f',
+  importSuccessBody: '\u5df2\u6062\u590d {count} \u4ef6\u6d88\u8d39\u54c1\u3002',
+  version: 'V1.1-D',
   authorName: 'Rinsann',
   stack: 'React Native\nExpo\nTypeScript'
 };
 
 const EXPORT_FILE_NAME = 'cost-per-day-backup.json';
+
+type PickedBackupAsset = {
+  uri: string;
+  name: string;
+  mimeType?: string;
+  size?: number;
+};
 
 export default function SettingsScreen() {
   const [productCount, setProductCount] = useState(0);
@@ -91,6 +117,138 @@ export default function SettingsScreen() {
     }
   }
 
+  async function confirmImportProducts(rawJson: string) {
+    const parsedBackup = parseCostPerDayBackup(rawJson);
+
+    if (!parsedBackup.ok) {
+      Alert.alert(
+        labels.importFailed,
+        parsedBackup.reason === 'invalid-json' ? labels.invalidJson : labels.invalidFormat
+      );
+      return;
+    }
+
+    const count = parsedBackup.products.length;
+
+    Alert.alert(
+      labels.importConfirmTitle,
+      labels.importConfirmBody.replace('{count}', String(count)),
+      [
+        {
+          text: labels.cancel,
+          style: 'cancel'
+        },
+        {
+          text: labels.confirmImport,
+          onPress: async () => {
+            try {
+              await saveProducts(parsedBackup.products);
+              setProductCount(count);
+              Alert.alert(
+                labels.importSuccess,
+                labels.importSuccessBody.replace('{count}', String(count))
+              );
+            } catch {
+              Alert.alert(labels.importFailed, labels.importFailedHint);
+            }
+          }
+        }
+      ]
+    );
+  }
+
+  async function readPickedBackupFile(asset: PickedBackupAsset) {
+    try {
+      const backupFile = new File(asset.uri);
+      return await backupFile.text();
+    } catch (error) {
+      console.log('Cost Per Day import read failed with File API', {
+        uri: asset.uri,
+        name: asset.name,
+        mimeType: asset.mimeType,
+        size: asset.size,
+        errorName: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error)
+      });
+    }
+
+    try {
+      return await readAsStringAsync(asset.uri, {
+        encoding: EncodingType.UTF8
+      });
+    } catch (error) {
+      console.log('Cost Per Day import read failed with legacy FileSystem API', {
+        uri: asset.uri,
+        name: asset.name,
+        mimeType: asset.mimeType,
+        size: asset.size,
+        errorName: error instanceof Error ? error.name : 'Unknown',
+        message: error instanceof Error ? error.message : String(error)
+      });
+
+      throw error;
+    }
+  }
+
+  async function handleFileImport() {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: '*/*',
+        copyToCacheDirectory: true,
+        multiple: false
+      });
+
+      if (result.canceled) {
+        return;
+      }
+
+      const asset = result.assets[0];
+
+      if (!asset) {
+        Alert.alert('\u6587\u4ef6\u8bfb\u53d6\u5931\u8d25', labels.readFailedUsePaste);
+        return;
+      }
+
+      let rawJson = '';
+      const pickedAsset = {
+        uri: asset.uri,
+        name: asset.name,
+        mimeType: asset.mimeType,
+        size: asset.size
+      };
+
+      console.log('Cost Per Day import picked asset', pickedAsset);
+
+      try {
+        rawJson = await readPickedBackupFile(pickedAsset);
+      } catch {
+        Alert.alert('\u6587\u4ef6\u8bfb\u53d6\u5931\u8d25', labels.readFailedUsePaste);
+        return;
+      }
+
+      await confirmImportProducts(rawJson);
+    } catch {
+      Alert.alert('\u6587\u4ef6\u8bfb\u53d6\u5931\u8d25', labels.readFailedUsePaste);
+    }
+  }
+
+  function handleImportData() {
+    Alert.alert(labels.importData, undefined, [
+      {
+        text: labels.importFromPaste,
+        onPress: () => router.push('/settings/import-json')
+      },
+      {
+        text: labels.importFromFile,
+        onPress: handleFileImport
+      },
+      {
+        text: labels.cancel,
+        style: 'cancel'
+      }
+    ]);
+  }
+
   return (
     <Screen>
       <Card mode="contained" style={styles.card}>
@@ -111,6 +269,16 @@ export default function SettingsScreen() {
               </>
             )}
             onPress={handleExportData}
+          />
+          <List.Item
+            title={labels.importData}
+            right={(props) => (
+              <>
+                <Text style={styles.valueText}>{labels.json}</Text>
+                <List.Icon {...props} icon="chevron-right" />
+              </>
+            )}
+            onPress={handleImportData}
           />
         </Card.Content>
       </Card>

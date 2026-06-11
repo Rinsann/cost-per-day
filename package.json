@@ -15,6 +15,7 @@
     "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "latest",
     "expo-constants": "~56.0.17",
+    "expo-document-picker": "~56.0.4",
     "expo-file-system": "~56.0.7",
     "expo-font": "~56.0.5",
     "expo-linking": "~56.0.13",
