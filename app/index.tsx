@@ -140,13 +140,22 @@ export default function HomeScreen() {
               <Text variant="labelLarge" style={styles.totalLabel}>
                 {labels.currentDailyCost}
               </Text>
-              <IconButton
-                icon="cog-outline"
-                iconColor="#FFFFFF"
-                size={22}
-                onPress={() => router.push('/settings')}
-                style={styles.settingsButton}
-              />
+              <View style={styles.headerActions}>
+                <IconButton
+                  icon="chart-box-outline"
+                  iconColor="#FFFFFF"
+                  size={22}
+                  onPress={() => router.push('/stats')}
+                  style={styles.headerActionButton}
+                />
+                <IconButton
+                  icon="cog-outline"
+                  iconColor="#FFFFFF"
+                  size={22}
+                  onPress={() => router.push('/settings')}
+                  style={styles.headerActionButton}
+                />
+              </View>
             </View>
             <Text variant="displaySmall" style={styles.totalValue}>
               {formatCurrency(currentDailyCost)}
@@ -289,7 +298,10 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between'
   },
-  settingsButton: {
+  headerActions: {
+    flexDirection: 'row'
+  },
+  headerActionButton: {
     margin: 0
   },
   totalValue: {
