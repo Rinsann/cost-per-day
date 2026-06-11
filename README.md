@@ -101,9 +101,16 @@ eas build --platform android --profile preview
 
 ## 当前版本
 
-- 当前稳定测试版本：`v1.3.1-preview`
+- 当前稳定测试版本：V1.3.1 Preview
+- 内部语义化版本：1.3.1
 - Android APK：已构建并完成真机测试
-- 远程 tag：等待 GitHub 网络恢复后推送
+
+## 应用信息
+
+- 应用名称：Cost Per Day
+- 应用说明：计算消费品真实使用成本
+- 作者：Rinsann
+- GitHub：https://github.com/Rinsann/cost-per-day
 
 ## 后续计划
 

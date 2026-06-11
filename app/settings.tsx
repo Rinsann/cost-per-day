@@ -8,6 +8,7 @@ import { Alert, StyleSheet } from 'react-native';
 import { Card, List, Text } from 'react-native-paper';
 
 import { Screen } from '@/components/layout/Screen';
+import { appInfo } from '@/constants/appInfo';
 import { getProducts, saveProducts } from '@/storage/productStorage';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -23,19 +24,19 @@ const labels = {
   importFromPaste: '\u7c98\u8d34 JSON \u5bfc\u5165\uff08\u63a8\u8350\uff09',
   json: 'JSON',
   app: '\u5e94\u7528',
+  appName: '\u5e94\u7528\u540d\u79f0',
   currentVersion: '\u5f53\u524d\u7248\u672c',
+  buildType: '\u6784\u5efa\u7c7b\u578b',
   techStack: '\u6280\u672f\u6808',
   about: '\u5173\u4e8e',
-  appName: 'Cost Per Day',
-  description: '\u5e2e\u52a9\u7528\u6237\u8ba1\u7b97\u6d88\u8d39\u54c1\u771f\u5b9e\u4f7f\u7528\u6210\u672c\u3002',
+  description: '\u5e94\u7528\u8bf4\u660e',
   versionNumber: '\u5f53\u524d\u7248\u672c\u53f7',
   author: '\u4f5c\u8005',
   github: 'Github \u4ed3\u5e93',
-  comingSoon: 'Coming Soon',
   noExportData: '\u6682\u65e0\u53ef\u5bfc\u51fa\u7684\u6d88\u8d39\u54c1\u6570\u636e\u3002',
   exportFailed: '\u5bfc\u51fa\u5931\u8d25',
   exportFailedHint: '\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002',
-  exportDialogTitle: '\u5bfc\u51fa Cost Per Day \u5907\u4efd',
+  exportDialogTitle: `\u5bfc\u51fa ${appInfo.name} \u5907\u4efd`,
   importFailed: '\u5bfc\u5165\u5931\u8d25',
   invalidFormat: '\u6587\u4ef6\u683c\u5f0f\u4e0d\u6b63\u786e\u3002',
   readFailedUsePaste:
@@ -49,8 +50,6 @@ const labels = {
   confirmImport: '\u786e\u8ba4\u5bfc\u5165',
   importSuccess: '\u5bfc\u5165\u6210\u529f',
   importSuccessBody: '\u5df2\u6062\u590d {count} \u4ef6\u6d88\u8d39\u54c1\u3002',
-  version: 'V1.1-D',
-  authorName: 'Rinsann',
   stack: 'React Native\nExpo\nTypeScript'
 };
 
@@ -98,8 +97,8 @@ export default function SettingsScreen() {
       }
 
       const backup = {
-        app: labels.appName,
-        version: labels.version,
+        app: appInfo.name,
+        version: appInfo.displayVersion,
         exportedAt: new Date().toISOString(),
         products
       };
@@ -162,7 +161,7 @@ export default function SettingsScreen() {
       const backupFile = new File(asset.uri);
       return await backupFile.text();
     } catch (error) {
-      console.log('Cost Per Day import read failed with File API', {
+      console.log(`${appInfo.name} import read failed with File API`, {
         uri: asset.uri,
         name: asset.name,
         mimeType: asset.mimeType,
@@ -177,7 +176,7 @@ export default function SettingsScreen() {
         encoding: EncodingType.UTF8
       });
     } catch (error) {
-      console.log('Cost Per Day import read failed with legacy FileSystem API', {
+      console.log(`${appInfo.name} import read failed with legacy FileSystem API`, {
         uri: asset.uri,
         name: asset.name,
         mimeType: asset.mimeType,
@@ -217,7 +216,7 @@ export default function SettingsScreen() {
         size: asset.size
       };
 
-      console.log('Cost Per Day import picked asset', pickedAsset);
+      console.log(`${appInfo.name} import picked asset`, pickedAsset);
 
       try {
         rawJson = await readPickedBackupFile(pickedAsset);
@@ -290,7 +289,11 @@ export default function SettingsScreen() {
           </Text>
           <List.Item
             title={labels.currentVersion}
-            right={() => <Text style={styles.valueText}>{labels.version}</Text>}
+            right={() => <Text style={styles.valueText}>{appInfo.displayVersion}</Text>}
+          />
+          <List.Item
+            title={labels.buildType}
+            right={() => <Text style={styles.valueText}>{appInfo.buildType}</Text>}
           />
           <List.Item
             title={labels.techStack}
@@ -305,19 +308,25 @@ export default function SettingsScreen() {
           <Text variant="titleMedium" style={styles.sectionTitle}>
             {labels.about}
           </Text>
-          <List.Item title={labels.appName} description={labels.description} />
+          <List.Item
+            title={labels.appName}
+            right={() => <Text style={styles.valueText}>{appInfo.name}</Text>}
+          />
+          <List.Item title={labels.description} description={appInfo.description} />
           <List.Item
             title={labels.versionNumber}
-            right={() => <Text style={styles.valueText}>{labels.version}</Text>}
+            right={() => <Text style={styles.valueText}>{appInfo.displayVersion}</Text>}
           />
           <List.Item
             title={labels.author}
-            right={() => <Text style={styles.valueText}>{labels.authorName}</Text>}
+            right={() => <Text style={styles.valueText}>{appInfo.author}</Text>}
           />
           <List.Item
             title={labels.github}
+            description={appInfo.github}
+            descriptionNumberOfLines={2}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
-            onPress={() => Alert.alert(labels.github, labels.comingSoon)}
+            onPress={() => Alert.alert(labels.github, appInfo.github)}
           />
         </Card.Content>
       </Card>
