@@ -38,7 +38,17 @@ function parseProduct(value: unknown): Product | null {
     return null;
   }
 
-  const { id, name, categoryId, price, purchaseDate, note, createdAt, updatedAt } = value;
+  const {
+    id,
+    name,
+    categoryId,
+    price,
+    purchaseDate,
+    targetDailyCost,
+    note,
+    createdAt,
+    updatedAt
+  } = value;
 
   if (
     typeof id !== 'string' ||
@@ -58,12 +68,20 @@ function parseProduct(value: unknown): Product | null {
     return null;
   }
 
+  if (
+    targetDailyCost !== undefined &&
+    (typeof targetDailyCost !== 'number' || targetDailyCost <= 0)
+  ) {
+    return null;
+  }
+
   return {
     id,
     name,
     categoryId: categoryId as Product['categoryId'],
     price,
     purchaseDate,
+    targetDailyCost,
     note,
     createdAt,
     updatedAt

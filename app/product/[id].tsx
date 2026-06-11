@@ -19,6 +19,7 @@ import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { Product } from '@/types/product';
 import { formatCurrency, getDailyCost, getProductMetrics } from '@/utils/cost';
+import { getTargetDailyCostMetrics } from '@/utils/targetCost';
 
 const labels = {
   detailTitle: '\u6d88\u8d39\u54c1\u8be6\u60c5',
@@ -37,6 +38,14 @@ const labels = {
   after365Days: '365\u5929\u540e',
   perDay: '/\u5929',
   valueHint: '\u7ee7\u7eed\u4f7f\u7528\u4f1a\u8fdb\u4e00\u6b65\u644a\u8584\u8d2d\u4e70\u6210\u672c\uff0c\u5e2e\u52a9\u4f60\u5224\u65ad\u8fd9\u7b14\u6d88\u8d39\u662f\u5426\u503c\u5f97\u3002',
+  targetTitle: '\u76ee\u6807\u65e5\u5747\u6210\u672c',
+  targetTotalDays: '\u9700\u8981\u603b\u4f7f\u7528\u5929\u6570',
+  remainingDays: '\u8fd8\u9700\u4f7f\u7528',
+  targetDate: '\u9884\u8ba1\u8fbe\u6210\u65e5\u671f',
+  targetReached: '\u5df2\u8fbe\u6210\u76ee\u6807',
+  targetReachedHint: '\u5f53\u524d\u65e5\u5747\u6210\u672c\u5df2\u4f4e\u4e8e\u76ee\u6807\u3002',
+  targetNotSet: '\u672a\u8bbe\u7f6e\u76ee\u6807\u65e5\u5747\u6210\u672c',
+  targetNotSetHint: '\u7f16\u8f91\u6d88\u8d39\u54c1\u540e\u53ef\u8bbe\u7f6e\u76ee\u6807\u6210\u672c\u3002',
   notFound: '\u672a\u627e\u5230\u8be5\u6d88\u8d39\u54c1',
   backHome: '\u8fd4\u56de\u9996\u9875',
   edit: '\u7f16\u8f91',
@@ -124,6 +133,10 @@ export default function ProductDetailScreen() {
       after365Days: getDailyCost(product.price, metrics.usedDays + 365)
     };
   }, [metrics, product]);
+
+  const targetMetrics = useMemo(() => {
+    return product ? getTargetDailyCostMetrics(product) : null;
+  }, [product]);
 
   async function handleDelete() {
     if (!productId) {
@@ -247,6 +260,56 @@ export default function ProductDetailScreen() {
           <Card mode="contained" style={styles.card}>
             <Card.Content>
               <Text variant="titleMedium" style={styles.cardTitle}>
+                {labels.targetTitle}
+              </Text>
+
+              {targetMetrics ? (
+                targetMetrics.isReached ? (
+                  <View style={styles.targetReachedBox}>
+                    <Text variant="titleMedium" style={styles.targetReachedText}>
+                      {labels.targetReached}
+                    </Text>
+                    <Text variant="bodyMedium" style={styles.valueHint}>
+                      {labels.targetReachedHint}
+                    </Text>
+                  </View>
+                ) : (
+                  <>
+                    <MetricRow
+                      label={labels.targetTitle}
+                      value={`${formatCurrency(targetMetrics.targetDailyCost)}${labels.perDay}`}
+                    />
+                    <MetricRow
+                      label={labels.targetTotalDays}
+                      value={`${targetMetrics.targetTotalDays} ${labels.days}`}
+                    />
+                    <MetricRow
+                      label={labels.usedDays}
+                      value={`${targetMetrics.usedDays} ${labels.days}`}
+                    />
+                    <MetricRow
+                      label={labels.remainingDays}
+                      value={`${targetMetrics.remainingDays} ${labels.days}`}
+                    />
+                    <MetricRow label={labels.targetDate} value={targetMetrics.targetDate} />
+                  </>
+                )
+              ) : (
+                <View style={styles.targetEmptyBox}>
+                  <Text variant="titleMedium" style={styles.targetEmptyTitle}>
+                    {labels.targetNotSet}
+                  </Text>
+                  <Text variant="bodyMedium" style={styles.valueHint}>
+                    {labels.targetNotSetHint}
+                  </Text>
+                </View>
+              )}
+            </Card.Content>
+          </Card>
+
+          <Card mode="contained" style={styles.card}>
+            <Card.Content>
+              <Text variant="titleMedium" style={styles.cardTitle}>
                 {labels.note}
               </Text>
               <Text variant="bodyMedium" style={styles.noteText}>
@@ -354,6 +417,24 @@ const styles = StyleSheet.create({
   valueHint: {
     color: colors.textSecondary,
     marginTop: spacing.md
+  },
+  targetReachedBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.md,
+    padding: spacing.md
+  },
+  targetReachedText: {
+    color: colors.primary,
+    fontWeight: '800'
+  },
+  targetEmptyBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.md,
+    padding: spacing.md
+  },
+  targetEmptyTitle: {
+    color: colors.text,
+    fontWeight: '800'
   },
   noteText: {
     color: colors.textSecondary,

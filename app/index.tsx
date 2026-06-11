@@ -10,6 +10,7 @@ import { spacing } from '@/theme/spacing';
 import { getProducts } from '@/storage/productStorage';
 import { Product, ProductCategoryId } from '@/types/product';
 import { formatCurrency, getProductMetrics } from '@/utils/cost';
+import { getTargetDailyCostMetrics } from '@/utils/targetCost';
 
 type SortMode =
   | 'dailyCostDesc'
@@ -38,7 +39,11 @@ const labels = {
   sortDailyCostDesc: '\u65e5\u5747\u6210\u672c\u9ad8\u5230\u4f4e',
   sortDailyCostAsc: '\u65e5\u5747\u6210\u672c\u4f4e\u5230\u9ad8',
   sortPurchaseDateDesc: '\u8d2d\u4e70\u65e5\u671f\u6700\u65b0',
-  sortPurchaseDateAsc: '\u8d2d\u4e70\u65e5\u671f\u6700\u65e9'
+  sortPurchaseDateAsc: '\u8d2d\u4e70\u65e5\u671f\u6700\u65e9',
+  targetReached: '\u76ee\u6807\u5df2\u8fbe\u6210',
+  targetPrefix: '\u76ee\u6807',
+  remainingPrefix: '\u8fd8\u9700',
+  perDay: '/\u5929'
 };
 
 const categoryLabels: Record<ProductCategoryId, string> = {
@@ -61,6 +66,57 @@ const sortLabels: Record<SortMode, string> = {
   purchaseDateDesc: labels.sortPurchaseDateDesc,
   purchaseDateAsc: labels.sortPurchaseDateAsc
 };
+
+type ProductCardProps = {
+  product: ProductWithMetrics;
+};
+
+function ProductCard({ product }: ProductCardProps) {
+  const targetMetrics = getTargetDailyCostMetrics(product);
+
+  return (
+    <Card
+      mode="contained"
+      style={styles.productCard}
+      onPress={() => router.push(`/product/${product.id}`)}
+    >
+      <Card.Content>
+        <View style={styles.cardHeader}>
+          <View style={styles.productTitleWrap}>
+            <Text variant="titleMedium" style={styles.productName}>
+              {product.name}
+            </Text>
+            <Text variant="bodySmall" style={styles.productMeta}>
+              {categoryLabels[product.categoryId]}
+            </Text>
+          </View>
+          <Text variant="titleMedium" style={styles.dailyCost}>
+            {formatCurrency(product.dailyCost)}
+          </Text>
+        </View>
+
+        <View style={styles.cardFooter}>
+          <Text variant="bodyMedium" style={styles.productInfo}>
+            {labels.price} {formatCurrency(product.price)}
+          </Text>
+          <Text variant="bodyMedium" style={styles.productInfo}>
+            {labels.used} {product.usedDays} {labels.days}
+          </Text>
+        </View>
+
+        {targetMetrics ? (
+          <Text variant="bodySmall" style={styles.targetInfo}>
+            {targetMetrics.isReached
+              ? labels.targetReached
+              : `${labels.targetPrefix} ${formatCurrency(targetMetrics.targetDailyCost)}${
+                  labels.perDay
+                } · ${labels.remainingPrefix} ${targetMetrics.remainingDays} ${labels.days}`}
+          </Text>
+        ) : null}
+      </Card.Content>
+    </Card>
+  );
+}
 
 export default function HomeScreen() {
   const [query, setQuery] = useState('');
@@ -219,37 +275,7 @@ export default function HomeScreen() {
 
         <View style={styles.list}>
           {visibleProducts.map((product) => (
-            <Card
-              key={product.id}
-              mode="contained"
-              style={styles.productCard}
-              onPress={() => router.push(`/product/${product.id}`)}
-            >
-              <Card.Content>
-                <View style={styles.cardHeader}>
-                  <View style={styles.productTitleWrap}>
-                    <Text variant="titleMedium" style={styles.productName}>
-                      {product.name}
-                    </Text>
-                    <Text variant="bodySmall" style={styles.productMeta}>
-                      {categoryLabels[product.categoryId]}
-                    </Text>
-                  </View>
-                  <Text variant="titleMedium" style={styles.dailyCost}>
-                    {formatCurrency(product.dailyCost)}
-                  </Text>
-                </View>
-
-                <View style={styles.cardFooter}>
-                  <Text variant="bodyMedium" style={styles.productInfo}>
-                    {labels.price} {formatCurrency(product.price)}
-                  </Text>
-                  <Text variant="bodyMedium" style={styles.productInfo}>
-                    {labels.used} {product.usedDays} {labels.days}
-                  </Text>
-                </View>
-              </Card.Content>
-            </Card>
+            <ProductCard key={product.id} product={product} />
           ))}
 
           {visibleProducts.length === 0 ? (
@@ -369,6 +395,11 @@ const styles = StyleSheet.create({
   },
   productInfo: {
     color: colors.textSecondary
+  },
+  targetInfo: {
+    color: colors.primary,
+    fontWeight: '700',
+    marginTop: spacing.sm
   },
   emptyCard: {
     backgroundColor: colors.card,

@@ -14,6 +14,7 @@ export type ProductFormValues = {
   categoryId: ProductCategoryId;
   price: number;
   purchaseDate: string;
+  targetDailyCost?: number;
   note?: string;
 };
 
@@ -30,9 +31,14 @@ const labels = {
   category: '\u5206\u7c7b',
   price: '\u8d2d\u4e70\u4ef7\u683c',
   purchaseDate: '\u8d2d\u4e70\u65e5\u671f',
+  targetDailyCost: '\u76ee\u6807\u65e5\u5747\u6210\u672c',
+  targetDailyCostPlaceholder: '\u4f8b\u5982 2',
+  targetDailyCostHint:
+    '\u8bbe\u7f6e\u540e\u53ef\u8ba1\u7b97\u8fd8\u9700\u8981\u4f7f\u7528\u591a\u4e45\u624d\u80fd\u8fbe\u5230\u76ee\u6807\u6210\u672c\u3002',
   note: '\u5907\u6ce8',
   required: '\u8be5\u9879\u5fc5\u586b',
   invalidPrice: '\u8bf7\u8f93\u5165\u6709\u6548\u7684\u8d2d\u4e70\u4ef7\u683c',
+  invalidTargetDailyCost: '\u8bf7\u8f93\u5165\u5927\u4e8e 0 \u7684\u6570\u5b57',
   invalidDate: '\u8bf7\u4f7f\u7528 YYYY-MM-DD \u683c\u5f0f'
 };
 
@@ -67,6 +73,9 @@ export function ProductForm({
     initialProduct?.categoryId ?? 'digital'
   );
   const [price, setPrice] = useState(initialProduct ? String(initialProduct.price) : '');
+  const [targetDailyCost, setTargetDailyCost] = useState(
+    initialProduct?.targetDailyCost ? String(initialProduct.targetDailyCost) : ''
+  );
   const [purchaseDate, setPurchaseDate] = useState(
     initialProduct?.purchaseDate ?? getTodayDateString()
   );
@@ -84,10 +93,16 @@ export function ProductForm({
 
   const normalizedName = name.trim();
   const normalizedPrice = Number(price);
+  const normalizedTargetDailyCost = Number(targetDailyCost);
+  const hasTargetDailyCostValue = targetDailyCost.trim().length > 0;
   const hasNameError = submitted && normalizedName.length === 0;
   const hasPriceError =
     submitted &&
     (price.trim().length === 0 || Number.isNaN(normalizedPrice) || normalizedPrice <= 0);
+  const hasTargetDailyCostError =
+    submitted &&
+    hasTargetDailyCostValue &&
+    (Number.isNaN(normalizedTargetDailyCost) || normalizedTargetDailyCost <= 0);
   const hasDateError = submitted && !isValidDateString(purchaseDate);
 
   async function handleSubmit() {
@@ -97,6 +112,8 @@ export function ProductForm({
       normalizedName.length === 0 ||
       Number.isNaN(normalizedPrice) ||
       normalizedPrice <= 0 ||
+      (hasTargetDailyCostValue &&
+        (Number.isNaN(normalizedTargetDailyCost) || normalizedTargetDailyCost <= 0)) ||
       !isValidDateString(purchaseDate)
     ) {
       return;
@@ -110,6 +127,7 @@ export function ProductForm({
         categoryId,
         price: normalizedPrice,
         purchaseDate,
+        targetDailyCost: hasTargetDailyCostValue ? normalizedTargetDailyCost : undefined,
         note: note.trim() || undefined
       });
     } finally {
@@ -192,6 +210,24 @@ export function ProductForm({
           />
           <HelperText type="error" visible={hasDateError}>
             {labels.invalidDate}
+          </HelperText>
+        </View>
+
+        <View>
+          <TextInput
+            label={labels.targetDailyCost}
+            mode="outlined"
+            value={targetDailyCost}
+            onChangeText={setTargetDailyCost}
+            error={hasTargetDailyCostError}
+            keyboardType="decimal-pad"
+            placeholder={labels.targetDailyCostPlaceholder}
+            left={<TextInput.Affix text="\uffe5" />}
+          />
+          <HelperText type={hasTargetDailyCostError ? 'error' : 'info'} visible>
+            {hasTargetDailyCostError
+              ? labels.invalidTargetDailyCost
+              : labels.targetDailyCostHint}
           </HelperText>
         </View>
 

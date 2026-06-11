@@ -17,6 +17,7 @@ export type Product = {
   categoryId: ProductCategoryId;
   price: number;
   purchaseDate: string;
+  targetDailyCost?: number;
   note?: string;
   createdAt: string;
   updatedAt: string;
