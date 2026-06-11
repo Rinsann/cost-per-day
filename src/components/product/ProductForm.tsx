@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { Button, Card, HelperText, Menu, Text, TextInput } from 'react-native-paper';
 
 import { productCategories } from '@/constants/categories';
@@ -84,6 +84,10 @@ export function ProductForm({
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
+  const openCategoryMenu = () => {
+    setCategoryMenuVisible(true);
+  };
+
   const selectedCategoryName = useMemo(() => {
     return (
       productCategories.find((category) => category.id === categoryId)?.name ??
@@ -160,14 +164,26 @@ export function ProductForm({
           visible={categoryMenuVisible}
           onDismiss={() => setCategoryMenuVisible(false)}
           anchor={
-            <TextInput
-              label={labels.category}
-              mode="outlined"
-              value={selectedCategoryName}
-              editable={false}
-              right={<TextInput.Icon icon="menu-down" onPress={() => setCategoryMenuVisible(true)} />}
-              onPressIn={() => setCategoryMenuVisible(true)}
-            />
+            <View>
+              <TextInput
+                label={labels.category}
+                mode="outlined"
+                value={selectedCategoryName}
+                editable={false}
+                right={
+                  <TextInput.Icon
+                    icon="menu-down"
+                    onPress={openCategoryMenu}
+                    forceTextInputFocus={false}
+                  />
+                }
+              />
+              <Pressable
+                accessibilityRole="button"
+                onPress={openCategoryMenu}
+                style={styles.categoryPressable}
+              />
+            </View>
           }
         >
           {productCategories.map((category) => (
@@ -267,6 +283,13 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: '800',
     marginBottom: spacing.sm
+  },
+  categoryPressable: {
+    bottom: 0,
+    left: 0,
+    position: 'absolute',
+    right: 56,
+    top: 0
   },
   saveButton: {
     borderRadius: radius.lg,

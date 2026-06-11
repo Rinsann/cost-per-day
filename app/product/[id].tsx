@@ -49,7 +49,7 @@ const labels = {
   notFound: '\u672a\u627e\u5230\u8be5\u6d88\u8d39\u54c1',
   backHome: '\u8fd4\u56de\u9996\u9875',
   edit: '\u7f16\u8f91',
-  deleteTitle: '\u786e\u5b9a\u5220\u9664\uff1a',
+  deleteTitle: '\u5220\u9664\u6d88\u8d39\u54c1\uff1f',
   deleteHint: '\u5220\u9664\u540e\u65e0\u6cd5\u6062\u590d\u3002',
   cancel: '\u53d6\u6d88',
   delete: '\u5220\u9664'
@@ -321,9 +321,13 @@ export default function ProductDetailScreen() {
       ) : null}
 
       <Portal>
-        <Dialog visible={deleteDialogVisible} onDismiss={() => setDeleteDialogVisible(false)}>
-          <Dialog.Title>{labels.deleteTitle}</Dialog.Title>
-          <Dialog.Content>
+        <Dialog
+          visible={deleteDialogVisible}
+          onDismiss={() => setDeleteDialogVisible(false)}
+          style={styles.deleteDialog}
+        >
+          <Dialog.Title style={styles.deleteDialogTitle}>{labels.deleteTitle}</Dialog.Title>
+          <Dialog.Content style={styles.deleteContent}>
             <Text variant="titleMedium" style={styles.deleteProductName}>
               {product?.name}
             </Text>
@@ -331,19 +335,28 @@ export default function ProductDetailScreen() {
               {labels.deleteHint}
             </Text>
           </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setDeleteDialogVisible(false)} disabled={deleting}>
+          <View style={styles.deleteActions}>
+            <Button
+              mode="text"
+              onPress={() => setDeleteDialogVisible(false)}
+              disabled={deleting}
+              style={styles.deleteActionButton}
+              contentStyle={styles.deleteActionContent}
+            >
               {labels.cancel}
             </Button>
             <Button
+              mode="text"
               onPress={handleDelete}
               loading={deleting}
               disabled={deleting}
               textColor={colors.danger}
+              style={styles.deleteActionButton}
+              contentStyle={styles.deleteActionContent}
             >
               {labels.delete}
             </Button>
-          </Dialog.Actions>
+          </View>
         </Dialog>
       </Portal>
     </Screen>
@@ -452,12 +465,48 @@ const styles = StyleSheet.create({
   homeButton: {
     borderRadius: radius.lg
   },
+  deleteDialog: {
+    alignSelf: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    maxWidth: 360,
+    width: '86%'
+  },
+  deleteDialogTitle: {
+    color: colors.text,
+    fontWeight: '800',
+    lineHeight: 28,
+    paddingBottom: 0
+  },
   deleteProductName: {
     color: colors.text,
-    fontWeight: '800'
+    flexShrink: 1,
+    fontWeight: '800',
+    lineHeight: 24
+  },
+  deleteContent: {
+    gap: spacing.xs,
+    paddingBottom: spacing.sm
   },
   deleteHint: {
     color: colors.textSecondary,
-    marginTop: spacing.xs
+    lineHeight: 22
+  },
+  deleteActions: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'flex-end',
+    paddingBottom: spacing.md,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.xs
+  },
+  deleteActionButton: {
+    borderRadius: radius.md,
+    minWidth: 80
+  },
+  deleteActionContent: {
+    minHeight: 44,
+    paddingHorizontal: spacing.sm
   }
 });
