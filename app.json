@@ -16,11 +16,18 @@
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF"
       },
-      "package": "com.costperday.app"
+      "package": "com.rinsann.costperday"
     },
     "plugins": [
       "expo-router",
       "expo-sharing"
-    ]
+    ],
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "92600c0b-92a2-49d3-ad49-dfbae8e2f4ae"
+      }
+    },
+    "owner": "rinsanv"
   }
 }
