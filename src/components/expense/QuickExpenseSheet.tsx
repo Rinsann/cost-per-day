@@ -1,7 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ComponentProps, useMemo, useState } from 'react';
+import { ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
+  Animated,
+  Easing,
   Modal,
   Pressable,
   ScrollView,
@@ -16,7 +18,6 @@ import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { ExpenseRecordType } from '@/types/expense';
-import { formatCurrency } from '@/utils/cost';
 
 type CategoryItem = {
   label: string;
@@ -75,9 +76,46 @@ function getAmountValue(amountText: string) {
   return Number.isFinite(amount) ? amount : 0;
 }
 
+function getAmountLabel(amountText: string) {
+  return amountText ? `\uFFE5${amountText}` : '\uFFE50';
+}
+
+function isValidAmountText(amountText: string) {
+  return /^\d+(\.\d{0,2})?$/.test(amountText);
+}
+
+function getNextAmountText(currentValue: string, key: string) {
+  if (key === 'backspace') {
+    return currentValue.slice(0, -1);
+  }
+
+  if (key === '.') {
+    if (currentValue.includes('.')) {
+      return currentValue;
+    }
+
+    return currentValue.length === 0 ? '0.' : `${currentValue}.`;
+  }
+
+  const nextValue = currentValue === '0' ? key : `${currentValue}${key}`;
+  const decimalPart = nextValue.split('.')[1];
+
+  if (decimalPart !== undefined && decimalPart.length > 2) {
+    return currentValue;
+  }
+
+  if (nextValue.length > 10) {
+    return currentValue;
+  }
+
+  return nextValue;
+}
+
 export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) {
   const insets = useSafeAreaInsets();
   const { addRecord } = useExpenseRecords();
+  const amountScale = useRef(new Animated.Value(1)).current;
+  const hasMountedAmount = useRef(false);
   const [recordType, setRecordType] = useState<ExpenseRecordType>('expense');
   const [amountText, setAmountText] = useState('');
   const [category, setCategory] = useState(expenseCategories[0].label);
@@ -86,11 +124,40 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
 
   const categories = recordType === 'expense' ? expenseCategories : incomeCategories;
   const amount = getAmountValue(amountText);
+  const isAmountValid = isValidAmountText(amountText) && amount > 0;
   const saveColor = recordType === 'expense' ? colors.expense : colors.primary;
 
   const amountLabel = useMemo(() => {
-    return amountText ? formatCurrency(amount) : '\uFFE50';
-  }, [amount, amountText]);
+    return getAmountLabel(amountText);
+  }, [amountText]);
+
+  const triggerAmountFeedback = useCallback(() => {
+    amountScale.stopAnimation();
+    amountScale.setValue(1);
+    Animated.sequence([
+      Animated.timing(amountScale, {
+        duration: 80,
+        easing: Easing.out(Easing.quad),
+        toValue: 1.045,
+        useNativeDriver: true
+      }),
+      Animated.timing(amountScale, {
+        duration: 100,
+        easing: Easing.out(Easing.quad),
+        toValue: 1,
+        useNativeDriver: true
+      })
+    ]).start();
+  }, [amountScale]);
+
+  useEffect(() => {
+    if (!hasMountedAmount.current) {
+      hasMountedAmount.current = true;
+      return;
+    }
+
+    triggerAmountFeedback();
+  }, [amountText, triggerAmountFeedback]);
 
   function resetForm() {
     setRecordType('expense');
@@ -105,38 +172,11 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   }
 
   function handleKeyPress(value: string) {
-    if (value === 'backspace') {
-      setAmountText((currentValue) => currentValue.slice(0, -1));
-      return;
-    }
-
-    setAmountText((currentValue) => {
-      if (value === '.' && currentValue.includes('.')) {
-        return currentValue;
-      }
-
-      if (value === '.' && currentValue.length === 0) {
-        return '0.';
-      }
-
-      const nextValue =
-        currentValue === '0' && value !== '.' ? value : `${currentValue}${value}`;
-      const decimalPart = nextValue.split('.')[1];
-
-      if (decimalPart && decimalPart.length > 2) {
-        return currentValue;
-      }
-
-      if (nextValue.length > 10) {
-        return currentValue;
-      }
-
-      return nextValue;
-    });
+    setAmountText((currentValue) => getNextAmountText(currentValue, value));
   }
 
   async function handleSave() {
-    if (!Number.isFinite(amount) || amount <= 0) {
+    if (!isAmountValid) {
       Alert.alert(labels.invalidTitle, labels.invalidDescription);
       return;
     }
@@ -210,9 +250,11 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
               </Pressable>
             </View>
 
-            <Text variant="displaySmall" style={styles.amountText}>
-              {amountLabel}
-            </Text>
+            <Animated.View style={{ transform: [{ scale: amountScale }] }}>
+              <Text variant="displaySmall" style={styles.amountText}>
+                {amountLabel}
+              </Text>
+            </Animated.View>
 
             <View style={styles.categoryGrid}>
               {categories.map((item) => {
@@ -257,7 +299,14 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                 <Pressable
                   key={item}
                   onPress={() => handleKeyPress(item)}
-                  style={styles.keypadButton}
+                  android_ripple={{
+                    borderless: false,
+                    color: 'rgba(255, 255, 255, 0.08)'
+                  }}
+                  style={({ pressed }) => [
+                    styles.keypadButton,
+                    pressed && styles.keypadButtonPressed
+                  ]}
                 >
                   {item === 'backspace' ? (
                     <MaterialCommunityIcons
@@ -279,11 +328,17 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
             <Button
               mode="contained"
               loading={saving}
-              disabled={saving || amount <= 0}
-              buttonColor={saveColor}
-              textColor={recordType === 'expense' ? colors.text : colors.background}
+              disabled={saving || !isAmountValid}
+              buttonColor={isAmountValid ? saveColor : colors.surfaceElevated}
+              textColor={
+                isAmountValid
+                  ? recordType === 'expense'
+                    ? colors.text
+                    : colors.background
+                  : colors.textSecondary
+              }
               onPress={handleSave}
-              style={styles.saveButton}
+              style={[styles.saveButton, !isAmountValid && styles.disabledSaveButton]}
               contentStyle={styles.saveButtonContent}
             >
               {saving ? labels.saving : labels.save}
@@ -405,7 +460,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.lg,
     height: 44,
     justifyContent: 'center',
+    overflow: 'hidden',
     width: '31.7%'
+  },
+  keypadButtonPressed: {
+    backgroundColor: '#24243A',
+    transform: [{ scale: 0.96 }]
   },
   keypadText: {
     color: colors.text,
@@ -413,6 +473,9 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     borderRadius: radius.lg
+  },
+  disabledSaveButton: {
+    opacity: 0.72
   },
   saveButtonContent: {
     minHeight: 52
