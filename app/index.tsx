@@ -11,7 +11,7 @@ import { spacing } from '@/theme/spacing';
 import { getProducts } from '@/storage/productStorage';
 import { Product, ProductCategoryId } from '@/types/product';
 import { formatCurrency, getProductMetrics } from '@/utils/cost';
-import { getTargetDailyCostMetrics } from '@/utils/targetCost';
+import { getTargetProgress, TargetDailyCostMetrics } from '@/utils/targetCost';
 
 type SortMode =
   | 'dailyCostDesc'
@@ -28,6 +28,7 @@ const labels = {
   currentDailyCost: '\u5f53\u524d\u65e5\u5747\u6210\u672c',
   currentDailyCostHint:
     '\u6240\u6709\u6d88\u8d39\u54c1\u65e5\u5747\u6210\u672c\u4e4b\u548c',
+  recentTargets: '\u6700\u8fd1\u76ee\u6807',
   searchPlaceholder: '\u641c\u7d22\u6d88\u8d39\u54c1',
   productSection: '\u6d88\u8d39\u54c1',
   price: '\u4ef7\u683c',
@@ -71,7 +72,7 @@ type ProductCardProps = {
 };
 
 function ProductCard({ product }: ProductCardProps) {
-  const targetMetrics = getTargetDailyCostMetrics(product);
+  const targetMetrics = getTargetProgress(product);
 
   return (
     <Card
@@ -117,6 +118,62 @@ function ProductCard({ product }: ProductCardProps) {
   );
 }
 
+type RecentTargetItem = {
+  product: ProductWithMetrics;
+  targetProgress: TargetDailyCostMetrics;
+};
+
+type RecentTargetsCardProps = {
+  items: RecentTargetItem[];
+};
+
+function RecentTargetsCard({ items }: RecentTargetsCardProps) {
+  return (
+    <Card mode="contained" style={styles.recentTargetCard}>
+      <Card.Content>
+        <Text variant="titleMedium" style={styles.recentTargetTitle}>
+          {labels.recentTargets}
+        </Text>
+        <View style={styles.recentTargetList}>
+          {items.map(({ product, targetProgress }) => (
+            <View key={product.id} style={styles.recentTargetItem}>
+              <View style={styles.recentTargetTextWrap}>
+                <Text variant="titleSmall" style={styles.productName}>
+                  {product.name}
+                </Text>
+                {targetProgress.isReached ? (
+                  <Text variant="bodySmall" style={styles.recentTargetReached}>
+                    {labels.targetReached}
+                  </Text>
+                ) : (
+                  <>
+                    <Text variant="bodySmall" style={styles.productMeta}>
+                      {formatCurrency(targetProgress.currentDailyCost)}
+                      {labels.perDay} → {labels.targetPrefix}{' '}
+                      {formatCurrency(targetProgress.targetDailyCost)}
+                      {labels.perDay}
+                    </Text>
+                    <Text variant="bodySmall" style={styles.productMeta}>
+                      {labels.remainingPrefix} {targetProgress.remainingDays} {labels.days}
+                    </Text>
+                  </>
+                )}
+              </View>
+              <IconButton
+                icon="chevron-right"
+                size={18}
+                iconColor={colors.textSecondary}
+                onPress={() => router.push(`/product/${product.id}`)}
+                style={styles.recentTargetIcon}
+              />
+            </View>
+          ))}
+        </View>
+      </Card.Content>
+    </Card>
+  );
+}
+
 export default function HomeScreen() {
   const [query, setQuery] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('dailyCostDesc');
@@ -153,6 +210,24 @@ export default function HomeScreen() {
 
   const currentDailyCost = useMemo(() => {
     return productsWithMetrics.reduce((total, product) => total + product.dailyCost, 0);
+  }, [productsWithMetrics]);
+
+  const recentTargetItems = useMemo<RecentTargetItem[]>(() => {
+    return productsWithMetrics
+      .map((product) => {
+        const targetProgress = getTargetProgress(product);
+
+        return targetProgress ? { product, targetProgress } : null;
+      })
+      .filter((item): item is RecentTargetItem => item !== null)
+      .sort((a, b) => {
+        if (a.targetProgress.isReached !== b.targetProgress.isReached) {
+          return a.targetProgress.isReached ? -1 : 1;
+        }
+
+        return a.targetProgress.remainingDays - b.targetProgress.remainingDays;
+      })
+      .slice(0, 3);
   }, [productsWithMetrics]);
 
   const visibleProducts = useMemo(() => {
@@ -220,6 +295,8 @@ export default function HomeScreen() {
             </Text>
           </Card.Content>
         </Card>
+
+        {recentTargetItems.length > 0 ? <RecentTargetsCard items={recentTargetItems} /> : null}
 
         <Searchbar
           value={query}
@@ -337,6 +414,39 @@ const styles = StyleSheet.create({
   totalHint: {
     color: '#EEF2FF',
     marginTop: spacing.xs
+  },
+  recentTargetCard: {
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
+    marginTop: spacing.md
+  },
+  recentTargetTitle: {
+    color: colors.text,
+    fontWeight: '800',
+    marginBottom: spacing.sm
+  },
+  recentTargetList: {
+    gap: spacing.sm
+  },
+  recentTargetItem: {
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingLeft: spacing.md,
+    paddingVertical: spacing.sm
+  },
+  recentTargetTextWrap: {
+    flex: 1
+  },
+  recentTargetReached: {
+    color: colors.primary,
+    fontWeight: '700',
+    marginTop: spacing.xs
+  },
+  recentTargetIcon: {
+    margin: 0
   },
   searchbar: {
     backgroundColor: colors.card,

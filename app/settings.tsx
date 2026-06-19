@@ -24,6 +24,10 @@ const labels = {
   importFromFile: '\u4ece\u6587\u4ef6\u5bfc\u5165\uff08\u5b9e\u9a8c\u6027\uff09',
   importFromPaste: '\u7c98\u8d34 JSON \u5bfc\u5165\uff08\u63a8\u8350\uff09',
   json: 'JSON',
+  reminder: '\u63d0\u9192',
+  targetReminder: '\u76ee\u6807\u63d0\u9192',
+  targetReminderDescription:
+    '\u5f53\u524d\u7248\u672c\u6682\u672a\u5f00\u542f\u7cfb\u7edf\u901a\u77e5\u3002\u4f60\u53ef\u4ee5\u901a\u8fc7\u9996\u9875\u201c\u6700\u8fd1\u76ee\u6807\u201d\u67e5\u770b\u63a5\u8fd1\u76ee\u6807\u7684\u6d88\u8d39\u54c1\u3002',
   app: '\u5e94\u7528',
   appName: '\u5e94\u7528\u540d\u79f0',
   currentVersion: '\u5f53\u524d\u7248\u672c',
@@ -271,6 +275,19 @@ export default function SettingsScreen() {
               </>
             )}
             onPress={handleImportData}
+          />
+        </Card.Content>
+      </Card>
+
+      <Card mode="contained" style={styles.card}>
+        <Card.Content>
+          <Text variant="titleMedium" style={styles.sectionTitle}>
+            {labels.reminder}
+          </Text>
+          <List.Item
+            title={labels.targetReminder}
+            description={labels.targetReminderDescription}
+            descriptionNumberOfLines={4}
           />
         </Card.Content>
       </Card>

@@ -20,7 +20,7 @@ import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { Product } from '@/types/product';
 import { formatCurrency, getDailyCost, getProductMetrics } from '@/utils/cost';
-import { getTargetDailyCostMetrics } from '@/utils/targetCost';
+import { getTargetProgress } from '@/utils/targetCost';
 
 const labels = {
   detailTitle: '\u6d88\u8d39\u54c1\u8be6\u60c5',
@@ -40,6 +40,7 @@ const labels = {
   perDay: '/\u5929',
   valueHint: '\u7ee7\u7eed\u4f7f\u7528\u4f1a\u8fdb\u4e00\u6b65\u644a\u8584\u8d2d\u4e70\u6210\u672c\uff0c\u5e2e\u52a9\u4f60\u5224\u65ad\u8fd9\u7b14\u6d88\u8d39\u662f\u5426\u503c\u5f97\u3002',
   targetTitle: '\u76ee\u6807\u65e5\u5747\u6210\u672c',
+  targetPrefix: '\u76ee\u6807',
   targetTotalDays: '\u9700\u8981\u603b\u4f7f\u7528\u5929\u6570',
   remainingDays: '\u8fd8\u9700\u4f7f\u7528',
   targetDate: '\u9884\u8ba1\u8fbe\u6210\u65e5\u671f',
@@ -47,6 +48,18 @@ const labels = {
   targetReachedHint: '\u5f53\u524d\u65e5\u5747\u6210\u672c\u5df2\u4f4e\u4e8e\u76ee\u6807\u3002',
   targetNotSet: '\u672a\u8bbe\u7f6e\u76ee\u6807\u65e5\u5747\u6210\u672c',
   targetNotSetHint: '\u7f16\u8f91\u6d88\u8d39\u54c1\u540e\u53ef\u8bbe\u7f6e\u76ee\u6807\u6210\u672c\u3002',
+  targetProgress: '\u76ee\u6807\u8fdb\u5ea6',
+  progressDone: '\u5df2\u5b8c\u6210',
+  renewalAdvice: '\u6362\u65b0\u5efa\u8bae',
+  continueUsing: '\u5efa\u8bae\u7ee7\u7eed\u4f7f\u7528',
+  continueUsingHint:
+    '\u8be5\u6d88\u8d39\u54c1\u8fd8\u672a\u8fbe\u5230\u4f60\u7684\u76ee\u6807\u65e5\u5747\u6210\u672c\u3002\u5982\u679c\u6ca1\u6709\u635f\u574f\u6216\u660e\u663e\u5f71\u54cd\u4f7f\u7528\uff0c\u5efa\u8bae\u7ee7\u7eed\u4f7f\u7528\u3002',
+  renewalReady: '\u5df2\u8fbe\u5230\u6362\u65b0\u95e8\u69db',
+  renewalReadyHint:
+    '\u8be5\u6d88\u8d39\u54c1\u5df2\u7ecf\u8fbe\u5230\u4f60\u7684\u76ee\u6807\u65e5\u5747\u6210\u672c\u3002\u5982\u679c\u6709\u660e\u786e\u9700\u6c42\uff0c\u53ef\u4ee5\u8003\u8651\u6362\u65b0\u3002',
+  renewalNotSet: '\u672a\u8bbe\u7f6e\u6362\u65b0\u76ee\u6807',
+  renewalNotSetHint:
+    '\u8bbe\u7f6e\u76ee\u6807\u65e5\u5747\u6210\u672c\u540e\uff0c\u53ef\u4ee5\u5224\u65ad\u4ec0\u4e48\u65f6\u5019\u66f4\u9002\u5408\u6362\u65b0\u3002',
   backHome: '\u8fd4\u56de\u9996\u9875',
   edit: '\u7f16\u8f91',
   cancel: '\u53d6\u6d88',
@@ -133,7 +146,7 @@ export default function ProductDetailScreen() {
   }, [metrics, product]);
 
   const targetMetrics = useMemo(() => {
-    return product ? getTargetDailyCostMetrics(product) : null;
+    return product ? getTargetProgress(product) : null;
   }, [product]);
 
   async function handleDelete() {
@@ -255,14 +268,14 @@ export default function ProductDetailScreen() {
             </Card.Content>
           </Card>
 
-          <Card mode="contained" style={styles.card}>
-            <Card.Content>
-              <Text variant="titleMedium" style={styles.cardTitle}>
-                {labels.targetTitle}
-              </Text>
+          {targetMetrics ? (
+            <Card mode="contained" style={styles.card}>
+              <Card.Content>
+                <Text variant="titleMedium" style={styles.cardTitle}>
+                  {labels.targetProgress}
+                </Text>
 
-              {targetMetrics ? (
-                targetMetrics.isReached ? (
+                {targetMetrics.isReached ? (
                   <View style={styles.targetReachedBox}>
                     <Text variant="titleMedium" style={styles.targetReachedText}>
                       {labels.targetReached}
@@ -273,14 +286,44 @@ export default function ProductDetailScreen() {
                   </View>
                 ) : (
                   <>
-                    <MetricRow
-                      label={labels.targetTitle}
-                      value={`${formatCurrency(targetMetrics.targetDailyCost)}${labels.perDay}`}
-                    />
-                    <MetricRow
-                      label={labels.targetTotalDays}
-                      value={`${targetMetrics.targetTotalDays} ${labels.days}`}
-                    />
+                    <View style={styles.targetSummary}>
+                      <View style={styles.targetSummaryItem}>
+                        <Text variant="bodySmall" style={styles.metricLabel}>
+                          {labels.current}
+                        </Text>
+                        <Text variant="titleMedium" style={styles.valueNumber}>
+                          {formatCurrency(targetMetrics.currentDailyCost)}
+                          {labels.perDay}
+                        </Text>
+                      </View>
+                      <View style={styles.targetSummaryItem}>
+                        <Text variant="bodySmall" style={styles.metricLabel}>
+                          {labels.targetPrefix}
+                        </Text>
+                        <Text variant="titleMedium" style={styles.valueNumber}>
+                          {formatCurrency(targetMetrics.targetDailyCost)}
+                          {labels.perDay}
+                        </Text>
+                      </View>
+                    </View>
+                    <View style={styles.progressBlock}>
+                      <View style={styles.progressHeader}>
+                        <Text variant="bodyMedium" style={styles.metricLabel}>
+                          {labels.progressDone}
+                        </Text>
+                        <Text variant="bodyMedium" style={styles.progressPercent}>
+                          {targetMetrics.progressPercent}%
+                        </Text>
+                      </View>
+                      <View style={styles.progressTrack}>
+                        <View
+                          style={[
+                            styles.progressFill,
+                            { width: `${targetMetrics.progressPercent}%` }
+                          ]}
+                        />
+                      </View>
+                    </View>
                     <MetricRow
                       label={labels.usedDays}
                       value={`${targetMetrics.usedDays} ${labels.days}`}
@@ -291,17 +334,32 @@ export default function ProductDetailScreen() {
                     />
                     <MetricRow label={labels.targetDate} value={targetMetrics.targetDate} />
                   </>
-                )
-              ) : (
-                <View style={styles.targetEmptyBox}>
-                  <Text variant="titleMedium" style={styles.targetEmptyTitle}>
-                    {labels.targetNotSet}
-                  </Text>
-                  <Text variant="bodyMedium" style={styles.valueHint}>
-                    {labels.targetNotSetHint}
-                  </Text>
-                </View>
-              )}
+                )}
+              </Card.Content>
+            </Card>
+          ) : null}
+
+          <Card mode="contained" style={styles.card}>
+            <Card.Content>
+              <Text variant="titleMedium" style={styles.cardTitle}>
+                {labels.renewalAdvice}
+              </Text>
+              <View style={styles.adviceBox}>
+                <Text variant="titleMedium" style={styles.adviceTitle}>
+                  {targetMetrics
+                    ? targetMetrics.isReached
+                      ? labels.renewalReady
+                      : labels.continueUsing
+                    : labels.renewalNotSet}
+                </Text>
+                <Text variant="bodyMedium" style={styles.valueHint}>
+                  {targetMetrics
+                    ? targetMetrics.isReached
+                      ? labels.renewalReadyHint
+                      : labels.continueUsingHint
+                    : labels.renewalNotSetHint}
+                </Text>
+              </View>
             </Card.Content>
           </Card>
 
@@ -431,6 +489,40 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     marginTop: spacing.md
   },
+  targetSummary: {
+    flexDirection: 'row',
+    gap: spacing.sm
+  },
+  targetSummaryItem: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.md,
+    flex: 1,
+    padding: spacing.md
+  },
+  progressBlock: {
+    marginTop: spacing.md
+  },
+  progressHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: spacing.sm
+  },
+  progressPercent: {
+    color: colors.primary,
+    fontWeight: '800'
+  },
+  progressTrack: {
+    backgroundColor: '#E0E7FF',
+    borderRadius: 999,
+    height: 8,
+    overflow: 'hidden'
+  },
+  progressFill: {
+    backgroundColor: colors.primary,
+    borderRadius: 999,
+    height: 8
+  },
   targetReachedBox: {
     backgroundColor: '#FFFFFF',
     borderRadius: radius.md,
@@ -446,6 +538,15 @@ const styles = StyleSheet.create({
     padding: spacing.md
   },
   targetEmptyTitle: {
+    color: colors.text,
+    fontWeight: '800'
+  },
+  adviceBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: radius.md,
+    padding: spacing.md
+  },
+  adviceTitle: {
     color: colors.text,
     fontWeight: '800'
   },
