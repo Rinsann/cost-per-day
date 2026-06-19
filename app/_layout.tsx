@@ -1,21 +1,21 @@
 import { Stack } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
+import { StatusBar, StyleSheet } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { appInfo } from '@/constants/appInfo';
 import { appTheme } from '@/theme/theme';
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={styles.provider}>
       <PaperProvider theme={appTheme}>
-        <StatusBar style="dark" />
+        <StatusBar backgroundColor={appTheme.colors.background} barStyle="light-content" />
         <Stack
           screenOptions={{
             headerStyle: {
               backgroundColor: appTheme.colors.background
             },
+            headerTintColor: appTheme.colors.onSurface,
             headerShadowVisible: false,
             headerTitleStyle: {
               fontSize: 20,
@@ -27,10 +27,9 @@ export default function RootLayout() {
           }}
         >
           <Stack.Screen
-            name="index"
+            name="(tabs)"
             options={{
-              title: appInfo.name,
-              headerBackVisible: false
+              headerShown: false
             }}
           />
           <Stack.Screen
@@ -75,3 +74,10 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
+
+const styles = StyleSheet.create({
+  provider: {
+    backgroundColor: appTheme.colors.background,
+    flex: 1
+  }
+});

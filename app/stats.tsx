@@ -4,6 +4,7 @@ import { StyleSheet, View } from 'react-native';
 import { Button, Card, List, Text } from 'react-native-paper';
 
 import { Screen } from '@/components/layout/Screen';
+import { AppCard } from '@/components/ui/AppCard';
 import { messages } from '@/constants/messages';
 import { getProducts } from '@/storage/productStorage';
 import { colors } from '@/theme/colors';
@@ -57,7 +58,7 @@ type ProductRankCardProps = {
 
 function ProductRankCard({ title, products, mode }: ProductRankCardProps) {
   return (
-    <Card mode="contained" style={styles.card}>
+    <AppCard style={styles.card}>
       <Card.Content>
         <Text variant="titleMedium" style={styles.sectionTitle}>
           {title}
@@ -66,7 +67,9 @@ function ProductRankCard({ title, products, mode }: ProductRankCardProps) {
           <List.Item
             key={product.id}
             title={product.name}
-            description={`${product.categoryName} · ${labels.used} ${product.usedDays} ${labels.days}`}
+            titleStyle={styles.listTitle}
+            description={`${product.categoryName} / ${labels.used} ${product.usedDays} ${labels.days}`}
+            descriptionStyle={styles.listDescription}
             right={() => (
               <Text style={mode === 'cost' ? styles.costValue : styles.daysValue}>
                 {mode === 'cost'
@@ -77,7 +80,7 @@ function ProductRankCard({ title, products, mode }: ProductRankCardProps) {
           />
         ))}
       </Card.Content>
-    </Card>
+    </AppCard>
   );
 }
 
@@ -87,7 +90,7 @@ type CategoryStatsCardProps = {
 
 function CategoryStatsCard({ categories }: CategoryStatsCardProps) {
   return (
-    <Card mode="contained" style={styles.card}>
+    <AppCard style={styles.card}>
       <Card.Content>
         <Text variant="titleMedium" style={styles.sectionTitle}>
           {labels.categoryStats}
@@ -96,16 +99,18 @@ function CategoryStatsCard({ categories }: CategoryStatsCardProps) {
           <List.Item
             key={category.categoryId}
             title={category.categoryName}
-            description={`${category.productCount} ${labels.countUnit} · ${labels.categoryAmount} ${formatCurrency(
+            titleStyle={styles.listTitle}
+            description={`${category.productCount} ${labels.countUnit} / ${labels.categoryAmount} ${formatCurrency(
               category.totalAmount
             )}`}
+            descriptionStyle={styles.listDescription}
             right={() => (
               <Text style={styles.costValue}>{formatCurrency(category.currentDailyCost)}</Text>
             )}
           />
         ))}
       </Card.Content>
-    </Card>
+    </AppCard>
   );
 }
 
@@ -133,7 +138,7 @@ export default function StatsScreen() {
   if (products.length === 0) {
     return (
       <Screen>
-        <Card mode="contained" style={styles.card}>
+        <AppCard style={styles.card}>
           <Card.Content style={styles.emptyContent}>
             <Text variant="titleLarge" style={styles.emptyTitle}>
               {messages.empty.statsTitle}
@@ -145,14 +150,14 @@ export default function StatsScreen() {
               {labels.add}
             </Button>
           </Card.Content>
-        </Card>
+        </AppCard>
       </Screen>
     );
   }
 
   return (
     <Screen>
-      <Card mode="contained" style={styles.heroCard}>
+      <AppCard style={styles.heroCard}>
         <Card.Content>
           <Text variant="titleMedium" style={styles.heroTitle}>
             {labels.overview}
@@ -176,7 +181,7 @@ export default function StatsScreen() {
             />
           </View>
         </Card.Content>
-      </Card>
+      </AppCard>
 
       <ProductRankCard
         title={labels.highestDailyCost}
@@ -197,16 +202,16 @@ export default function StatsScreen() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: radius.lg,
+    borderRadius: 24,
     marginBottom: spacing.md
   },
   heroCard: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.lg,
+    backgroundColor: colors.cardAlt,
+    borderRadius: 24,
     marginBottom: spacing.md
   },
   heroTitle: {
-    color: '#E0E7FF',
+    color: colors.text,
     fontWeight: '800',
     marginBottom: spacing.md
   },
@@ -214,12 +219,12 @@ const styles = StyleSheet.create({
     gap: spacing.sm
   },
   overviewItem: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: radius.md,
+    backgroundColor: colors.card,
+    borderRadius: radius.lg,
     padding: spacing.md
   },
   overviewValue: {
-    color: colors.text,
+    color: colors.primary,
     fontWeight: '800',
     marginTop: spacing.xs
   },
@@ -229,6 +234,13 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs
   },
   mutedText: {
+    color: colors.textSecondary
+  },
+  listTitle: {
+    color: colors.text,
+    fontWeight: '800'
+  },
+  listDescription: {
     color: colors.textSecondary
   },
   costValue: {

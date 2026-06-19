@@ -12,6 +12,7 @@ import {
 } from 'react-native-paper';
 
 import { Screen } from '@/components/layout/Screen';
+import { AppCard } from '@/components/ui/AppCard';
 import { getCategoryName } from '@/constants/categories';
 import { messages } from '@/constants/messages';
 import { deleteProductById, getProductById } from '@/storage/productStorage';
@@ -193,7 +194,7 @@ export default function ProductDetailScreen() {
       ) : null}
 
       {!loading && !product ? (
-        <Card mode="contained" style={styles.card}>
+        <AppCard style={styles.card}>
           <Card.Content style={styles.emptyContent}>
             <Text variant="titleLarge" style={styles.emptyTitle}>
               {messages.empty.productNotFound}
@@ -202,12 +203,12 @@ export default function ProductDetailScreen() {
               {labels.backHome}
             </Button>
           </Card.Content>
-        </Card>
+        </AppCard>
       ) : null}
 
       {!loading && product && metrics && valueMetrics ? (
         <View style={styles.content}>
-          <Card mode="contained" style={styles.heroCard}>
+          <AppCard style={styles.heroCard}>
             <Card.Content>
               <Text variant="headlineSmall" style={styles.productName}>
                 {product.name}
@@ -216,9 +217,9 @@ export default function ProductDetailScreen() {
                 {getCategoryName(product.categoryId)}
               </Text>
             </Card.Content>
-          </Card>
+          </AppCard>
 
-          <Card mode="contained" style={styles.card}>
+          <AppCard style={styles.card}>
             <Card.Content>
               <MetricRow label={labels.price} value={formatCurrency(product.price)} />
               <MetricRow label={labels.purchaseDate} value={product.purchaseDate} />
@@ -226,9 +227,9 @@ export default function ProductDetailScreen() {
               <MetricRow label={labels.dailyCost} value={formatCurrency(metrics.dailyCost)} />
               <MetricRow label={labels.monthlyCost} value={formatCurrency(metrics.monthlyCost)} />
             </Card.Content>
-          </Card>
+          </AppCard>
 
-          <Card mode="contained" style={styles.card}>
+          <AppCard style={styles.card}>
             <Card.Content>
               <Text variant="titleMedium" style={styles.cardTitle}>
                 {labels.valueAnalysis}
@@ -266,10 +267,10 @@ export default function ProductDetailScreen() {
                 {labels.valueHint}
               </Text>
             </Card.Content>
-          </Card>
+          </AppCard>
 
           {targetMetrics ? (
-            <Card mode="contained" style={styles.card}>
+            <AppCard style={styles.card}>
               <Card.Content>
                 <Text variant="titleMedium" style={styles.cardTitle}>
                   {labels.targetProgress}
@@ -336,10 +337,10 @@ export default function ProductDetailScreen() {
                   </>
                 )}
               </Card.Content>
-            </Card>
+            </AppCard>
           ) : null}
 
-          <Card mode="contained" style={styles.card}>
+          <AppCard style={styles.card}>
             <Card.Content>
               <Text variant="titleMedium" style={styles.cardTitle}>
                 {labels.renewalAdvice}
@@ -361,9 +362,9 @@ export default function ProductDetailScreen() {
                 </Text>
               </View>
             </Card.Content>
-          </Card>
+          </AppCard>
 
-          <Card mode="contained" style={styles.card}>
+          <AppCard style={styles.card}>
             <Card.Content>
               <Text variant="titleMedium" style={styles.cardTitle}>
                 {labels.note}
@@ -372,7 +373,7 @@ export default function ProductDetailScreen() {
                 {product.note ?? labels.noNote}
               </Text>
             </Card.Content>
-          </Card>
+          </AppCard>
         </View>
       ) : null}
 
@@ -436,19 +437,19 @@ const styles = StyleSheet.create({
   },
   heroCard: {
     backgroundColor: colors.primary,
-    borderRadius: radius.lg
+    borderRadius: 24
   },
   productName: {
-    color: '#FFFFFF',
+    color: colors.background,
     fontWeight: '800'
   },
   categoryText: {
-    color: '#E0E7FF',
+    color: 'rgba(8, 8, 15, 0.72)',
     marginTop: spacing.xs
   },
   card: {
     backgroundColor: colors.card,
-    borderRadius: radius.lg
+    borderRadius: 24
   },
   cardTitle: {
     color: colors.text,
@@ -476,8 +477,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm
   },
   valueItem: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: radius.md,
+    backgroundColor: colors.cardAlt,
+    borderRadius: radius.lg,
     padding: spacing.md
   },
   valueNumber: {
@@ -494,8 +495,8 @@ const styles = StyleSheet.create({
     gap: spacing.sm
   },
   targetSummaryItem: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: radius.md,
+    backgroundColor: colors.cardAlt,
+    borderRadius: radius.lg,
     flex: 1,
     padding: spacing.md
   },
@@ -513,7 +514,7 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
   progressTrack: {
-    backgroundColor: '#E0E7FF',
+    backgroundColor: colors.outline,
     borderRadius: 999,
     height: 8,
     overflow: 'hidden'
@@ -524,8 +525,8 @@ const styles = StyleSheet.create({
     height: 8
   },
   targetReachedBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: radius.md,
+    backgroundColor: colors.cardAlt,
+    borderRadius: radius.lg,
     padding: spacing.md
   },
   targetReachedText: {
@@ -533,8 +534,8 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
   targetEmptyBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: radius.md,
+    backgroundColor: colors.cardAlt,
+    borderRadius: radius.lg,
     padding: spacing.md
   },
   targetEmptyTitle: {
@@ -542,8 +543,8 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
   adviceBox: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: radius.md,
+    backgroundColor: colors.cardAlt,
+    borderRadius: radius.lg,
     padding: spacing.md
   },
   adviceTitle: {
@@ -568,7 +569,7 @@ const styles = StyleSheet.create({
   },
   deleteDialog: {
     alignSelf: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.card,
     borderRadius: 24,
     maxWidth: 360,
     width: '86%'

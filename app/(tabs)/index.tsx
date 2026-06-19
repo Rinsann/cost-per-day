@@ -1,9 +1,9 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Button, Card, FAB, IconButton, Menu, Searchbar, Text } from 'react-native-paper';
+import { StyleSheet, View } from 'react-native';
+import { Button, Card, IconButton, Menu, Searchbar, Text } from 'react-native-paper';
 
+import { AppScreen } from '@/components/layout/AppScreen';
 import { messages } from '@/constants/messages';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -25,6 +25,7 @@ type ProductWithMetrics = Product & {
 };
 
 const labels = {
+  title: '\u6210\u672c',
   currentDailyCost: '\u5f53\u524d\u65e5\u5747\u6210\u672c',
   currentDailyCostHint:
     '\u6240\u6709\u6d88\u8d39\u54c1\u65e5\u5747\u6210\u672c\u4e4b\u548c',
@@ -110,7 +111,7 @@ function ProductCard({ product }: ProductCardProps) {
               ? labels.targetReached
               : `${labels.targetPrefix} ${formatCurrency(targetMetrics.targetDailyCost)}${
                   labels.perDay
-                } · ${labels.remainingPrefix} ${targetMetrics.remainingDays} ${labels.days}`}
+                } / ${labels.remainingPrefix} ${targetMetrics.remainingDays} ${labels.days}`}
           </Text>
         ) : null}
       </Card.Content>
@@ -149,7 +150,7 @@ function RecentTargetsCard({ items }: RecentTargetsCardProps) {
                   <>
                     <Text variant="bodySmall" style={styles.productMeta}>
                       {formatCurrency(targetProgress.currentDailyCost)}
-                      {labels.perDay} → {labels.targetPrefix}{' '}
+                      {labels.perDay} {'->'} {labels.targetPrefix}{' '}
                       {formatCurrency(targetProgress.targetDailyCost)}
                       {labels.perDay}
                     </Text>
@@ -258,12 +259,13 @@ export default function HomeScreen() {
   }
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['left', 'right', 'bottom']}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
+    <AppScreen>
+        <View style={styles.header}>
+          <Text variant="headlineSmall" style={styles.title}>
+            {labels.title}
+          </Text>
+        </View>
+
         <Card mode="contained" style={styles.totalCard}>
           <Card.Content>
             <View style={styles.totalHeader}>
@@ -272,16 +274,23 @@ export default function HomeScreen() {
               </Text>
               <View style={styles.headerActions}>
                 <IconButton
+                  icon="plus-circle-outline"
+                  iconColor={colors.primary}
+                  size={18}
+                  onPress={() => router.push('/add')}
+                  style={styles.headerActionButton}
+                />
+                <IconButton
                   icon="chart-box-outline"
-                  iconColor="#FFFFFF"
-                  size={22}
+                  iconColor={colors.textSecondary}
+                  size={18}
                   onPress={() => router.push('/stats')}
                   style={styles.headerActionButton}
                 />
                 <IconButton
                   icon="cog-outline"
-                  iconColor="#FFFFFF"
-                  size={22}
+                  iconColor={colors.textSecondary}
+                  size={18}
                   onPress={() => router.push('/settings')}
                   style={styles.headerActionButton}
                 />
@@ -367,33 +376,24 @@ export default function HomeScreen() {
             </Card>
           ) : null}
         </View>
-      </ScrollView>
-
-      <FAB
-        icon="plus"
-        style={styles.fab}
-        color="#FFFFFF"
-        onPress={() => router.push('/add')}
-      />
-    </SafeAreaView>
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    backgroundColor: colors.background,
-    flex: 1
+  header: {
+    marginBottom: spacing.lg
   },
-  content: {
-    padding: spacing.md,
-    paddingBottom: spacing.xxxl
+  title: {
+    color: colors.text,
+    fontWeight: '900'
   },
   totalCard: {
-    backgroundColor: colors.primary,
-    borderRadius: radius.lg
+    backgroundColor: colors.cardAlt,
+    borderRadius: 24
   },
   totalLabel: {
-    color: '#E0E7FF'
+    color: colors.textSecondary
   },
   totalHeader: {
     alignItems: 'center',
@@ -407,12 +407,12 @@ const styles = StyleSheet.create({
     margin: 0
   },
   totalValue: {
-    color: '#FFFFFF',
+    color: colors.text,
     fontWeight: '800',
     marginTop: spacing.xs
   },
   totalHint: {
-    color: '#EEF2FF',
+    color: colors.textSecondary,
     marginTop: spacing.xs
   },
   recentTargetCard: {
@@ -430,7 +430,7 @@ const styles = StyleSheet.create({
   },
   recentTargetItem: {
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.cardAlt,
     borderRadius: radius.md,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -524,10 +524,4 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     textAlign: 'center'
   },
-  fab: {
-    backgroundColor: colors.primary,
-    bottom: spacing.lg,
-    position: 'absolute',
-    right: spacing.lg
-  }
 });

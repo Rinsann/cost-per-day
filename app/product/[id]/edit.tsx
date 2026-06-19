@@ -5,6 +5,7 @@ import { ActivityIndicator, Button, Card, Text } from 'react-native-paper';
 
 import { Screen } from '@/components/layout/Screen';
 import { ProductForm, ProductFormValues } from '@/components/product/ProductForm';
+import { AppCard } from '@/components/ui/AppCard';
 import { getProductById, updateProduct } from '@/storage/productStorage';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -92,7 +93,7 @@ export default function EditProductScreen() {
       ) : null}
 
       {!loading && !product ? (
-        <Card mode="contained" style={styles.card}>
+        <AppCard style={styles.card}>
           <Card.Content style={styles.emptyContent}>
             <Text variant="titleLarge" style={styles.emptyTitle}>
               {labels.notFound}
@@ -101,7 +102,7 @@ export default function EditProductScreen() {
               {labels.backHome}
             </Button>
           </Card.Content>
-        </Card>
+        </AppCard>
       ) : null}
 
       {!loading && product ? (
@@ -126,7 +127,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: colors.card,
-    borderRadius: radius.lg
+    borderRadius: 24
   },
   emptyContent: {
     alignItems: 'center',

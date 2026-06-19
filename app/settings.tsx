@@ -8,6 +8,7 @@ import { Alert, StyleSheet } from 'react-native';
 import { Card, List, Text } from 'react-native-paper';
 
 import { Screen } from '@/components/layout/Screen';
+import { AppCard } from '@/components/ui/AppCard';
 import { appInfo } from '@/constants/appInfo';
 import { messages } from '@/constants/messages';
 import { getProducts, saveProducts } from '@/storage/productStorage';
@@ -247,17 +248,19 @@ export default function SettingsScreen() {
 
   return (
     <Screen>
-      <Card mode="contained" style={styles.card}>
+      <AppCard style={styles.card}>
         <Card.Content>
           <Text variant="titleMedium" style={styles.sectionTitle}>
             {labels.data}
           </Text>
           <List.Item
             title={labels.productCount}
+            titleStyle={styles.listTitle}
             right={() => <Text style={styles.valueText}>{productCount}</Text>}
           />
           <List.Item
             title={labels.exportData}
+            titleStyle={styles.listTitle}
             right={(props) => (
               <>
                 <Text style={styles.valueText}>{labels.json}</Text>
@@ -268,6 +271,7 @@ export default function SettingsScreen() {
           />
           <List.Item
             title={labels.importData}
+            titleStyle={styles.listTitle}
             right={(props) => (
               <>
                 <Text style={styles.valueText}>{labels.json}</Text>
@@ -277,9 +281,9 @@ export default function SettingsScreen() {
             onPress={handleImportData}
           />
         </Card.Content>
-      </Card>
+      </AppCard>
 
-      <Card mode="contained" style={styles.card}>
+      <AppCard style={styles.card}>
         <Card.Content>
           <Text variant="titleMedium" style={styles.sectionTitle}>
             {labels.reminder}
@@ -287,59 +291,75 @@ export default function SettingsScreen() {
           <List.Item
             title={labels.targetReminder}
             description={labels.targetReminderDescription}
+            titleStyle={styles.listTitle}
+            descriptionStyle={styles.listDescription}
             descriptionNumberOfLines={4}
           />
         </Card.Content>
-      </Card>
+      </AppCard>
 
-      <Card mode="contained" style={styles.card}>
+      <AppCard style={styles.card}>
         <Card.Content>
           <Text variant="titleMedium" style={styles.sectionTitle}>
             {labels.app}
           </Text>
           <List.Item
             title={labels.currentVersion}
+            titleStyle={styles.listTitle}
             right={() => <Text style={styles.valueText}>{appInfo.displayVersion}</Text>}
           />
           <List.Item
             title={labels.buildType}
+            titleStyle={styles.listTitle}
             right={() => <Text style={styles.valueText}>{appInfo.buildType}</Text>}
           />
           <List.Item
             title={labels.techStack}
             description={labels.stack}
+            titleStyle={styles.listTitle}
+            descriptionStyle={styles.listDescription}
             descriptionNumberOfLines={3}
           />
         </Card.Content>
-      </Card>
+      </AppCard>
 
-      <Card mode="contained" style={styles.card}>
+      <AppCard style={styles.card}>
         <Card.Content>
           <Text variant="titleMedium" style={styles.sectionTitle}>
             {labels.about}
           </Text>
           <List.Item
             title={labels.appName}
+            titleStyle={styles.listTitle}
             right={() => <Text style={styles.valueText}>{appInfo.name}</Text>}
           />
-          <List.Item title={labels.description} description={appInfo.description} />
+          <List.Item
+            title={labels.description}
+            description={appInfo.description}
+            titleStyle={styles.listTitle}
+            descriptionStyle={styles.listDescription}
+          />
           <List.Item
             title={labels.versionNumber}
+            titleStyle={styles.listTitle}
             right={() => <Text style={styles.valueText}>{appInfo.displayVersion}</Text>}
           />
           <List.Item
             title={labels.author}
+            titleStyle={styles.listTitle}
             right={() => <Text style={styles.valueText}>{appInfo.author}</Text>}
           />
           <List.Item
             title={labels.github}
             description={appInfo.github}
+            titleStyle={styles.listTitle}
+            descriptionStyle={styles.listDescription}
             descriptionNumberOfLines={2}
             right={(props) => <List.Icon {...props} icon="chevron-right" />}
             onPress={() => Alert.alert(labels.github, appInfo.github)}
           />
         </Card.Content>
-      </Card>
+      </AppCard>
     </Screen>
   );
 }
@@ -347,7 +367,7 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: radius.lg,
+    borderRadius: 24,
     marginBottom: spacing.md
   },
   sectionTitle: {
@@ -359,5 +379,12 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     color: colors.text,
     fontWeight: '700'
+  },
+  listTitle: {
+    color: colors.text,
+    fontWeight: '700'
+  },
+  listDescription: {
+    color: colors.textSecondary
   }
 });

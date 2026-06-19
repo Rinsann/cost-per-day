@@ -1,11 +1,18 @@
 export const colors = {
-  primary: '#4F46E5',
-  background: '#FFFFFF',
-  card: '#F8F9FA',
-  text: '#111827',
-  textSecondary: '#6B7280',
-  outline: '#E5E7EB',
-  success: '#16A34A',
-  warning: '#D97706',
-  danger: '#DC2626'
+  background: '#08080F',
+  surface: '#131321',
+  surfaceElevated: '#17172A',
+  primary: '#3DD9AC',
+  textPrimary: '#FFFFFF',
+  textSecondary: '#A7A4CF',
+  danger: '#FF6B6B',
+  border: 'rgba(255,255,255,0.08)',
+  card: '#131321',
+  cardAlt: '#17172A',
+  text: '#FFFFFF',
+  outline: 'rgba(255,255,255,0.08)',
+  success: '#3DD9AC',
+  warning: '#FBBF24',
+  expense: '#FF6B6B',
+  income: '#3DD9AC'
 } as const;

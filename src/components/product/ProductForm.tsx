@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { Button, Card, HelperText, Menu, Text, TextInput } from 'react-native-paper';
 
+import { AppCard } from '@/components/ui/AppCard';
 import { productCategories } from '@/constants/categories';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -140,7 +141,7 @@ export function ProductForm({
   }
 
   return (
-    <Card mode="contained" style={styles.card}>
+    <AppCard style={styles.card}>
       <Card.Content style={styles.content}>
         <Text variant="titleLarge" style={styles.title}>
           {title}
@@ -154,6 +155,7 @@ export function ProductForm({
             onChangeText={setName}
             error={hasNameError}
             returnKeyType="next"
+            style={styles.input}
           />
           <HelperText type="error" visible={hasNameError}>
             {labels.required}
@@ -170,6 +172,7 @@ export function ProductForm({
                 mode="outlined"
                 value={selectedCategoryName}
                 editable={false}
+                style={styles.input}
                 right={
                   <TextInput.Icon
                     icon="menu-down"
@@ -207,6 +210,7 @@ export function ProductForm({
             onChangeText={setPrice}
             error={hasPriceError}
             keyboardType="decimal-pad"
+            style={styles.input}
             left={<TextInput.Affix text="\uffe5" />}
           />
           <HelperText type="error" visible={hasPriceError}>
@@ -223,6 +227,7 @@ export function ProductForm({
             error={hasDateError}
             keyboardType="numbers-and-punctuation"
             placeholder="YYYY-MM-DD"
+            style={styles.input}
           />
           <HelperText type="error" visible={hasDateError}>
             {labels.invalidDate}
@@ -238,6 +243,7 @@ export function ProductForm({
             error={hasTargetDailyCostError}
             keyboardType="decimal-pad"
             placeholder={labels.targetDailyCostPlaceholder}
+            style={styles.input}
             left={<TextInput.Affix text="\uffe5" />}
           />
           <HelperText type={hasTargetDailyCostError ? 'error' : 'info'} visible>
@@ -254,6 +260,7 @@ export function ProductForm({
           onChangeText={setNote}
           multiline
           numberOfLines={4}
+          style={styles.input}
         />
 
         <Button
@@ -267,14 +274,14 @@ export function ProductForm({
           {submitting ? submittingLabel : submitLabel}
         </Button>
       </Card.Content>
-    </Card>
+    </AppCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: radius.lg
+    borderRadius: 24
   },
   content: {
     gap: spacing.sm
@@ -283,6 +290,9 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: '800',
     marginBottom: spacing.sm
+  },
+  input: {
+    backgroundColor: colors.cardAlt
   },
   categoryPressable: {
     bottom: 0,

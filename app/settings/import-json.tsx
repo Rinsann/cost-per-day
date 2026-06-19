@@ -4,6 +4,7 @@ import { Alert, StyleSheet } from 'react-native';
 import { Button, Card, Text, TextInput } from 'react-native-paper';
 
 import { Screen } from '@/components/layout/Screen';
+import { AppCard } from '@/components/ui/AppCard';
 import { messages } from '@/constants/messages';
 import { saveProducts } from '@/storage/productStorage';
 import { colors } from '@/theme/colors';
@@ -83,7 +84,7 @@ export default function PasteJsonImportScreen() {
 
   return (
     <Screen>
-      <Card mode="contained" style={styles.card}>
+      <AppCard style={styles.card}>
         <Card.Content style={styles.content}>
           <Text variant="titleLarge" style={styles.title}>
             {labels.title}
@@ -98,6 +99,8 @@ export default function PasteJsonImportScreen() {
             placeholder={labels.placeholder}
             multiline
             style={styles.input}
+            textColor={colors.text}
+            placeholderTextColor={colors.textSecondary}
             textAlignVertical="top"
           />
           <Button
@@ -111,7 +114,7 @@ export default function PasteJsonImportScreen() {
             {importing ? labels.importing : labels.validateAndImport}
           </Button>
         </Card.Content>
-      </Card>
+      </AppCard>
     </Screen>
   );
 }
@@ -119,7 +122,7 @@ export default function PasteJsonImportScreen() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.card,
-    borderRadius: radius.lg
+    borderRadius: 24
   },
   content: {
     gap: spacing.md
@@ -133,6 +136,7 @@ const styles = StyleSheet.create({
     lineHeight: 22
   },
   input: {
+    backgroundColor: colors.cardAlt,
     minHeight: 200
   },
   button: {
