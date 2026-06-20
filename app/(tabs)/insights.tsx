@@ -45,7 +45,9 @@ import {
 } from '@/utils/formatDate';
 import { formatMoney } from '@/utils/formatMoney';
 
-type RangeMode = 'month' | 'quarter' | 'year';
+type StandardRangeMode = 'month' | 'quarter' | 'year';
+type RangeMode = StandardRangeMode | 'custom';
+type DateRangeShortcut = 'month' | 'sevenDays' | 'thirtyDays' | 'year';
 type TypeFilter = 'all' | ExpenseRecordType;
 
 type Filters = {
@@ -103,8 +105,11 @@ const labels = {
   clearMockFailed: '\u6e05\u9664 mock \u8d26\u5355\u5931\u8d25\uff0c\u8bf7\u67e5\u770b Metro \u65e5\u5fd7\u3002',
   clearMockSuccess: '\u5df2\u6e05\u9664',
   confirm: '\u786e\u5b9a',
+  customRange: '自定义日期范围',
+  customRangeUnavailable: '暂无账单可筛选',
   devDataTitle: '\u5f00\u53d1\u6d4b\u8bd5\u6570\u636e',
   devDataDescription: '仅开发环境可见，用于测试统计页月 / 季度 / 全年和筛选效果。',
+  endDate: '结束',
   expenseCategory: '\u652f\u51fa\u5206\u7c7b',
   filter: '\u7b5b\u9009',
   filtered: '\u5df2\u7b5b\u9009',
@@ -116,13 +121,25 @@ const labels = {
   noFilteredRecords: '\u5f53\u524d\u6761\u4ef6\u4e0b\u6ca1\u6709\u8bb0\u5f55',
   noExpense: '\u5f53\u524d\u8303\u56f4\u6682\u65e0\u652f\u51fa',
   other: '\u5176\u4ed6',
+  rangeBalance: '范围结余',
+  rangeExpense: '范围支出',
+  rangeIncome: '范围收入',
+  rangeInvalidAfterMax: '结束日期不能晚于今天。',
+  rangeInvalidBeforeMin: '开始日期不能早于最早账单日期。',
+  rangeInvalidFormat: '请使用 YYYY-MM-DD 格式。',
+  rangeInvalidOrder: '开始日期不能晚于结束日期。',
+  rangeInvalidTitle: '日期范围无效',
+  recent7Days: '最近7天',
+  recent30Days: '最近30天',
   reset: '\u91cd\u7f6e',
   selectTime: '\u9009\u62e9\u65f6\u95f4',
   seedMock: '\u6ce8\u5165 mock \u8d26\u5355',
   seedMockConfirmMessage: '\u5c06\u6ce8\u5165\u6d4b\u8bd5\u8d26\u5355\u6570\u636e\uff0c\u4e0d\u4f1a\u5220\u9664\u771f\u5b9e\u8bb0\u5f55\uff0c\u53ea\u4f1a\u66ff\u6362\u65e7 mock \u6570\u636e\u3002',
   seedMockFailed: '\u6ce8\u5165 mock \u8d26\u5355\u5931\u8d25\uff0c\u8bf7\u67e5\u770b Metro \u65e5\u5fd7\u3002',
   seedMockSuccess: '\u5df2\u6ce8\u5165',
+  startDate: '开始',
   type: '\u7c7b\u578b',
+  useCustomRange: '启用自定义范围',
   loadFailedTitle: '\u8bfb\u53d6\u5931\u8d25',
   loadFailedDescription: '\u65e0\u6cd5\u8bfb\u53d6\u672c\u5730\u8bb0\u8d26\u7edf\u8ba1\u3002'
 };
@@ -139,9 +156,83 @@ const DONUT_STROKE = 13;
 const DONUT_SIZE = 116;
 const DONUT_CIRCUMFERENCE = 2 * Math.PI * DONUT_RADIUS;
 const DONUT_COLORS = ['#FFB020', '#FF6B6B', '#7C83FF', '#60A5FA', '#A78BFA', '#64748B'];
+const DAY_IN_MS = 24 * 60 * 60 * 1000;
 
 function getQuarterFromMonth(month: number) {
   return Math.floor((month - 1) / 3) + 1;
+}
+
+function getDateFromString(value: string) {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
+
+  if (!match) {
+    return null;
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const date = new Date(year, month - 1, day);
+
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return date;
+}
+
+function isValidDateText(value: string) {
+  return getDateFromString(value) !== null;
+}
+
+function addDays(date: Date, days: number) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
+}
+
+function getShortDateLabel(dateString: string) {
+  const date = getDateFromString(dateString);
+
+  if (!date) {
+    return dateString;
+  }
+
+  return `${String(date.getMonth() + 1).padStart(2, '0')}/${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function clampDateString(dateString: string, minDate: string, maxDate: string) {
+  if (dateString < minDate) {
+    return minDate;
+  }
+
+  if (dateString > maxDate) {
+    return maxDate;
+  }
+
+  return dateString;
+}
+
+function getDaysBetweenInclusive(startDate: string, endDate: string) {
+  const start = getDateFromString(startDate);
+  const end = getDateFromString(endDate);
+
+  if (!start || !end) {
+    return 0;
+  }
+
+  return Math.floor((end.getTime() - start.getTime()) / DAY_IN_MS) + 1;
+}
+
+function getMinSelectableDate(records: ExpenseRecord[], todayString: string) {
+  const recordDates = records
+    .map((record) => record.date)
+    .filter((date) => isValidDateText(date) && date <= todayString)
+    .sort((a, b) => a.localeCompare(b));
+
+  return recordDates[0] ?? todayString;
 }
 
 function getMinSelectableYear(records: ExpenseRecord[], currentYear: number) {
@@ -198,7 +289,25 @@ function clampTimeSelection({
   };
 }
 
-function getRangeInfo(mode: RangeMode, year: number, month: number, quarter: number): RangeInfo {
+function getRangeInfo(
+  mode: RangeMode,
+  year: number,
+  month: number,
+  quarter: number,
+  customStartDate: string,
+  customEndDate: string
+): RangeInfo {
+  if (mode === 'custom') {
+    return {
+      balanceLabel: labels.rangeBalance,
+      endDate: customEndDate,
+      expenseLabel: labels.rangeExpense,
+      incomeLabel: labels.rangeIncome,
+      startDate: customStartDate,
+      title: `${customStartDate} ~ ${customEndDate}`
+    };
+  }
+
   if (mode === 'month') {
     return {
       balanceLabel: labels.monthBalance,
@@ -291,7 +400,83 @@ function applyFilters(records: ExpenseRecord[], filters: Filters) {
   });
 }
 
-function getBarStats(records: ExpenseRecord[], mode: RangeMode, year: number, month: number, quarter: number) {
+function getCustomBarStats(records: ExpenseRecord[], startDate: string, endDate: string) {
+  const totalDays = getDaysBetweenInclusive(startDate, endDate);
+  const start = getDateFromString(startDate);
+  const end = getDateFromString(endDate);
+
+  if (!start || !end || totalDays <= 0) {
+    return [];
+  }
+
+  if (totalDays <= 31) {
+    return Array.from({ length: totalDays }, (_, index) => {
+      const date = getDateString(addDays(start, index));
+
+      return {
+        ...getSummary(records.filter((record) => record.date === date)),
+        key: date,
+        label: getShortDateLabel(date)
+      };
+    });
+  }
+
+  if (totalDays <= 366) {
+    const startYear = start.getFullYear();
+    const endYear = end.getFullYear();
+    const monthCount =
+      (end.getFullYear() - start.getFullYear()) * 12 +
+      end.getMonth() -
+      start.getMonth() +
+      1;
+
+    return Array.from({ length: monthCount }, (_, index) => {
+      const bucketDate = new Date(start.getFullYear(), start.getMonth() + index, 1);
+      const year = bucketDate.getFullYear();
+      const month = bucketDate.getMonth() + 1;
+      const monthStartDate = getDateString(bucketDate);
+      const monthEndDate = getDateString(new Date(year, month, 0));
+      const bucketStartDate = monthStartDate < startDate ? startDate : monthStartDate;
+      const bucketEndDate = monthEndDate > endDate ? endDate : monthEndDate;
+
+      return {
+        ...getSummary(records.filter((record) => isRecordInDateRange(record, bucketStartDate, bucketEndDate))),
+        key: `${year}-${String(month).padStart(2, '0')}`,
+        label: startYear === endYear ? formatMonthOnlyLabel(month) : `${year}-${String(month).padStart(2, '0')}`
+      };
+    });
+  }
+
+  const yearCount = end.getFullYear() - start.getFullYear() + 1;
+
+  return Array.from({ length: yearCount }, (_, index) => {
+    const year = start.getFullYear() + index;
+    const yearStartDate = `${year}-01-01`;
+    const yearEndDate = `${year}-12-31`;
+    const bucketStartDate = yearStartDate < startDate ? startDate : yearStartDate;
+    const bucketEndDate = yearEndDate > endDate ? endDate : yearEndDate;
+
+    return {
+      ...getSummary(records.filter((record) => isRecordInDateRange(record, bucketStartDate, bucketEndDate))),
+      key: String(year),
+      label: String(year)
+    };
+  });
+}
+
+function getBarStats(
+  records: ExpenseRecord[],
+  mode: RangeMode,
+  year: number,
+  month: number,
+  quarter: number,
+  startDate: string,
+  endDate: string
+) {
+  if (mode === 'custom') {
+    return getCustomBarStats(records, startDate, endDate);
+  }
+
   if (mode === 'month') {
     const lastDay = new Date(year, month, 0).getDate();
     const weekCount = Math.ceil(lastDay / 7);
@@ -383,9 +568,86 @@ function isFilterActive(filters: Filters) {
   return filters.type !== 'all' || filters.category !== 'all' || filters.keyword.trim().length > 0;
 }
 
+function getDefaultCustomRange(startDate: string, endDate: string, minDate: string, maxDate: string) {
+  const nextStartDate = clampDateString(startDate, minDate, maxDate);
+  const nextEndDate = clampDateString(endDate, minDate, maxDate);
+
+  if (nextStartDate > nextEndDate) {
+    return {
+      endDate: nextStartDate,
+      startDate: nextStartDate
+    };
+  }
+
+  return {
+    endDate: nextEndDate,
+    startDate: nextStartDate
+  };
+}
+
+function getShortcutDateRange(
+  shortcut: DateRangeShortcut,
+  minDate: string,
+  maxDate: string,
+  today: Date
+) {
+  const todayString = getDateString(today);
+  let startDate = minDate;
+  let endDate = maxDate;
+
+  if (shortcut === 'sevenDays') {
+    startDate = getDateString(addDays(today, -6));
+    endDate = todayString;
+  }
+
+  if (shortcut === 'thirtyDays') {
+    startDate = getDateString(addDays(today, -29));
+    endDate = todayString;
+  }
+
+  if (shortcut === 'month') {
+    startDate = getDateString(new Date(today.getFullYear(), today.getMonth(), 1));
+    endDate = todayString;
+  }
+
+  if (shortcut === 'year') {
+    startDate = getDateString(new Date(today.getFullYear(), 0, 1));
+    endDate = todayString;
+  }
+
+  const clampedStartDate = clampDateString(startDate, minDate, maxDate);
+  const clampedEndDate = clampDateString(endDate, minDate, maxDate);
+
+  return {
+    endDate: clampedEndDate,
+    startDate: clampedStartDate > clampedEndDate ? clampedEndDate : clampedStartDate
+  };
+}
+
+function getCustomRangeError(startDate: string, endDate: string, minDate: string, maxDate: string) {
+  if (!isValidDateText(startDate) || !isValidDateText(endDate)) {
+    return labels.rangeInvalidFormat;
+  }
+
+  if (startDate < minDate) {
+    return labels.rangeInvalidBeforeMin;
+  }
+
+  if (endDate > maxDate) {
+    return labels.rangeInvalidAfterMax;
+  }
+
+  if (startDate > endDate) {
+    return labels.rangeInvalidOrder;
+  }
+
+  return null;
+}
+
 export default function InsightsTab() {
   const { records, refreshRecords } = useExpenseRecords();
   const today = new Date();
+  const todayString = getDateString(today);
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth() + 1;
   const currentQuarter = getQuarterFromMonth(currentMonth);
@@ -395,12 +657,18 @@ export default function InsightsTab() {
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [selectedQuarter, setSelectedQuarter] = useState(currentQuarter);
+  const [standardRangeMode, setStandardRangeMode] = useState<StandardRangeMode>('month');
+  const [customStartDate, setCustomStartDate] = useState(todayString);
+  const [customEndDate, setCustomEndDate] = useState(todayString);
   const [timeSheetVisible, setTimeSheetVisible] = useState(false);
   const [draftYear, setDraftYear] = useState(selectedYear);
   const [draftMonth, setDraftMonth] = useState(selectedMonth);
   const [draftQuarter, setDraftQuarter] = useState(selectedQuarter);
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
   const [draftFilters, setDraftFilters] = useState<Filters>(DEFAULT_FILTERS);
+  const [draftCustomEndDate, setDraftCustomEndDate] = useState(customEndDate);
+  const [draftCustomStartDate, setDraftCustomStartDate] = useState(customStartDate);
+  const [draftUseCustomRange, setDraftUseCustomRange] = useState(false);
   const [filterSheetVisible, setFilterSheetVisible] = useState(false);
   const [devToolBusy, setDevToolBusy] = useState(false);
   const minSelectableYear = useMemo(
@@ -408,6 +676,13 @@ export default function InsightsTab() {
     [currentYear, records]
   );
   const maxSelectableYear = currentYear;
+  const minSelectableDate = useMemo(
+    () => getMinSelectableDate(records, todayString),
+    [records, todayString]
+  );
+  const hasSelectableDateRecords = records.some(
+    (record) => isValidDateText(record.date) && record.date <= todayString
+  );
 
   const playChartAnimations = useCallback(() => {
     barAnimation.setValue(0);
@@ -439,6 +714,26 @@ export default function InsightsTab() {
   );
 
   useEffect(() => {
+    if (!hasSelectableDateRecords && rangeMode === 'custom') {
+      setRangeMode(standardRangeMode);
+      return;
+    }
+
+    const nextCustomRange = getDefaultCustomRange(
+      customStartDate,
+      customEndDate,
+      minSelectableDate,
+      todayString
+    );
+
+    if (nextCustomRange.startDate !== customStartDate) {
+      setCustomStartDate(nextCustomRange.startDate);
+    }
+
+    if (nextCustomRange.endDate !== customEndDate) {
+      setCustomEndDate(nextCustomRange.endDate);
+    }
+
     const nextSelection = clampTimeSelection({
       currentMonth,
       currentQuarter,
@@ -466,17 +761,23 @@ export default function InsightsTab() {
     currentMonth,
     currentQuarter,
     currentYear,
+    customEndDate,
+    customStartDate,
+    hasSelectableDateRecords,
     maxSelectableYear,
+    minSelectableDate,
     minSelectableYear,
     rangeMode,
     selectedMonth,
     selectedQuarter,
-    selectedYear
+    selectedYear,
+    standardRangeMode,
+    todayString
   ]);
 
   const rangeInfo = useMemo(
-    () => getRangeInfo(rangeMode, selectedYear, selectedMonth, selectedQuarter),
-    [rangeMode, selectedMonth, selectedQuarter, selectedYear]
+    () => getRangeInfo(rangeMode, selectedYear, selectedMonth, selectedQuarter, customStartDate, customEndDate),
+    [customEndDate, customStartDate, rangeMode, selectedMonth, selectedQuarter, selectedYear]
   );
   const rangeRecords = useMemo(
     () => records.filter((record) => isRecordInDateRange(record, rangeInfo.startDate, rangeInfo.endDate)),
@@ -488,8 +789,25 @@ export default function InsightsTab() {
   );
   const summary = useMemo(() => getSummary(filteredRecords), [filteredRecords]);
   const barStats = useMemo(
-    () => getBarStats(filteredRecords, rangeMode, selectedYear, selectedMonth, selectedQuarter),
-    [filteredRecords, rangeMode, selectedMonth, selectedQuarter, selectedYear]
+    () =>
+      getBarStats(
+        filteredRecords,
+        rangeMode,
+        selectedYear,
+        selectedMonth,
+        selectedQuarter,
+        rangeInfo.startDate,
+        rangeInfo.endDate
+      ),
+    [
+      filteredRecords,
+      rangeInfo.endDate,
+      rangeInfo.startDate,
+      rangeMode,
+      selectedMonth,
+      selectedQuarter,
+      selectedYear
+    ]
   );
   const expenseRank = useMemo(
     () => getCategoryRank(filteredRecords, summary.expense),
@@ -506,7 +824,7 @@ export default function InsightsTab() {
   const balance = summary.income - summary.expense;
   const balanceColor = balance >= 0 ? colors.income : colors.expense;
   const hasAnyRecords = records.length > 0;
-  const hasActiveFilters = isFilterActive(filters);
+  const hasActiveFilters = isFilterActive(filters) || rangeMode === 'custom';
   const donutScale = donutAnimation.interpolate({
     inputRange: [0, 1],
     outputRange: [0.86, 1]
@@ -516,7 +834,7 @@ export default function InsightsTab() {
     outputRange: ['-80deg', '0deg']
   });
 
-  function changeRangeMode(mode: RangeMode) {
+  function changeRangeMode(mode: StandardRangeMode) {
     const nextSelection = clampTimeSelection({
       currentMonth,
       currentQuarter,
@@ -530,6 +848,7 @@ export default function InsightsTab() {
     });
 
     setRangeMode(mode);
+    setStandardRangeMode(mode);
     setSelectedYear(nextSelection.year);
     setSelectedMonth(nextSelection.month);
     setSelectedQuarter(nextSelection.quarter);
@@ -611,10 +930,46 @@ export default function InsightsTab() {
 
   function openFilterSheet() {
     setDraftFilters(filters);
+    setDraftUseCustomRange(rangeMode === 'custom');
+
+    const nextCustomRange = getDefaultCustomRange(
+      rangeMode === 'custom' ? customStartDate : rangeInfo.startDate,
+      rangeMode === 'custom' ? customEndDate : rangeInfo.endDate,
+      minSelectableDate,
+      todayString
+    );
+
+    setDraftCustomStartDate(nextCustomRange.startDate);
+    setDraftCustomEndDate(nextCustomRange.endDate);
     setFilterSheetVisible(true);
   }
 
   function confirmFilters() {
+    if (draftUseCustomRange) {
+      if (!hasSelectableDateRecords) {
+        Alert.alert(labels.rangeInvalidTitle, labels.customRangeUnavailable);
+        return;
+      }
+
+      const rangeError = getCustomRangeError(
+        draftCustomStartDate,
+        draftCustomEndDate,
+        minSelectableDate,
+        todayString
+      );
+
+      if (rangeError) {
+        Alert.alert(labels.rangeInvalidTitle, rangeError);
+        return;
+      }
+
+      setCustomStartDate(draftCustomStartDate);
+      setCustomEndDate(draftCustomEndDate);
+      setRangeMode('custom');
+    } else if (rangeMode === 'custom') {
+      setRangeMode(standardRangeMode);
+    }
+
     setFilters({
       ...draftFilters,
       keyword: draftFilters.keyword.trim()
@@ -625,6 +980,25 @@ export default function InsightsTab() {
 
   function resetFilters() {
     setDraftFilters(DEFAULT_FILTERS);
+    setDraftUseCustomRange(false);
+
+    const nextCustomRange = getDefaultCustomRange(
+      rangeInfo.startDate,
+      rangeInfo.endDate,
+      minSelectableDate,
+      todayString
+    );
+
+    setDraftCustomStartDate(nextCustomRange.startDate);
+    setDraftCustomEndDate(nextCustomRange.endDate);
+  }
+
+  function applyDraftShortcut(shortcut: DateRangeShortcut) {
+    const nextRange = getShortcutDateRange(shortcut, minSelectableDate, todayString, today);
+
+    setDraftCustomStartDate(nextRange.startDate);
+    setDraftCustomEndDate(nextRange.endDate);
+    setDraftUseCustomRange(true);
   }
 
   function confirmSeedMockData() {
@@ -676,7 +1050,7 @@ export default function InsightsTab() {
       </Text>
 
       <View style={styles.segment}>
-        {(['month', 'quarter', 'year'] as RangeMode[]).map((mode) => {
+        {(['month', 'quarter', 'year'] as StandardRangeMode[]).map((mode) => {
           const isActive = rangeMode === mode;
 
           return (
@@ -694,7 +1068,7 @@ export default function InsightsTab() {
       </View>
 
       <View style={styles.toolbar}>
-        <Pressable onPress={openTimeSheet} style={styles.rangeButton}>
+        <Pressable onPress={rangeMode === 'custom' ? openFilterSheet : openTimeSheet} style={styles.rangeButton}>
           <MaterialCommunityIcons name="calendar-month-outline" color={colors.primary} size={18} />
           <Text variant="titleSmall" style={styles.rangeButtonText} numberOfLines={1}>
             {rangeInfo.title}
@@ -802,11 +1176,21 @@ export default function InsightsTab() {
         visible={timeSheetVisible}
       />
       <FilterSheet
+        customEndDate={draftCustomEndDate}
+        customRangeAvailable={hasSelectableDateRecords}
+        customStartDate={draftCustomStartDate}
         draftFilters={draftFilters}
+        maxSelectableDate={todayString}
+        minSelectableDate={minSelectableDate}
         onCancel={() => setFilterSheetVisible(false)}
         onConfirm={confirmFilters}
         onReset={resetFilters}
+        onCustomEndDateChange={setDraftCustomEndDate}
+        onCustomStartDateChange={setDraftCustomStartDate}
+        onShortcutPress={applyDraftShortcut}
         onUpdate={setDraftFilters}
+        onUseCustomRangeChange={setDraftUseCustomRange}
+        useCustomRange={draftUseCustomRange}
         visible={filterSheetVisible}
       />
     </Screen>
@@ -1274,18 +1658,38 @@ function TimeRangeSheet({
 }
 
 function FilterSheet({
+  customEndDate,
+  customRangeAvailable,
+  customStartDate,
   draftFilters,
+  maxSelectableDate,
+  minSelectableDate,
   onCancel,
   onConfirm,
+  onCustomEndDateChange,
+  onCustomStartDateChange,
   onReset,
+  onShortcutPress,
   onUpdate,
+  onUseCustomRangeChange,
+  useCustomRange,
   visible
 }: {
+  customEndDate: string;
+  customRangeAvailable: boolean;
+  customStartDate: string;
   draftFilters: Filters;
+  maxSelectableDate: string;
+  minSelectableDate: string;
   onCancel: () => void;
   onConfirm: () => void;
+  onCustomEndDateChange: (date: string) => void;
+  onCustomStartDateChange: (date: string) => void;
   onReset: () => void;
+  onShortcutPress: (shortcut: DateRangeShortcut) => void;
   onUpdate: (filters: Filters) => void;
+  onUseCustomRangeChange: (enabled: boolean) => void;
+  useCustomRange: boolean;
   visible: boolean;
 }) {
   const categoryOptions = getCategoryOptions(draftFilters.type);
@@ -1302,41 +1706,114 @@ function FilterSheet({
           <Text variant="titleMedium" style={styles.sheetTitle}>
             {labels.filter}
           </Text>
-          <Text style={styles.filterLabel}>{labels.type}</Text>
-          <View style={styles.choiceRow}>
-            {(['all', 'expense', 'income'] as TypeFilter[]).map((type) => (
+          <ScrollView
+            contentContainerStyle={styles.sheetBodyContent}
+            showsVerticalScrollIndicator={false}
+            style={styles.sheetBody}
+          >
+            <Text style={styles.filterLabel}>{labels.type}</Text>
+            <View style={styles.choiceRow}>
+              {(['all', 'expense', 'income'] as TypeFilter[]).map((type) => (
+                <ChoiceButton
+                  key={type}
+                  active={draftFilters.type === type}
+                  label={type === 'all' ? labels.all : type === 'expense' ? labels.expense : labels.income}
+                  onPress={() => updateType(type)}
+                />
+              ))}
+            </View>
+            <Text style={styles.filterLabel}>{labels.allCategories}</Text>
+            <View style={styles.optionGrid}>
               <ChoiceButton
-                key={type}
-                active={draftFilters.type === type}
-                label={type === 'all' ? labels.all : type === 'expense' ? labels.expense : labels.income}
-                onPress={() => updateType(type)}
+                active={draftFilters.category === 'all'}
+                label={labels.allCategories}
+                onPress={() => onUpdate({ ...draftFilters, category: 'all' })}
               />
-            ))}
-          </View>
-          <Text style={styles.filterLabel}>{labels.allCategories}</Text>
-          <View style={styles.optionGrid}>
-            <ChoiceButton
-              active={draftFilters.category === 'all'}
-              label={labels.allCategories}
-              onPress={() => onUpdate({ ...draftFilters, category: 'all' })}
+              {categoryOptions.map((category) => (
+                <ChoiceButton
+                  key={category.label}
+                  active={draftFilters.category === category.label}
+                  label={category.label}
+                  onPress={() => onUpdate({ ...draftFilters, category: category.label })}
+                />
+              ))}
+            </View>
+            <Text style={styles.filterLabel}>{labels.keyword}</Text>
+            <TextInput
+              onChangeText={(keyword) => onUpdate({ ...draftFilters, keyword })}
+              placeholder={labels.keywordPlaceholder}
+              placeholderTextColor={colors.textSecondary}
+              style={styles.keywordInput}
+              value={draftFilters.keyword}
             />
-            {categoryOptions.map((category) => (
-              <ChoiceButton
-                key={category.label}
-                active={draftFilters.category === category.label}
-                label={category.label}
-                onPress={() => onUpdate({ ...draftFilters, category: category.label })}
-              />
-            ))}
-          </View>
-          <Text style={styles.filterLabel}>{labels.keyword}</Text>
-          <TextInput
-            onChangeText={(keyword) => onUpdate({ ...draftFilters, keyword })}
-            placeholder={labels.keywordPlaceholder}
-            placeholderTextColor={colors.textSecondary}
-            style={styles.keywordInput}
-            value={draftFilters.keyword}
-          />
+            <Text style={styles.filterLabel}>{labels.customRange}</Text>
+            {!customRangeAvailable ? (
+              <Text style={styles.emptyInlineText}>{labels.customRangeUnavailable}</Text>
+            ) : (
+              <View style={styles.customRangeBox}>
+                <ChoiceButton
+                  active={useCustomRange}
+                  label={labels.useCustomRange}
+                  onPress={() => onUseCustomRangeChange(!useCustomRange)}
+                />
+                <Text style={styles.rangeHint}>
+                  {minSelectableDate} ~ {maxSelectableDate}
+                </Text>
+                <View style={styles.dateInputRow}>
+                  <View style={styles.dateInputWrap}>
+                    <Text style={styles.dateInputLabel}>{labels.startDate}</Text>
+                    <TextInput
+                      keyboardType="numbers-and-punctuation"
+                      onChangeText={(value) => {
+                        onUseCustomRangeChange(true);
+                        onCustomStartDateChange(value);
+                      }}
+                      placeholder="YYYY-MM-DD"
+                      placeholderTextColor={colors.textSecondary}
+                      style={styles.dateInput}
+                      value={customStartDate}
+                    />
+                  </View>
+                  <View style={styles.dateInputWrap}>
+                    <Text style={styles.dateInputLabel}>{labels.endDate}</Text>
+                    <TextInput
+                      keyboardType="numbers-and-punctuation"
+                      onChangeText={(value) => {
+                        onUseCustomRangeChange(true);
+                        onCustomEndDateChange(value);
+                      }}
+                      placeholder="YYYY-MM-DD"
+                      placeholderTextColor={colors.textSecondary}
+                      style={styles.dateInput}
+                      value={customEndDate}
+                    />
+                  </View>
+                </View>
+                <View style={styles.shortcutRow}>
+                  <ChoiceButton
+                    active={false}
+                    label={labels.recent7Days}
+                    onPress={() => onShortcutPress('sevenDays')}
+                  />
+                  <ChoiceButton
+                    active={false}
+                    label={labels.recent30Days}
+                    onPress={() => onShortcutPress('thirtyDays')}
+                  />
+                  <ChoiceButton
+                    active={false}
+                    label={labels.month}
+                    onPress={() => onShortcutPress('month')}
+                  />
+                  <ChoiceButton
+                    active={false}
+                    label={labels.year}
+                    onPress={() => onShortcutPress('year')}
+                  />
+                </View>
+              </View>
+            )}
+          </ScrollView>
           <View style={styles.sheetActions}>
             <Pressable onPress={onReset} style={styles.secondaryAction}>
               <Text style={styles.secondaryActionText}>{labels.reset}</Text>
@@ -1785,6 +2262,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surfaceElevated,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
+    maxHeight: '88%',
     padding: spacing.lg
   },
   sheetHandle: {
@@ -1800,6 +2278,12 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontWeight: '900',
     marginBottom: spacing.md
+  },
+  sheetBody: {
+    flexGrow: 0
+  },
+  sheetBodyContent: {
+    paddingBottom: spacing.xs
   },
   yearControl: {
     alignItems: 'center',
@@ -1872,6 +2356,48 @@ const styles = StyleSheet.create({
     fontSize: 16,
     minHeight: 48,
     paddingHorizontal: spacing.md
+  },
+  customRangeBox: {
+    backgroundColor: colors.card,
+    borderColor: colors.border,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    gap: spacing.sm,
+    padding: spacing.md
+  },
+  rangeHint: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '700'
+  },
+  dateInputRow: {
+    flexDirection: 'row',
+    gap: spacing.sm
+  },
+  dateInputWrap: {
+    flex: 1,
+    gap: spacing.xs
+  },
+  dateInputLabel: {
+    color: colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '800'
+  },
+  dateInput: {
+    backgroundColor: colors.surface,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    color: colors.text,
+    fontSize: 14,
+    fontWeight: '800',
+    minHeight: 42,
+    paddingHorizontal: spacing.sm
+  },
+  shortcutRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm
   },
   sheetActions: {
     flexDirection: 'row',
