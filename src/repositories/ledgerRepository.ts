@@ -27,6 +27,10 @@ export const ledgerRepository = {
     return addExpenseRecord(recordInput);
   },
 
+  async saveAllRecords(records: ExpenseRecord[]) {
+    await saveExpenseRecords(sortRecords(records));
+  },
+
   async updateRecord(id: string, patch: LedgerRecordPatch) {
     const records = await getExpenseRecords();
     let updatedRecord: ExpenseRecord | null = null;

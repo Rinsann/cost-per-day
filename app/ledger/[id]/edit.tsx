@@ -12,6 +12,7 @@ import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { ExpenseRecord, ExpenseRecordType } from '@/types/expense';
+import { isFutureDateString } from '@/utils/formatDate';
 
 const labels = {
   title: '编辑记账',
@@ -27,6 +28,7 @@ const labels = {
   backToLedger: '返回记账',
   invalidTitle: '内容无效',
   invalidDescription: '请确认金额大于 0，日期格式为 YYYY-MM-DD。',
+  futureDateDescription: '记账日期不能晚于今天。',
   saveFailedTitle: '保存失败',
   saveFailedDescription: '请稍后再试。'
 };
@@ -92,7 +94,9 @@ export default function EditLedgerRecordScreen() {
 
   const categories = recordType === 'expense' ? expenseCategories : incomeCategories;
   const isAmountValid = isValidAmountText(amountText);
-  const isDateValid = isValidDateString(date);
+  const isDateFormatValid = isValidDateString(date);
+  const isDateFuture = isFutureDateString(date);
+  const isDateValid = isDateFormatValid && !isDateFuture;
 
   useFocusEffect(
     useCallback(() => {
@@ -145,8 +149,13 @@ export default function EditLedgerRecordScreen() {
   }
 
   async function handleSave() {
-    if (!recordId || !isAmountValid || !isDateValid) {
+    if (!recordId || !isAmountValid || !isDateFormatValid) {
       Alert.alert(labels.invalidTitle, labels.invalidDescription);
+      return;
+    }
+
+    if (isDateFuture) {
+      Alert.alert(labels.invalidTitle, labels.futureDateDescription);
       return;
     }
 
@@ -250,7 +259,7 @@ export default function EditLedgerRecordScreen() {
               onChangeText={(value) => setAmountText(normalizeAmountInput(value))}
               keyboardType="decimal-pad"
               error={amountText.length > 0 && !isAmountValid}
-              left={<TextInput.Affix text="￥" />}
+              left={<TextInput.Affix text="¥" />}
               style={styles.input}
             />
 

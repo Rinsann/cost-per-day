@@ -11,7 +11,15 @@ import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { ExpenseRecord } from '@/types/expense';
-import { formatCurrency } from '@/utils/cost';
+import {
+  getMonthString,
+  getRecordType,
+  groupExpenseRecordsByDate,
+  isRecordInDateRange,
+  getDateString,
+  sortExpenseRecords
+} from '@/utils/expenseRecords';
+import { formatMoney } from '@/utils/formatMoney';
 
 const labels = {
   title: '\u8bb0\u8d26\u672c',
@@ -23,30 +31,12 @@ const labels = {
   today: '\u4eca\u5929',
   yesterday: '\u6628\u5929',
   recentRecords: '\u6700\u8fd1\u8d26\u5355',
+  viewAllRecords: '\u67e5\u770b\u5168\u90e8\u8d26\u5355',
   emptyTitle: '\u8fd8\u6ca1\u6709\u8bb0\u5f55',
   emptyDescription: '\u70b9\u51fb\u5e95\u90e8\u4e2d\u95f4\u7684 + \u5feb\u901f\u8bb0\u4e00\u7b14\u3002',
   loadFailedTitle: '\u8bfb\u53d6\u5931\u8d25',
   loadFailedDescription: '\u65e0\u6cd5\u8bfb\u53d6\u672c\u5730\u8bb0\u8d26\u8bb0\u5f55\u3002'
 };
-
-function getDateString(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
-
-function getMonthString(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-
-  return `${year}-${month}`;
-}
-
-function getRecordType(record: ExpenseRecord) {
-  return record.type === 'income' ? 'income' : 'expense';
-}
 
 function getRecordIcon(record: ExpenseRecord) {
   if (getRecordType(record) === 'income') {
@@ -56,50 +46,11 @@ function getRecordIcon(record: ExpenseRecord) {
   return getExpenseCategoryIcon(record.category, 'expense');
 }
 
-function getDateLabel(date: string, today: string, yesterday: string) {
-  if (date === today) {
-    return labels.today;
-  }
-
-  if (date === yesterday) {
-    return labels.yesterday;
-  }
-
-  return date;
-}
-
-function getDailySummary(records: ExpenseRecord[]) {
-  return records.reduce(
-    (summary, record) => {
-      if (getRecordType(record) === 'income') {
-        summary.income += record.amount;
-      } else {
-        summary.expense += record.amount;
-      }
-
-      return summary;
-    },
-    { expense: 0, income: 0 }
-  );
-}
-
-function formatCompactAmount(value: number) {
-  return value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-}
-
-function formatBalanceCurrency(value: number) {
-  if (value < 0) {
-    return `-${formatCurrency(Math.abs(value))}`;
-  }
-
-  return formatCurrency(value);
-}
-
 export default function LedgerTab() {
   const { records, refreshRecords } = useExpenseRecords();
   const now = new Date();
   const today = getDateString(now);
-  const yesterday = getDateString(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1));
+  const sevenDaysAgo = getDateString(new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6));
   const currentMonth = getMonthString(now);
 
   useFocusEffect(
@@ -128,28 +79,14 @@ export default function LedgerTab() {
   }, [currentMonth, records]);
 
   const recentRecords = useMemo(() => {
-    return [...records]
-      .sort((a, b) => b.date.localeCompare(a.date) || b.createdAt.localeCompare(a.createdAt))
-      .slice(0, 12);
-  }, [records]);
+    return sortExpenseRecords(
+      records.filter((record) => isRecordInDateRange(record, sevenDaysAgo, today))
+    );
+  }, [records, sevenDaysAgo, today]);
 
   const recordGroups = useMemo(() => {
-    const groupedRecords = new Map<string, ExpenseRecord[]>();
-
-    recentRecords.forEach((record) => {
-      const groupRecords = groupedRecords.get(record.date) ?? [];
-
-      groupRecords.push(record);
-      groupedRecords.set(record.date, groupRecords);
-    });
-
-    return Array.from(groupedRecords.entries()).map(([date, groupRecords]) => ({
-      date,
-      label: getDateLabel(date, today, yesterday),
-      records: groupRecords,
-      summary: getDailySummary(groupRecords)
-    }));
-  }, [recentRecords, today, yesterday]);
+    return groupExpenseRecordsByDate(recentRecords, now);
+  }, [now, recentRecords]);
 
   const monthBalance = monthSummary.income - monthSummary.expense;
   const monthBalanceColor = monthBalance >= 0 ? colors.income : colors.expense;
@@ -168,7 +105,7 @@ export default function LedgerTab() {
             {labels.monthExpense}
           </Text>
           <Text variant="displaySmall" style={styles.monthExpenseValue}>
-            {formatCurrency(monthSummary.expense)}
+            {formatMoney(monthSummary.expense)}
           </Text>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
@@ -180,7 +117,7 @@ export default function LedgerTab() {
                   {labels.monthIncome}
                 </Text>
                 <Text variant="titleSmall" style={styles.incomeValue}>
-                  {formatCurrency(monthSummary.income)}
+                  {formatMoney(monthSummary.income)}
                 </Text>
               </View>
             </View>
@@ -198,7 +135,7 @@ export default function LedgerTab() {
                   {labels.monthBalance}
                 </Text>
                 <Text variant="titleSmall" style={[styles.balanceSummaryValue, { color: monthBalanceColor }]}>
-                  {formatBalanceCurrency(monthBalance)}
+                  {formatMoney(monthBalance, { sign: monthBalance < 0 ? 'auto' : 'none' })}
                 </Text>
               </View>
             </View>
@@ -234,12 +171,12 @@ export default function LedgerTab() {
                 <View style={styles.groupSummary}>
                   {group.summary.expense > 0 ? (
                     <Text variant="bodySmall" style={[styles.groupSummaryText, styles.groupExpense]}>
-                      {labels.dailyExpense}:{formatCompactAmount(group.summary.expense)}
+                      {labels.dailyExpense}:{formatMoney(group.summary.expense, { symbol: false })}
                     </Text>
                   ) : null}
                   {group.summary.income > 0 ? (
                     <Text variant="bodySmall" style={[styles.groupSummaryText, styles.groupIncome]}>
-                      {labels.dailyIncome}:{formatCompactAmount(group.summary.income)}
+                      {labels.dailyIncome}:{formatMoney(group.summary.income, { symbol: false })}
                     </Text>
                   ) : null}
                 </View>
@@ -276,8 +213,7 @@ export default function LedgerTab() {
                         </Text>
                       </View>
                       <Text variant="titleSmall" style={[styles.recordAmount, { color: amountColor }]}>
-                        {isIncome ? '+' : '-'}
-                        {formatCurrency(record.amount)}
+                        {formatMoney(record.amount, { sign: isIncome ? 'income' : 'expense' })}
                       </Text>
                     </Pressable>
                   );
@@ -287,6 +223,16 @@ export default function LedgerTab() {
           ))}
         </View>
       )}
+
+      <Pressable
+        onPress={() => router.push('/insights')}
+        style={({ pressed }) => [styles.viewAllButton, pressed && styles.viewAllButtonPressed]}
+      >
+        <Text variant="titleSmall" style={styles.viewAllText}>
+          {labels.viewAllRecords}
+        </Text>
+        <MaterialCommunityIcons name="chevron-right" color={colors.primary} size={20} />
+      </Pressable>
     </Screen>
   );
 }
@@ -447,5 +393,21 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     minWidth: 96,
     textAlign: 'right'
+  },
+  viewAllButton: {
+    alignItems: 'center',
+    alignSelf: 'center',
+    flexDirection: 'row',
+    gap: spacing.xs,
+    marginTop: spacing.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm
+  },
+  viewAllButtonPressed: {
+    opacity: 0.72
+  },
+  viewAllText: {
+    color: colors.primary,
+    fontWeight: '900'
   }
 });

@@ -75,3 +75,10 @@ UI 设计参考：
 - 所有 Expo Router Stack 二级页面必须保持深色 contentStyle，避免安卓返回闪白。
 - 记账、统计、成本、我的四个模块的二级页面也必须保持同一套 UI 语言。
 - 成本模块原有 Cost Per Day 功能必须保留，不要用预算追踪页面替换。
+
+## Dev Mock Data Rules
+
+- mock 测试数据只能用于开发环境。
+- mock 记账数据 id 必须以 `mock-ledger-` 开头。
+- 清除 mock 数据时只能删除 `mock-ledger-` 前缀记录，不能删除真实用户数据。
+- 不允许把 mock 数据作为生产默认数据。

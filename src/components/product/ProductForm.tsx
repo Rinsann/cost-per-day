@@ -9,6 +9,7 @@ import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { Product, ProductCategoryId } from '@/types/product';
 import { getTodayDateString } from '@/utils/date';
+import { isFutureDateString } from '@/utils/formatDate';
 
 export type ProductFormValues = {
   name: string;
@@ -31,7 +32,7 @@ const labels = {
   name: '\u5546\u54c1\u540d\u79f0',
   category: '\u5206\u7c7b',
   price: '\u8d2d\u4e70\u4ef7\u683c',
-  purchaseDate: '\u8d2d\u4e70\u65e5\u671f',
+  purchaseDate: '购买日期',
   targetDailyCost: '\u76ee\u6807\u65e5\u5747\u6210\u672c',
   targetDailyCostPlaceholder: '\u4f8b\u5982 2',
   targetDailyCostHint:
@@ -40,7 +41,8 @@ const labels = {
   required: '\u8be5\u9879\u5fc5\u586b',
   invalidPrice: '\u8bf7\u8f93\u5165\u6709\u6548\u7684\u8d2d\u4e70\u4ef7\u683c',
   invalidTargetDailyCost: '\u8bf7\u8f93\u5165\u5927\u4e8e 0 \u7684\u6570\u5b57',
-  invalidDate: '\u8bf7\u4f7f\u7528 YYYY-MM-DD \u683c\u5f0f'
+  invalidDate: '\u8bf7\u4f7f\u7528 YYYY-MM-DD \u683c\u5f0f',
+  futurePurchaseDate: '购买日期不能晚于今天。'
 };
 
 function isValidDateString(value: string) {
@@ -108,7 +110,9 @@ export function ProductForm({
     submitted &&
     hasTargetDailyCostValue &&
     (Number.isNaN(normalizedTargetDailyCost) || normalizedTargetDailyCost <= 0);
-  const hasDateError = submitted && !isValidDateString(purchaseDate);
+  const hasPurchaseDateFormatError = submitted && !isValidDateString(purchaseDate);
+  const hasFuturePurchaseDateError = submitted && isFutureDateString(purchaseDate);
+  const hasDateError = hasPurchaseDateFormatError || hasFuturePurchaseDateError;
 
   async function handleSubmit() {
     setSubmitted(true);
@@ -119,7 +123,8 @@ export function ProductForm({
       normalizedPrice <= 0 ||
       (hasTargetDailyCostValue &&
         (Number.isNaN(normalizedTargetDailyCost) || normalizedTargetDailyCost <= 0)) ||
-      !isValidDateString(purchaseDate)
+      !isValidDateString(purchaseDate) ||
+      isFutureDateString(purchaseDate)
     ) {
       return;
     }
@@ -211,7 +216,7 @@ export function ProductForm({
             error={hasPriceError}
             keyboardType="decimal-pad"
             style={styles.input}
-            left={<TextInput.Affix text="\uffe5" />}
+            left={<TextInput.Affix text="¥" />}
           />
           <HelperText type="error" visible={hasPriceError}>
             {labels.invalidPrice}
@@ -230,7 +235,7 @@ export function ProductForm({
             style={styles.input}
           />
           <HelperText type="error" visible={hasDateError}>
-            {labels.invalidDate}
+            {hasFuturePurchaseDateError ? labels.futurePurchaseDate : labels.invalidDate}
           </HelperText>
         </View>
 
@@ -244,7 +249,7 @@ export function ProductForm({
             keyboardType="decimal-pad"
             placeholder={labels.targetDailyCostPlaceholder}
             style={styles.input}
-            left={<TextInput.Affix text="\uffe5" />}
+            left={<TextInput.Affix text="¥" />}
           />
           <HelperText type={hasTargetDailyCostError ? 'error' : 'info'} visible>
             {hasTargetDailyCostError

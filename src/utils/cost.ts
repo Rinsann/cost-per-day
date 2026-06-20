@@ -1,6 +1,7 @@
 import { Product, ProductMetrics, StatsSummary } from '@/types/product';
 
 import { getUsedDays } from './date';
+import { formatMoney } from './formatMoney';
 import { getValueSummary } from './valueAnalysis';
 
 export function roundMoney(value: number) {
@@ -8,7 +9,7 @@ export function roundMoney(value: number) {
 }
 
 export function formatCurrency(value: number) {
-  return `\uFFE5${roundMoney(value).toFixed(2)}`;
+  return formatMoney(roundMoney(value));
 }
 
 export function getDailyCost(price: number, usedDays: number) {

@@ -54,7 +54,7 @@ function getAmountValue(amountText: string) {
 }
 
 function getAmountLabel(amountText: string) {
-  return amountText ? `\uFFE5${amountText}` : '\uFFE50';
+  return amountText ? `¥${amountText}` : '¥0';
 }
 
 function isValidAmountText(amountText: string) {
