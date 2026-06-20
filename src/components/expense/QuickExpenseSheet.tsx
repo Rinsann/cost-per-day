@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppDateField } from '@/components/ui/AppDateField';
 import { expenseCategories, incomeCategories } from '@/constants/expenseCategories';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { useExpenseRecords } from '@/context/ExpenseRecordsContext';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -88,6 +89,7 @@ function getNextAmountText(currentValue: string, key: string) {
 
 export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) {
   const insets = useSafeAreaInsets();
+  const { colors: themeColors, resolvedTheme } = useAppTheme();
   const { addRecord } = useExpenseRecords();
   const amountScale = useRef(new Animated.Value(1)).current;
   const hasMountedAmount = useRef(false);
@@ -101,7 +103,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   const categories = recordType === 'expense' ? expenseCategories : incomeCategories;
   const amount = getAmountValue(amountText);
   const isAmountValid = isValidAmountText(amountText) && amount > 0;
-  const saveColor = recordType === 'expense' ? colors.expense : colors.primary;
+  const saveColor = recordType === 'expense' ? themeColors.expense : themeColors.primary;
   const todayString = getDateString(new Date());
 
   const amountLabel = useMemo(() => {
@@ -193,28 +195,28 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={styles.modalRoot}>
-        <Pressable style={styles.backdrop} onPress={onClose} />
-        <View style={styles.sheet}>
-          <View style={styles.handle} />
+        <Pressable style={[styles.backdrop, { backgroundColor: themeColors.overlay }]} onPress={onClose} />
+        <View style={[styles.sheet, { backgroundColor: themeColors.card }]}>
+          <View style={[styles.handle, { backgroundColor: themeColors.textSecondary }]} />
           <ScrollView
             contentContainerStyle={styles.sheetContent}
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             style={styles.sheetBody}
           >
-            <View style={styles.segment}>
+            <View style={[styles.segment, { backgroundColor: themeColors.chipBackground }]}>
               <Pressable
                 onPress={() => selectRecordType('expense')}
                 style={[
                   styles.segmentButton,
-                  recordType === 'expense' && styles.expenseSegmentButton
+                  recordType === 'expense' && { backgroundColor: themeColors.expense }
                 ]}
               >
                 <Text
                   variant="titleSmall"
                   style={[
                     styles.segmentText,
-                    recordType === 'expense' && styles.activeSegmentText
+                    { color: recordType === 'expense' ? themeColors.text : themeColors.textSecondary }
                   ]}
                 >
                   {labels.expense}
@@ -224,14 +226,14 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                 onPress={() => selectRecordType('income')}
                 style={[
                   styles.segmentButton,
-                  recordType === 'income' && styles.incomeSegmentButton
+                  recordType === 'income' && { backgroundColor: themeColors.primary }
                 ]}
               >
                 <Text
                   variant="titleSmall"
                   style={[
                     styles.segmentText,
-                    recordType === 'income' && styles.activeSegmentText
+                    { color: recordType === 'income' ? themeColors.background : themeColors.textSecondary }
                   ]}
                 >
                   {labels.income}
@@ -240,7 +242,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
             </View>
 
             <Animated.View style={{ transform: [{ scale: amountScale }] }}>
-              <Text variant="displaySmall" style={styles.amountText}>
+              <Text variant="displaySmall" style={[styles.amountText, { color: themeColors.text }]}>
                 {amountLabel}
               </Text>
             </Animated.View>
@@ -253,16 +255,22 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                   <Pressable
                     key={item.label}
                     onPress={() => setCategory(item.label)}
-                    style={[styles.categoryItem, isSelected && styles.selectedCategoryItem]}
+                    style={[
+                      styles.categoryItem,
+                      { backgroundColor: isSelected ? themeColors.primary : themeColors.chipBackground }
+                    ]}
                   >
                     <MaterialCommunityIcons
                       name={item.icon}
                       size={24}
-                      color={isSelected ? colors.background : colors.textSecondary}
+                      color={isSelected ? themeColors.background : themeColors.textSecondary}
                     />
                     <Text
                       variant="labelMedium"
-                      style={[styles.categoryText, isSelected && styles.selectedCategoryText]}
+                      style={[
+                        styles.categoryText,
+                        { color: isSelected ? themeColors.background : themeColors.textSecondary }
+                      ]}
                     >
                       {item.label}
                     </Text>
@@ -288,9 +296,9 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
               mode="flat"
               underlineColor="transparent"
               activeUnderlineColor="transparent"
-              textColor={colors.text}
-              placeholderTextColor={colors.textSecondary}
-              style={styles.noteInput}
+              textColor={themeColors.text}
+              placeholderTextColor={themeColors.textSecondary}
+              style={[styles.noteInput, { backgroundColor: themeColors.inputBackground }]}
             />
 
             <View style={styles.keypad}>
@@ -298,12 +306,18 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                 <Pressable
                   key={item}
                   onPress={() => handleKeyPress(item)}
-                  android_ripple={{
-                    borderless: false,
-                    color: 'rgba(255, 255, 255, 0.08)'
-                  }}
+                  android_ripple={
+                    resolvedTheme === 'dark'
+                      ? {
+                          borderless: false,
+                          color: themeColors.ripple,
+                          radius: 18
+                        }
+                      : undefined
+                  }
                   style={({ pressed }) => [
                     styles.keypadButton,
+                    { backgroundColor: pressed ? themeColors.surfacePressed : themeColors.inputBackground },
                     pressed && styles.keypadButtonPressed
                   ]}
                 >
@@ -311,10 +325,10 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                     <MaterialCommunityIcons
                       name="backspace-outline"
                       size={22}
-                      color={colors.textSecondary}
+                      color={themeColors.textSecondary}
                     />
                   ) : (
-                    <Text variant="titleMedium" style={styles.keypadText}>
+                    <Text variant="titleMedium" style={[styles.keypadText, { color: themeColors.text }]}>
                       {item}
                     </Text>
                   )}
@@ -323,18 +337,26 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
             </View>
 
           </ScrollView>
-          <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, spacing.sm) }]}>
+          <View
+            style={[
+              styles.footer,
+              {
+                backgroundColor: themeColors.card,
+                paddingBottom: Math.max(insets.bottom, spacing.sm)
+              }
+            ]}
+          >
             <Button
               mode="contained"
               loading={saving}
               disabled={saving || !isAmountValid}
-              buttonColor={isAmountValid ? saveColor : colors.surfaceElevated}
+              buttonColor={isAmountValid ? saveColor : themeColors.surfacePressed}
               textColor={
                 isAmountValid
                   ? recordType === 'expense'
-                    ? colors.text
-                    : colors.background
-                  : colors.textSecondary
+                    ? themeColors.text
+                    : themeColors.background
+                  : themeColors.textSecondary
               }
               onPress={handleSave}
               style={[styles.saveButton, !isAmountValid && styles.disabledSaveButton]}
@@ -355,7 +377,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end'
   },
   backdrop: {
-    backgroundColor: 'rgba(0, 0, 0, 0.58)',
     bottom: 0,
     left: 0,
     position: 'absolute',
@@ -363,7 +384,6 @@ const styles = StyleSheet.create({
     top: 0
   },
   sheet: {
-    backgroundColor: colors.card,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     maxHeight: '90%',
@@ -385,7 +405,6 @@ const styles = StyleSheet.create({
     width: 48
   },
   segment: {
-    backgroundColor: colors.cardAlt,
     borderRadius: radius.full,
     flexDirection: 'row',
     padding: spacing.xs
@@ -422,7 +441,6 @@ const styles = StyleSheet.create({
   },
   categoryItem: {
     alignItems: 'center',
-    backgroundColor: colors.cardAlt,
     borderRadius: radius.lg,
     minHeight: 58,
     paddingVertical: 6,
@@ -440,9 +458,7 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
   noteInput: {
-    backgroundColor: colors.cardAlt,
     borderRadius: radius.lg,
-    color: colors.text,
     height: 48,
     marginTop: spacing.sm,
     overflow: 'hidden'
@@ -458,7 +474,6 @@ const styles = StyleSheet.create({
   },
   keypadButton: {
     alignItems: 'center',
-    backgroundColor: colors.cardAlt,
     borderRadius: radius.lg,
     height: 44,
     justifyContent: 'center',
@@ -466,7 +481,6 @@ const styles = StyleSheet.create({
     width: '31.7%'
   },
   keypadButtonPressed: {
-    backgroundColor: '#24243A',
     transform: [{ scale: 0.96 }]
   },
   keypadText: {
@@ -483,7 +497,6 @@ const styles = StyleSheet.create({
     minHeight: 52
   },
   footer: {
-    backgroundColor: colors.card,
     paddingTop: spacing.sm
   }
 });

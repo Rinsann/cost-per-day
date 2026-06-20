@@ -24,6 +24,7 @@ import {
   incomeCategories
 } from '@/constants/expenseCategories';
 import { useExpenseRecords } from '@/context/ExpenseRecordsContext';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { clearLedgerMockData, seedLedgerMockData } from '@/dev/seedLedgerMockData';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -647,6 +648,7 @@ function getCustomRangeError(startDate: string, endDate: string, minDate: string
 
 export default function InsightsTab() {
   const { records, refreshRecords } = useExpenseRecords();
+  const { colors: themeColors } = useAppTheme();
   const today = new Date();
   const todayString = getDateString(today);
   const currentYear = today.getFullYear();
@@ -823,7 +825,7 @@ export default function InsightsTab() {
     0
   );
   const balance = summary.income - summary.expense;
-  const balanceColor = balance >= 0 ? colors.income : colors.expense;
+  const balanceColor = balance >= 0 ? themeColors.income : themeColors.expense;
   const hasAnyRecords = records.length > 0;
   const hasActiveFilters = isFilterActive(filters) || rangeMode === 'custom';
   const donutScale = donutAnimation.interpolate({
@@ -1066,11 +1068,11 @@ export default function InsightsTab() {
 
   return (
     <Screen bottomPadding={24}>
-      <Text variant="headlineSmall" style={styles.title}>
+      <Text variant="headlineSmall" style={[styles.title, { color: themeColors.text }]}>
         {labels.title}
       </Text>
 
-      <View style={styles.segment}>
+      <View style={[styles.segment, { backgroundColor: themeColors.card }]}>
         {(['month', 'quarter', 'year'] as StandardRangeMode[]).map((mode) => {
           const isActive = rangeMode === mode;
 
@@ -1078,9 +1080,19 @@ export default function InsightsTab() {
             <Pressable
               key={mode}
               onPress={() => changeRangeMode(mode)}
-              style={[styles.segmentItem, isActive && styles.activeSegment]}
+              style={[
+                styles.segmentItem,
+                isActive && styles.activeSegment,
+                isActive && { backgroundColor: themeColors.primary }
+              ]}
             >
-              <Text variant="titleSmall" style={isActive ? styles.activeSegmentText : styles.segmentText}>
+              <Text
+                variant="titleSmall"
+                style={[
+                  isActive ? styles.activeSegmentText : styles.segmentText,
+                  { color: isActive ? themeColors.background : themeColors.textSecondary }
+                ]}
+              >
                 {labels[mode]}
               </Text>
             </Pressable>
@@ -1089,23 +1101,44 @@ export default function InsightsTab() {
       </View>
 
       <View style={styles.toolbar}>
-        <Pressable onPress={rangeMode === 'custom' ? openFilterSheet : openTimeSheet} style={styles.rangeButton}>
-          <MaterialCommunityIcons name="calendar-month-outline" color={colors.primary} size={18} />
-          <Text variant="titleSmall" style={styles.rangeButtonText} numberOfLines={1}>
+        <Pressable
+          onPress={rangeMode === 'custom' ? openFilterSheet : openTimeSheet}
+          style={[
+            styles.rangeButton,
+            { backgroundColor: themeColors.card, borderColor: themeColors.border }
+          ]}
+        >
+          <MaterialCommunityIcons name="calendar-month-outline" color={themeColors.primary} size={18} />
+          <Text
+            variant="titleSmall"
+            style={[styles.rangeButtonText, { color: themeColors.text }]}
+            numberOfLines={1}
+          >
             {rangeInfo.title}
           </Text>
-          <MaterialCommunityIcons name="chevron-down" color={colors.textSecondary} size={18} />
+          <MaterialCommunityIcons name="chevron-down" color={themeColors.textSecondary} size={18} />
         </Pressable>
         <Pressable
           onPress={openFilterSheet}
-          style={[styles.filterButton, hasActiveFilters && styles.filterButtonActive]}
+          style={[
+            styles.filterButton,
+            {
+              backgroundColor: hasActiveFilters ? themeColors.primary : themeColors.card,
+              borderColor: hasActiveFilters ? themeColors.primary : themeColors.border
+            }
+          ]}
         >
           <MaterialCommunityIcons
             name="filter-variant"
-            color={hasActiveFilters ? colors.background : colors.primary}
+            color={hasActiveFilters ? themeColors.background : themeColors.primary}
             size={18}
           />
-          <Text style={[styles.filterButtonText, hasActiveFilters && styles.filterButtonTextActive]}>
+          <Text
+            style={[
+              styles.filterButtonText,
+              { color: hasActiveFilters ? themeColors.background : themeColors.primary }
+            ]}
+          >
             {hasActiveFilters ? labels.filtered : labels.filter}
           </Text>
         </Pressable>
@@ -1114,11 +1147,11 @@ export default function InsightsTab() {
       {!hasAnyRecords ? (
         <AppCard elevated style={styles.emptyCard}>
           <View style={styles.emptyContent}>
-            <MaterialCommunityIcons name="chart-box-outline" color={colors.textSecondary} size={36} />
-            <Text variant="titleMedium" style={styles.emptyTitle}>
+            <MaterialCommunityIcons name="chart-box-outline" color={themeColors.textSecondary} size={36} />
+            <Text variant="titleMedium" style={[styles.emptyTitle, { color: themeColors.text }]}>
               {labels.noRecordsTitle}
             </Text>
-            <Text variant="bodyMedium" style={styles.emptyDescription}>
+            <Text variant="bodyMedium" style={[styles.emptyDescription, { color: themeColors.textSecondary }]}>
               {labels.noRecordsDescription}
             </Text>
           </View>
@@ -1130,18 +1163,23 @@ export default function InsightsTab() {
           icon="trending-up"
           label={rangeInfo.incomeLabel}
           value={formatMoney(summary.income)}
-          valueColor={colors.income}
+          valueColor={themeColors.income}
         />
         <MetricCard
           icon="trending-down"
           label={rangeInfo.expenseLabel}
           value={formatMoney(summary.expense)}
-          valueColor={colors.expense}
+          valueColor={themeColors.expense}
         />
       </View>
 
-      <View style={styles.balanceRow}>
-        <Text variant="bodyMedium" style={styles.mutedText}>
+      <View
+        style={[
+          styles.balanceRow,
+          { backgroundColor: themeColors.card, borderColor: themeColors.border }
+        ]}
+      >
+        <Text variant="bodyMedium" style={[styles.mutedText, { color: themeColors.textSecondary }]}>
           {rangeInfo.balanceLabel}
         </Text>
         <Text
@@ -1227,29 +1265,43 @@ function DevMockDataCard({
   onClear: () => void;
   onSeed: () => void;
 }) {
+  const { colors: themeColors } = useAppTheme();
+
   return (
     <AppCard style={styles.sectionCard}>
       <View style={styles.cardContent}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: themeColors.textSecondary }]}>
           {labels.devDataTitle}
         </Text>
-        <Text variant="bodyMedium" style={styles.devDescription}>
+        <Text variant="bodyMedium" style={[styles.devDescription, { color: themeColors.textSecondary }]}>
           {labels.devDataDescription}
         </Text>
         <View style={styles.devActions}>
           <Pressable
             disabled={busy}
             onPress={onSeed}
-            style={[styles.primaryDevAction, busy && styles.disabledAction]}
+            style={[
+              styles.primaryDevAction,
+              { backgroundColor: themeColors.primary },
+              busy && styles.disabledAction
+            ]}
           >
-            <Text style={styles.primaryActionText}>{labels.seedMock}</Text>
+            <Text style={[styles.primaryActionText, { color: themeColors.background }]}>
+              {labels.seedMock}
+            </Text>
           </Pressable>
           <Pressable
             disabled={busy}
             onPress={onClear}
-            style={[styles.secondaryDevAction, busy && styles.disabledAction]}
+            style={[
+              styles.secondaryDevAction,
+              { backgroundColor: themeColors.card },
+              busy && styles.disabledAction
+            ]}
           >
-            <Text style={styles.secondaryActionText}>{labels.clearMock}</Text>
+            <Text style={[styles.secondaryActionText, { color: themeColors.text }]}>
+              {labels.clearMock}
+            </Text>
           </Pressable>
         </View>
       </View>
@@ -1268,11 +1320,17 @@ function MetricCard({
   value: string;
   valueColor: string;
 }) {
+  const { colors: themeColors } = useAppTheme();
+
   return (
     <AppCard elevated style={styles.metricCard}>
       <View style={styles.metricContent}>
         <MaterialCommunityIcons name={icon} color={valueColor} size={18} />
-        <Text variant="bodyMedium" style={styles.mutedText} numberOfLines={1}>
+        <Text
+          variant="bodyMedium"
+          style={[styles.mutedText, { color: themeColors.textSecondary }]}
+          numberOfLines={1}
+        >
           {label}
         </Text>
         <Text
@@ -1298,6 +1356,7 @@ function MonthlyBarChart({
   maxAmount: number;
   stats: BarStat[];
 }) {
+  const { colors: themeColors } = useAppTheme();
   const barWidth = stats.length > 8 ? 6 : 10;
   const shouldScroll = stats.length > 8;
 
@@ -1324,19 +1383,25 @@ function MonthlyBarChart({
               <Animated.View
                 style={[
                   styles.bar,
-                  styles.incomeBar,
+                  { backgroundColor: themeColors.income },
                   { height: animatedIncomeHeight, width: barWidth }
                 ]}
               />
               <Animated.View
                 style={[
                   styles.bar,
-                  styles.expenseBar,
+                  { backgroundColor: themeColors.expense },
                   { height: animatedExpenseHeight, width: barWidth }
                 ]}
               />
             </View>
-            <Text style={[styles.axisLabel, shouldScroll && styles.axisLabelScrollable]}>
+            <Text
+              style={[
+                styles.axisLabel,
+                { color: themeColors.textSecondary },
+                shouldScroll && styles.axisLabelScrollable
+              ]}
+            >
               {item.label}
             </Text>
           </View>
@@ -1348,7 +1413,7 @@ function MonthlyBarChart({
   return (
     <AppCard style={styles.sectionCard}>
       <View style={styles.cardContent}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: themeColors.textSecondary }]}>
           {labels.monthChart}
         </Text>
         {shouldScroll ? (
@@ -1359,8 +1424,8 @@ function MonthlyBarChart({
           chartContent
         )}
         <View style={styles.legendRow}>
-          <LegendDot color={colors.income} label={labels.income} />
-          <LegendDot color={colors.expense} label={labels.expense} />
+          <LegendDot color={themeColors.income} label={labels.income} />
+          <LegendDot color={themeColors.expense} label={labels.expense} />
         </View>
       </View>
     </AppCard>
@@ -1380,16 +1445,17 @@ function ExpenseDonutChart({
   items: CategoryRankItem[];
   totalExpense: number;
 }) {
+  const { colors: themeColors } = useAppTheme();
   let segmentOffset = 0;
 
   return (
     <AppCard style={styles.sectionCard}>
       <View style={styles.cardContent}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: themeColors.textSecondary }]}>
           {labels.expenseCategory}
         </Text>
         {items.length === 0 ? (
-          <Text variant="bodyMedium" style={styles.emptyInlineText}>
+          <Text variant="bodyMedium" style={[styles.emptyInlineText, { color: themeColors.textSecondary }]}>
             {labels.noExpense}
           </Text>
         ) : (
@@ -1410,7 +1476,7 @@ function ExpenseDonutChart({
                     cy={DONUT_SIZE / 2}
                     fill="none"
                     r={DONUT_RADIUS}
-                    stroke={colors.cardAlt}
+                    stroke={themeColors.cardAlt}
                     strokeWidth={DONUT_STROKE}
                   />
                   {items.map((item, index) => {
@@ -1444,12 +1510,14 @@ function ExpenseDonutChart({
                 </Svg>
               </Animated.View>
               <View style={styles.donutCenter}>
-                <Text style={styles.donutCenterLabel}>{labels.expense}</Text>
+                <Text style={[styles.donutCenterLabel, { color: themeColors.textSecondary }]}>
+                  {labels.expense}
+                </Text>
                 <Text
                   adjustsFontSizeToFit
                   minimumFontScale={0.7}
                   numberOfLines={1}
-                  style={styles.donutCenterValue}
+                  style={[styles.donutCenterValue, { color: themeColors.text }]}
                 >
                   {formatMoney(totalExpense)}
                 </Text>
@@ -1459,10 +1527,12 @@ function ExpenseDonutChart({
               {items.map((item, index) => (
                 <View key={`donut-legend-${item.key}-${index}`} style={styles.categoryLegendItem}>
                   <View style={[styles.categoryDot, { backgroundColor: item.color }]} />
-                  <Text style={styles.categoryName} numberOfLines={1}>
+                  <Text style={[styles.categoryName, { color: themeColors.textSecondary }]} numberOfLines={1}>
                     {item.category}
                   </Text>
-                  <Text style={styles.categoryPercent}>{item.percentage}%</Text>
+                  <Text style={[styles.categoryPercent, { color: themeColors.text }]}>
+                    {item.percentage}%
+                  </Text>
                 </View>
               ))}
             </View>
@@ -1474,14 +1544,16 @@ function ExpenseDonutChart({
 }
 
 function BillDetails({ groups }: { groups: ReturnType<typeof groupExpenseRecordsByDate> }) {
+  const { colors: themeColors } = useAppTheme();
+
   return (
     <AppCard style={styles.sectionCard}>
       <View style={styles.cardContent}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: themeColors.textSecondary }]}>
           {labels.billDetails}
         </Text>
         {groups.length === 0 ? (
-          <Text variant="bodyMedium" style={styles.emptyInlineText}>
+          <Text variant="bodyMedium" style={[styles.emptyInlineText, { color: themeColors.textSecondary }]}>
             {labels.noFilteredRecords}
           </Text>
         ) : (
@@ -1489,7 +1561,7 @@ function BillDetails({ groups }: { groups: ReturnType<typeof groupExpenseRecords
             {groups.map((group) => (
               <View key={group.date} style={styles.detailGroup}>
                 <View style={styles.groupHeader}>
-                  <Text variant="labelLarge" style={styles.groupDate}>
+                  <Text variant="labelLarge" style={[styles.groupDate, { color: themeColors.textSecondary }]}>
                     {group.label}
                   </Text>
                   <View style={styles.groupSummary}>
@@ -1505,24 +1577,25 @@ function BillDetails({ groups }: { groups: ReturnType<typeof groupExpenseRecords
                     ) : null}
                   </View>
                 </View>
-                <View style={styles.detailList}>
+                <View style={[styles.detailList, { backgroundColor: themeColors.card }]}>
                   {group.records.map((record, index) => {
                     const recordType = getRecordType(record);
                     const isIncome = recordType === 'income';
-                    const amountColor = isIncome ? colors.income : colors.expense;
+                    const amountColor = isIncome ? themeColors.income : themeColors.expense;
 
                     return (
                       <Pressable
                         key={record.id}
                         onPress={() => router.push(`/ledger/${record.id}`)}
-                        android_ripple={{ color: 'rgba(255,255,255,0.06)' }}
+                        android_ripple={{ color: themeColors.border }}
                         style={({ pressed }) => [
                           styles.detailItem,
+                          { borderBottomColor: themeColors.outline },
                           index === group.records.length - 1 && styles.detailItemLast,
-                          pressed && styles.detailItemPressed
+                          pressed && { backgroundColor: themeColors.cardAlt }
                         ]}
                       >
-                        <View style={styles.detailIcon}>
+                        <View style={[styles.detailIcon, { backgroundColor: themeColors.cardAlt }]}>
                           <MaterialCommunityIcons
                             name={getExpenseCategoryIcon(record.category, recordType)}
                             color={amountColor}
@@ -1530,10 +1603,18 @@ function BillDetails({ groups }: { groups: ReturnType<typeof groupExpenseRecords
                           />
                         </View>
                         <View style={styles.detailMain}>
-                          <Text variant="titleSmall" style={styles.detailTitle} numberOfLines={1}>
+                          <Text
+                            variant="titleSmall"
+                            style={[styles.detailTitle, { color: themeColors.text }]}
+                            numberOfLines={1}
+                          >
                             {record.note || record.category}
                           </Text>
-                          <Text variant="bodySmall" style={styles.detailMeta} numberOfLines={1}>
+                          <Text
+                            variant="bodySmall"
+                            style={[styles.detailMeta, { color: themeColors.textSecondary }]}
+                            numberOfLines={1}
+                          >
                             {record.category} · {record.date}
                           </Text>
                         </View>
@@ -1592,40 +1673,49 @@ function TimeRangeSheet({
   onYearChange: (year: number) => void;
   visible: boolean;
 }) {
+  const { colors: themeColors } = useAppTheme();
   const canGoPreviousYear = draftYear > minYear;
   const canGoNextYear = draftYear < maxYear;
 
   return (
     <Modal animationType="slide" onRequestClose={onCancel} transparent visible={visible}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.sheet}>
-          <View style={styles.sheetHandle} />
-          <Text variant="titleMedium" style={styles.sheetTitle}>
+      <View style={[styles.modalOverlay, { backgroundColor: themeColors.overlay }]}>
+        <View style={[styles.sheet, { backgroundColor: themeColors.surfaceElevated }]}>
+          <View style={[styles.sheetHandle, { backgroundColor: themeColors.textSecondary }]} />
+          <Text variant="titleMedium" style={[styles.sheetTitle, { color: themeColors.text }]}>
             {labels.selectTime}
           </Text>
           <View style={styles.yearControl}>
             <Pressable
               disabled={!canGoPreviousYear}
               onPress={() => onYearChange(draftYear - 1)}
-              style={[styles.yearButton, !canGoPreviousYear && styles.disabledOption]}
+              style={[
+                styles.yearButton,
+                { backgroundColor: themeColors.card },
+                !canGoPreviousYear && styles.disabledOption
+              ]}
             >
               <MaterialCommunityIcons
                 name="chevron-left"
-                color={canGoPreviousYear ? colors.text : colors.textSecondary}
+                color={canGoPreviousYear ? themeColors.text : themeColors.textSecondary}
                 size={22}
               />
             </Pressable>
-            <Text variant="titleLarge" style={styles.yearText}>
+            <Text variant="titleLarge" style={[styles.yearText, { color: themeColors.text }]}>
               {formatYearLabel(draftYear)}
             </Text>
             <Pressable
               disabled={!canGoNextYear}
               onPress={() => onYearChange(draftYear + 1)}
-              style={[styles.yearButton, !canGoNextYear && styles.disabledOption]}
+              style={[
+                styles.yearButton,
+                { backgroundColor: themeColors.card },
+                !canGoNextYear && styles.disabledOption
+              ]}
             >
               <MaterialCommunityIcons
                 name="chevron-right"
-                color={canGoNextYear ? colors.text : colors.textSecondary}
+                color={canGoNextYear ? themeColors.text : themeColors.textSecondary}
                 size={22}
               />
             </Pressable>
@@ -1665,11 +1755,11 @@ function TimeRangeSheet({
             </View>
           ) : null}
           <View style={styles.sheetActions}>
-            <Pressable onPress={onCancel} style={styles.secondaryAction}>
-              <Text style={styles.secondaryActionText}>{labels.cancel}</Text>
+            <Pressable onPress={onCancel} style={[styles.secondaryAction, { backgroundColor: themeColors.card }]}>
+              <Text style={[styles.secondaryActionText, { color: themeColors.text }]}>{labels.cancel}</Text>
             </Pressable>
-            <Pressable onPress={onConfirm} style={styles.primaryAction}>
-              <Text style={styles.primaryActionText}>{labels.confirm}</Text>
+            <Pressable onPress={onConfirm} style={[styles.primaryAction, { backgroundColor: themeColors.primary }]}>
+              <Text style={[styles.primaryActionText, { color: themeColors.background }]}>{labels.confirm}</Text>
             </Pressable>
           </View>
         </View>
@@ -1713,6 +1803,7 @@ function FilterSheet({
   useCustomRange: boolean;
   visible: boolean;
 }) {
+  const { colors: themeColors } = useAppTheme();
   const categoryOptions = getCategoryOptions(draftFilters.type);
 
   function updateType(type: TypeFilter) {
@@ -1721,10 +1812,10 @@ function FilterSheet({
 
   return (
     <Modal animationType="slide" onRequestClose={onCancel} transparent visible={visible}>
-      <View style={styles.modalOverlay}>
-        <View style={styles.sheet}>
-          <View style={styles.sheetHandle} />
-          <Text variant="titleMedium" style={styles.sheetTitle}>
+      <View style={[styles.modalOverlay, { backgroundColor: themeColors.overlay }]}>
+        <View style={[styles.sheet, { backgroundColor: themeColors.surfaceElevated }]}>
+          <View style={[styles.sheetHandle, { backgroundColor: themeColors.textSecondary }]} />
+          <Text variant="titleMedium" style={[styles.sheetTitle, { color: themeColors.text }]}>
             {labels.filter}
           </Text>
           <ScrollView
@@ -1732,7 +1823,7 @@ function FilterSheet({
             showsVerticalScrollIndicator={false}
             style={styles.sheetBody}
           >
-            <Text style={styles.filterLabel}>{labels.type}</Text>
+            <Text style={[styles.filterLabel, { color: themeColors.textSecondary }]}>{labels.type}</Text>
             <View style={styles.choiceRow}>
               {(['all', 'expense', 'income'] as TypeFilter[]).map((type) => (
                 <ChoiceButton
@@ -1743,7 +1834,7 @@ function FilterSheet({
                 />
               ))}
             </View>
-            <Text style={styles.filterLabel}>{labels.allCategories}</Text>
+            <Text style={[styles.filterLabel, { color: themeColors.textSecondary }]}>{labels.allCategories}</Text>
             <View style={styles.optionGrid}>
               <ChoiceButton
                 active={draftFilters.category === 'all'}
@@ -1759,25 +1850,39 @@ function FilterSheet({
                 />
               ))}
             </View>
-            <Text style={styles.filterLabel}>{labels.keyword}</Text>
+            <Text style={[styles.filterLabel, { color: themeColors.textSecondary }]}>{labels.keyword}</Text>
             <TextInput
               onChangeText={(keyword) => onUpdate({ ...draftFilters, keyword })}
               placeholder={labels.keywordPlaceholder}
-              placeholderTextColor={colors.textSecondary}
-              style={styles.keywordInput}
+              placeholderTextColor={themeColors.textSecondary}
+              style={[
+                styles.keywordInput,
+                {
+                  backgroundColor: themeColors.card,
+                  borderColor: themeColors.border,
+                  color: themeColors.text
+                }
+              ]}
               value={draftFilters.keyword}
             />
-            <Text style={styles.filterLabel}>{labels.customRange}</Text>
+            <Text style={[styles.filterLabel, { color: themeColors.textSecondary }]}>{labels.customRange}</Text>
             {!customRangeAvailable ? (
-              <Text style={styles.emptyInlineText}>{labels.customRangeUnavailable}</Text>
+              <Text style={[styles.emptyInlineText, { color: themeColors.textSecondary }]}>
+                {labels.customRangeUnavailable}
+              </Text>
             ) : (
-              <View style={styles.customRangeBox}>
+              <View
+                style={[
+                  styles.customRangeBox,
+                  { backgroundColor: themeColors.card, borderColor: themeColors.border }
+                ]}
+              >
                 <ChoiceButton
                   active={useCustomRange}
                   label={labels.useCustomRange}
                   onPress={() => onUseCustomRangeChange(!useCustomRange)}
                 />
-                <Text style={styles.rangeHint}>
+                <Text style={[styles.rangeHint, { color: themeColors.textSecondary }]}>
                   {minSelectableDate} ~ {maxSelectableDate}
                 </Text>
                 <View style={styles.dateInputRow}>
@@ -1832,11 +1937,11 @@ function FilterSheet({
             )}
           </ScrollView>
           <View style={styles.sheetActions}>
-            <Pressable onPress={onReset} style={styles.secondaryAction}>
-              <Text style={styles.secondaryActionText}>{labels.reset}</Text>
+            <Pressable onPress={onReset} style={[styles.secondaryAction, { backgroundColor: themeColors.card }]}>
+              <Text style={[styles.secondaryActionText, { color: themeColors.text }]}>{labels.reset}</Text>
             </Pressable>
-            <Pressable onPress={onConfirm} style={styles.primaryAction}>
-              <Text style={styles.primaryActionText}>{labels.confirm}</Text>
+            <Pressable onPress={onConfirm} style={[styles.primaryAction, { backgroundColor: themeColors.primary }]}>
+              <Text style={[styles.primaryActionText, { color: themeColors.background }]}>{labels.confirm}</Text>
             </Pressable>
           </View>
         </View>
@@ -1856,20 +1961,22 @@ function ChoiceButton({
   label: string;
   onPress: () => void;
 }) {
+  const { colors: themeColors } = useAppTheme();
+
   return (
     <Pressable
       disabled={disabled}
       onPress={onPress}
       style={[
         styles.choiceButton,
-        active && styles.choiceButtonActive,
+        { backgroundColor: active ? themeColors.primary : themeColors.card },
         disabled && styles.disabledOption
       ]}
     >
       <Text
         style={[
           styles.choiceText,
-          active && styles.choiceTextActive,
+          { color: active ? themeColors.background : themeColors.textSecondary },
           disabled && styles.disabledChoiceText
         ]}
         numberOfLines={1}
@@ -1881,10 +1988,12 @@ function ChoiceButton({
 }
 
 function LegendDot({ color, label }: { color: string; label: string }) {
+  const { colors: themeColors } = useAppTheme();
+
   return (
     <View style={styles.legendItem}>
       <View style={[styles.legendDot, { backgroundColor: color }]} />
-      <Text style={styles.legendText}>{label}</Text>
+      <Text style={[styles.legendText, { color: themeColors.textSecondary }]}>{label}</Text>
     </View>
   );
 }

@@ -1,20 +1,30 @@
-import { MD3DarkTheme } from 'react-native-paper';
+import { MD3DarkTheme, MD3LightTheme } from 'react-native-paper';
 
-import { colors } from './colors';
+import { AppColors, colors } from './colors';
+
+export function createAppTheme(themeColors: AppColors, resolvedTheme: 'dark' | 'light') {
+  const baseTheme = resolvedTheme === 'dark' ? MD3DarkTheme : MD3LightTheme;
+
+  return {
+    ...baseTheme,
+    dark: resolvedTheme === 'dark',
+    roundness: 16,
+    colors: {
+      ...baseTheme.colors,
+      primary: themeColors.primary,
+      background: themeColors.background,
+      surface: themeColors.surface,
+      surfaceVariant: themeColors.surface,
+      secondaryContainer: themeColors.surfaceElevated,
+      onSurface: themeColors.textPrimary,
+      onSurfaceVariant: themeColors.textSecondary,
+      outline: themeColors.border,
+      error: themeColors.danger
+    }
+  };
+}
 
 export const appTheme = {
-  ...MD3DarkTheme,
+  ...createAppTheme(colors, 'dark'),
   roundness: 16,
-  colors: {
-    ...MD3DarkTheme.colors,
-    primary: colors.primary,
-    background: colors.background,
-    surface: colors.surface,
-    surfaceVariant: colors.surface,
-    secondaryContainer: colors.surfaceElevated,
-    onSurface: colors.textPrimary,
-    onSurfaceVariant: colors.textSecondary,
-    outline: colors.border,
-    error: colors.danger
-  }
 };

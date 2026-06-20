@@ -11,6 +11,7 @@ import { Screen } from '@/components/layout/Screen';
 import { AppCard } from '@/components/ui/AppCard';
 import { appInfo } from '@/constants/appInfo';
 import { messages } from '@/constants/messages';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { getProducts, saveProducts } from '@/storage/productStorage';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -56,7 +57,12 @@ type PickedBackupAsset = {
 };
 
 export default function SettingsScreen() {
+  const { colors: themeColors } = useAppTheme();
   const [productCount, setProductCount] = useState(0);
+  const sectionTitleStyle = [styles.sectionTitle, { color: themeColors.text }];
+  const listTitleStyle = [styles.listTitle, { color: themeColors.text }];
+  const listDescriptionStyle = [styles.listDescription, { color: themeColors.textSecondary }];
+  const valueTextStyle = [styles.valueText, { color: themeColors.text }];
 
   useFocusEffect(
     useCallback(() => {
@@ -250,32 +256,32 @@ export default function SettingsScreen() {
     <Screen>
       <AppCard style={styles.card}>
         <Card.Content>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
+          <Text variant="titleMedium" style={sectionTitleStyle}>
             {labels.data}
           </Text>
           <List.Item
             title={labels.productCount}
-            titleStyle={styles.listTitle}
-            right={() => <Text style={styles.valueText}>{productCount}</Text>}
+            titleStyle={listTitleStyle}
+            right={() => <Text style={valueTextStyle}>{productCount}</Text>}
           />
           <List.Item
             title={labels.exportData}
-            titleStyle={styles.listTitle}
+            titleStyle={listTitleStyle}
             right={(props) => (
               <>
-                <Text style={styles.valueText}>{labels.json}</Text>
-                <List.Icon {...props} icon="chevron-right" />
+                <Text style={valueTextStyle}>{labels.json}</Text>
+                <List.Icon {...props} color={themeColors.textSecondary} icon="chevron-right" />
               </>
             )}
             onPress={handleExportData}
           />
           <List.Item
             title={labels.importData}
-            titleStyle={styles.listTitle}
+            titleStyle={listTitleStyle}
             right={(props) => (
               <>
-                <Text style={styles.valueText}>{labels.json}</Text>
-                <List.Icon {...props} icon="chevron-right" />
+                <Text style={valueTextStyle}>{labels.json}</Text>
+                <List.Icon {...props} color={themeColors.textSecondary} icon="chevron-right" />
               </>
             )}
             onPress={handleImportData}
@@ -285,14 +291,14 @@ export default function SettingsScreen() {
 
       <AppCard style={styles.card}>
         <Card.Content>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
+          <Text variant="titleMedium" style={sectionTitleStyle}>
             {labels.reminder}
           </Text>
           <List.Item
             title={labels.targetReminder}
             description={labels.targetReminderDescription}
-            titleStyle={styles.listTitle}
-            descriptionStyle={styles.listDescription}
+            titleStyle={listTitleStyle}
+            descriptionStyle={listDescriptionStyle}
             descriptionNumberOfLines={4}
           />
         </Card.Content>
@@ -300,24 +306,24 @@ export default function SettingsScreen() {
 
       <AppCard style={styles.card}>
         <Card.Content>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
+          <Text variant="titleMedium" style={sectionTitleStyle}>
             {labels.app}
           </Text>
           <List.Item
             title={labels.currentVersion}
-            titleStyle={styles.listTitle}
-            right={() => <Text style={styles.valueText}>{appInfo.displayVersion}</Text>}
+            titleStyle={listTitleStyle}
+            right={() => <Text style={valueTextStyle}>{appInfo.displayVersion}</Text>}
           />
           <List.Item
             title={labels.buildType}
-            titleStyle={styles.listTitle}
-            right={() => <Text style={styles.valueText}>{appInfo.buildType}</Text>}
+            titleStyle={listTitleStyle}
+            right={() => <Text style={valueTextStyle}>{appInfo.buildType}</Text>}
           />
           <List.Item
             title={labels.techStack}
             description={labels.stack}
-            titleStyle={styles.listTitle}
-            descriptionStyle={styles.listDescription}
+            titleStyle={listTitleStyle}
+            descriptionStyle={listDescriptionStyle}
             descriptionNumberOfLines={3}
           />
         </Card.Content>
@@ -325,37 +331,37 @@ export default function SettingsScreen() {
 
       <AppCard style={styles.card}>
         <Card.Content>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
+          <Text variant="titleMedium" style={sectionTitleStyle}>
             {labels.about}
           </Text>
           <List.Item
             title={labels.appName}
-            titleStyle={styles.listTitle}
-            right={() => <Text style={styles.valueText}>{appInfo.name}</Text>}
+            titleStyle={listTitleStyle}
+            right={() => <Text style={valueTextStyle}>{appInfo.name}</Text>}
           />
           <List.Item
             title={labels.description}
             description={appInfo.description}
-            titleStyle={styles.listTitle}
-            descriptionStyle={styles.listDescription}
+            titleStyle={listTitleStyle}
+            descriptionStyle={listDescriptionStyle}
           />
           <List.Item
             title={labels.versionNumber}
-            titleStyle={styles.listTitle}
-            right={() => <Text style={styles.valueText}>{appInfo.displayVersion}</Text>}
+            titleStyle={listTitleStyle}
+            right={() => <Text style={valueTextStyle}>{appInfo.displayVersion}</Text>}
           />
           <List.Item
             title={labels.author}
-            titleStyle={styles.listTitle}
-            right={() => <Text style={styles.valueText}>{appInfo.author}</Text>}
+            titleStyle={listTitleStyle}
+            right={() => <Text style={valueTextStyle}>{appInfo.author}</Text>}
           />
           <List.Item
             title={labels.github}
             description={appInfo.github}
-            titleStyle={styles.listTitle}
-            descriptionStyle={styles.listDescription}
+            titleStyle={listTitleStyle}
+            descriptionStyle={listDescriptionStyle}
             descriptionNumberOfLines={2}
-            right={(props) => <List.Icon {...props} icon="chevron-right" />}
+            right={(props) => <List.Icon {...props} color={themeColors.textSecondary} icon="chevron-right" />}
             onPress={() => Alert.alert(labels.github, appInfo.github)}
           />
         </Card.Content>

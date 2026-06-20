@@ -15,6 +15,7 @@ import { Screen } from '@/components/layout/Screen';
 import { AppCard } from '@/components/ui/AppCard';
 import { getCategoryName } from '@/constants/categories';
 import { messages } from '@/constants/messages';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { deleteProductById, getProductById } from '@/storage/productStorage';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -81,12 +82,14 @@ type MetricRowProps = {
 };
 
 function MetricRow({ label, value }: MetricRowProps) {
+  const { colors: themeColors } = useAppTheme();
+
   return (
-    <View style={styles.metricRow}>
-      <Text variant="bodyMedium" style={styles.metricLabel}>
+    <View style={[styles.metricRow, { borderBottomColor: themeColors.outline }]}>
+      <Text variant="bodyMedium" style={[styles.metricLabel, { color: themeColors.textSecondary }]}>
         {label}
       </Text>
-      <Text variant="bodyLarge" style={styles.metricValue}>
+      <Text variant="bodyLarge" style={[styles.metricValue, { color: themeColors.text }]}>
         {value}
       </Text>
     </View>
@@ -94,6 +97,7 @@ function MetricRow({ label, value }: MetricRowProps) {
 }
 
 export default function ProductDetailScreen() {
+  const { colors: themeColors } = useAppTheme();
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const productId = getParamValue(params.id);
   const [product, setProduct] = useState<Product | null>(null);
@@ -172,13 +176,13 @@ export default function ProductDetailScreen() {
                 <View style={styles.headerActions}>
                   <IconButton
                     icon="pencil-outline"
-                    iconColor={colors.primary}
+                    iconColor={themeColors.primary}
                     accessibilityLabel={labels.edit}
                     onPress={() => router.push(`/product/${productId}/edit`)}
                   />
                   <IconButton
                     icon="delete-outline"
-                    iconColor={colors.danger}
+                    iconColor={themeColors.danger}
                     onPress={() => setDeleteDialogVisible(true)}
                   />
                 </View>
@@ -189,14 +193,14 @@ export default function ProductDetailScreen() {
 
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator color={colors.primary} />
+          <ActivityIndicator color={themeColors.primary} />
         </View>
       ) : null}
 
       {!loading && !product ? (
         <AppCard style={styles.card}>
           <Card.Content style={styles.emptyContent}>
-            <Text variant="titleLarge" style={styles.emptyTitle}>
+            <Text variant="titleLarge" style={[styles.emptyTitle, { color: themeColors.text }]}>
               {messages.empty.productNotFound}
             </Text>
             <Button mode="contained" onPress={() => router.replace('/')} style={styles.homeButton}>
@@ -208,12 +212,12 @@ export default function ProductDetailScreen() {
 
       {!loading && product && metrics && valueMetrics ? (
         <View style={styles.content}>
-          <AppCard style={styles.heroCard}>
+          <AppCard style={[styles.heroCard, { backgroundColor: themeColors.primary }]}>
             <Card.Content>
-              <Text variant="headlineSmall" style={styles.productName}>
+              <Text variant="headlineSmall" style={[styles.productName, { color: themeColors.text }]}>
                 {product.name}
               </Text>
-              <Text variant="bodyMedium" style={styles.categoryText}>
+              <Text variant="bodyMedium" style={[styles.categoryText, { color: themeColors.textSecondary }]}>
                 {getCategoryName(product.categoryId)}
               </Text>
             </Card.Content>
@@ -231,39 +235,39 @@ export default function ProductDetailScreen() {
 
           <AppCard style={styles.card}>
             <Card.Content>
-              <Text variant="titleMedium" style={styles.cardTitle}>
+              <Text variant="titleMedium" style={[styles.cardTitle, { color: themeColors.text }]}>
                 {labels.valueAnalysis}
               </Text>
               <View style={styles.valueGrid}>
-                <View style={styles.valueItem}>
-                  <Text variant="bodySmall" style={styles.metricLabel}>
+                <View style={[styles.valueItem, { backgroundColor: themeColors.cardAlt }]}>
+                  <Text variant="bodySmall" style={[styles.metricLabel, { color: themeColors.textSecondary }]}>
                     {labels.current}
                   </Text>
-                  <Text variant="titleMedium" style={styles.valueNumber}>
+                  <Text variant="titleMedium" style={[styles.valueNumber, { color: themeColors.primary }]}>
                     {formatCurrency(valueMetrics.current)}
                     {labels.perDay}
                   </Text>
                 </View>
-                <View style={styles.valueItem}>
-                  <Text variant="bodySmall" style={styles.metricLabel}>
+                <View style={[styles.valueItem, { backgroundColor: themeColors.cardAlt }]}>
+                  <Text variant="bodySmall" style={[styles.metricLabel, { color: themeColors.textSecondary }]}>
                     {labels.after30Days}
                   </Text>
-                  <Text variant="titleMedium" style={styles.valueNumber}>
+                  <Text variant="titleMedium" style={[styles.valueNumber, { color: themeColors.primary }]}>
                     {formatCurrency(valueMetrics.after30Days)}
                     {labels.perDay}
                   </Text>
                 </View>
-                <View style={styles.valueItem}>
-                  <Text variant="bodySmall" style={styles.metricLabel}>
+                <View style={[styles.valueItem, { backgroundColor: themeColors.cardAlt }]}>
+                  <Text variant="bodySmall" style={[styles.metricLabel, { color: themeColors.textSecondary }]}>
                     {labels.after365Days}
                   </Text>
-                  <Text variant="titleMedium" style={styles.valueNumber}>
+                  <Text variant="titleMedium" style={[styles.valueNumber, { color: themeColors.primary }]}>
                     {formatCurrency(valueMetrics.after365Days)}
                     {labels.perDay}
                   </Text>
                 </View>
               </View>
-              <Text variant="bodyMedium" style={styles.valueHint}>
+              <Text variant="bodyMedium" style={[styles.valueHint, { color: themeColors.textSecondary }]}>
                 {labels.valueHint}
               </Text>
             </Card.Content>
@@ -272,36 +276,36 @@ export default function ProductDetailScreen() {
           {targetMetrics ? (
             <AppCard style={styles.card}>
               <Card.Content>
-                <Text variant="titleMedium" style={styles.cardTitle}>
+                <Text variant="titleMedium" style={[styles.cardTitle, { color: themeColors.text }]}>
                   {labels.targetProgress}
                 </Text>
 
                 {targetMetrics.isReached ? (
-                  <View style={styles.targetReachedBox}>
-                    <Text variant="titleMedium" style={styles.targetReachedText}>
+                  <View style={[styles.targetReachedBox, { backgroundColor: themeColors.cardAlt }]}>
+                    <Text variant="titleMedium" style={[styles.targetReachedText, { color: themeColors.primary }]}>
                       {labels.targetReached}
                     </Text>
-                    <Text variant="bodyMedium" style={styles.valueHint}>
+                    <Text variant="bodyMedium" style={[styles.valueHint, { color: themeColors.textSecondary }]}>
                       {labels.targetReachedHint}
                     </Text>
                   </View>
                 ) : (
                   <>
                     <View style={styles.targetSummary}>
-                      <View style={styles.targetSummaryItem}>
-                        <Text variant="bodySmall" style={styles.metricLabel}>
+                      <View style={[styles.targetSummaryItem, { backgroundColor: themeColors.cardAlt }]}>
+                        <Text variant="bodySmall" style={[styles.metricLabel, { color: themeColors.textSecondary }]}>
                           {labels.current}
                         </Text>
-                        <Text variant="titleMedium" style={styles.valueNumber}>
+                        <Text variant="titleMedium" style={[styles.valueNumber, { color: themeColors.primary }]}>
                           {formatCurrency(targetMetrics.currentDailyCost)}
                           {labels.perDay}
                         </Text>
                       </View>
-                      <View style={styles.targetSummaryItem}>
-                        <Text variant="bodySmall" style={styles.metricLabel}>
+                      <View style={[styles.targetSummaryItem, { backgroundColor: themeColors.cardAlt }]}>
+                        <Text variant="bodySmall" style={[styles.metricLabel, { color: themeColors.textSecondary }]}>
                           {labels.targetPrefix}
                         </Text>
-                        <Text variant="titleMedium" style={styles.valueNumber}>
+                        <Text variant="titleMedium" style={[styles.valueNumber, { color: themeColors.primary }]}>
                           {formatCurrency(targetMetrics.targetDailyCost)}
                           {labels.perDay}
                         </Text>
@@ -309,17 +313,18 @@ export default function ProductDetailScreen() {
                     </View>
                     <View style={styles.progressBlock}>
                       <View style={styles.progressHeader}>
-                        <Text variant="bodyMedium" style={styles.metricLabel}>
+                        <Text variant="bodyMedium" style={[styles.metricLabel, { color: themeColors.textSecondary }]}>
                           {labels.progressDone}
                         </Text>
-                        <Text variant="bodyMedium" style={styles.progressPercent}>
+                        <Text variant="bodyMedium" style={[styles.progressPercent, { color: themeColors.primary }]}>
                           {targetMetrics.progressPercent}%
                         </Text>
                       </View>
-                      <View style={styles.progressTrack}>
+                      <View style={[styles.progressTrack, { backgroundColor: themeColors.outline }]}>
                         <View
                           style={[
                             styles.progressFill,
+                            { backgroundColor: themeColors.primary },
                             { width: `${targetMetrics.progressPercent}%` }
                           ]}
                         />
@@ -342,18 +347,18 @@ export default function ProductDetailScreen() {
 
           <AppCard style={styles.card}>
             <Card.Content>
-              <Text variant="titleMedium" style={styles.cardTitle}>
+              <Text variant="titleMedium" style={[styles.cardTitle, { color: themeColors.text }]}>
                 {labels.renewalAdvice}
               </Text>
-              <View style={styles.adviceBox}>
-                <Text variant="titleMedium" style={styles.adviceTitle}>
+              <View style={[styles.adviceBox, { backgroundColor: themeColors.cardAlt }]}>
+                <Text variant="titleMedium" style={[styles.adviceTitle, { color: themeColors.text }]}>
                   {targetMetrics
                     ? targetMetrics.isReached
                       ? labels.renewalReady
                       : labels.continueUsing
                     : labels.renewalNotSet}
                 </Text>
-                <Text variant="bodyMedium" style={styles.valueHint}>
+                <Text variant="bodyMedium" style={[styles.valueHint, { color: themeColors.textSecondary }]}>
                   {targetMetrics
                     ? targetMetrics.isReached
                       ? labels.renewalReadyHint
@@ -366,10 +371,10 @@ export default function ProductDetailScreen() {
 
           <AppCard style={styles.card}>
             <Card.Content>
-              <Text variant="titleMedium" style={styles.cardTitle}>
+              <Text variant="titleMedium" style={[styles.cardTitle, { color: themeColors.text }]}>
                 {labels.note}
               </Text>
-              <Text variant="bodyMedium" style={styles.noteText}>
+              <Text variant="bodyMedium" style={[styles.noteText, { color: themeColors.textSecondary }]}>
                 {product.note ?? labels.noNote}
               </Text>
             </Card.Content>
@@ -381,16 +386,16 @@ export default function ProductDetailScreen() {
         <Dialog
           visible={deleteDialogVisible}
           onDismiss={() => setDeleteDialogVisible(false)}
-          style={styles.deleteDialog}
+          style={[styles.deleteDialog, { backgroundColor: themeColors.surfaceElevated }]}
         >
-          <Dialog.Title style={styles.deleteDialogTitle}>
+          <Dialog.Title style={[styles.deleteDialogTitle, { color: themeColors.text }]}>
             {messages.confirm.deleteTitle}
           </Dialog.Title>
           <Dialog.Content style={styles.deleteContent}>
-            <Text variant="titleMedium" style={styles.deleteProductName}>
+            <Text variant="titleMedium" style={[styles.deleteProductName, { color: themeColors.text }]}>
               {product?.name}
             </Text>
-            <Text variant="bodyMedium" style={styles.deleteHint}>
+            <Text variant="bodyMedium" style={[styles.deleteHint, { color: themeColors.textSecondary }]}>
               {messages.confirm.deleteDescription}
             </Text>
           </Dialog.Content>
@@ -409,7 +414,7 @@ export default function ProductDetailScreen() {
               onPress={handleDelete}
               loading={deleting}
               disabled={deleting}
-              textColor={colors.danger}
+              textColor={themeColors.danger}
               style={styles.deleteActionButton}
               contentStyle={styles.deleteActionContent}
             >
@@ -448,7 +453,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   card: {
-    backgroundColor: colors.card,
     borderRadius: 24
   },
   cardTitle: {
@@ -477,7 +481,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm
   },
   valueItem: {
-    backgroundColor: colors.cardAlt,
     borderRadius: radius.lg,
     padding: spacing.md
   },
@@ -495,7 +498,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm
   },
   targetSummaryItem: {
-    backgroundColor: colors.cardAlt,
     borderRadius: radius.lg,
     flex: 1,
     padding: spacing.md
@@ -525,7 +527,6 @@ const styles = StyleSheet.create({
     height: 8
   },
   targetReachedBox: {
-    backgroundColor: colors.cardAlt,
     borderRadius: radius.lg,
     padding: spacing.md
   },
@@ -534,7 +535,6 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
   targetEmptyBox: {
-    backgroundColor: colors.cardAlt,
     borderRadius: radius.lg,
     padding: spacing.md
   },
@@ -543,7 +543,6 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
   adviceBox: {
-    backgroundColor: colors.cardAlt,
     borderRadius: radius.lg,
     padding: spacing.md
   },
@@ -569,7 +568,6 @@ const styles = StyleSheet.create({
   },
   deleteDialog: {
     alignSelf: 'center',
-    backgroundColor: colors.card,
     borderRadius: 24,
     maxWidth: 360,
     width: '86%'

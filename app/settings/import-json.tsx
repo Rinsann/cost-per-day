@@ -6,6 +6,7 @@ import { Button, Card, Text, TextInput } from 'react-native-paper';
 import { Screen } from '@/components/layout/Screen';
 import { AppCard } from '@/components/ui/AppCard';
 import { messages } from '@/constants/messages';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { saveProducts } from '@/storage/productStorage';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -26,6 +27,7 @@ const labels = {
 };
 
 export default function PasteJsonImportScreen() {
+  const { colors: themeColors } = useAppTheme();
   const [jsonText, setJsonText] = useState('');
   const [importing, setImporting] = useState(false);
 
@@ -86,10 +88,10 @@ export default function PasteJsonImportScreen() {
     <Screen>
       <AppCard style={styles.card}>
         <Card.Content style={styles.content}>
-          <Text variant="titleLarge" style={styles.title}>
+          <Text variant="titleLarge" style={[styles.title, { color: themeColors.text }]}>
             {labels.title}
           </Text>
-          <Text variant="bodyMedium" style={styles.description}>
+          <Text variant="bodyMedium" style={[styles.description, { color: themeColors.textSecondary }]}>
             {labels.description}
           </Text>
           <TextInput
@@ -98,9 +100,11 @@ export default function PasteJsonImportScreen() {
             onChangeText={setJsonText}
             placeholder={labels.placeholder}
             multiline
-            style={styles.input}
-            textColor={colors.text}
-            placeholderTextColor={colors.textSecondary}
+            style={[styles.input, { backgroundColor: themeColors.cardAlt }]}
+            textColor={themeColors.text}
+            placeholderTextColor={themeColors.textSecondary}
+            outlineColor={themeColors.border}
+            activeOutlineColor={themeColors.primary}
             textAlignVertical="top"
           />
           <Button

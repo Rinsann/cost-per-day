@@ -8,6 +8,7 @@ import { AppScreen } from '@/components/layout/AppScreen';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppDateField } from '@/components/ui/AppDateField';
 import { expenseCategories, incomeCategories } from '@/constants/expenseCategories';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { ledgerRepository } from '@/repositories/ledgerRepository';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -64,6 +65,7 @@ function isValidAmountText(value: string) {
 }
 
 export default function EditLedgerRecordScreen() {
+  const { colors: themeColors } = useAppTheme();
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const recordId = getParamValue(params.id);
   const [loading, setLoading] = useState(true);
@@ -175,14 +177,14 @@ export default function EditLedgerRecordScreen() {
     <AppScreen>
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator color={colors.primary} />
+          <ActivityIndicator color={themeColors.primary} />
         </View>
       ) : null}
 
       {!loading && !record ? (
         <AppCard>
           <Card.Content style={styles.emptyContent}>
-            <Text variant="titleLarge" style={styles.emptyTitle}>
+            <Text variant="titleLarge" style={[styles.emptyTitle, { color: themeColors.text }]}>
               {labels.notFound}
             </Text>
             <Button mode="contained" onPress={() => router.replace('/ledger')}>
@@ -195,23 +197,28 @@ export default function EditLedgerRecordScreen() {
       {!loading && record ? (
         <AppCard>
           <Card.Content style={styles.formContent}>
-            <Text variant="titleLarge" style={styles.title}>
+            <Text variant="titleLarge" style={[styles.title, { color: themeColors.text }]}>
               {labels.title}
             </Text>
 
-            <View style={styles.segment}>
+            <View style={[styles.segment, { backgroundColor: themeColors.surfaceElevated }]}>
               <Pressable
                 onPress={() => selectRecordType('expense')}
                 style={[
                   styles.segmentButton,
-                  recordType === 'expense' && styles.expenseSegmentButton
+                  recordType === 'expense' && { backgroundColor: themeColors.expense }
                 ]}
               >
                 <Text
                   variant="titleSmall"
                   style={[
                     styles.segmentText,
-                    recordType === 'expense' && styles.activeSegmentText
+                    {
+                      color:
+                        recordType === 'expense'
+                          ? themeColors.background
+                          : themeColors.textSecondary
+                    }
                   ]}
                 >
                   {labels.expense}
@@ -221,14 +228,19 @@ export default function EditLedgerRecordScreen() {
                 onPress={() => selectRecordType('income')}
                 style={[
                   styles.segmentButton,
-                  recordType === 'income' && styles.incomeSegmentButton
+                  recordType === 'income' && { backgroundColor: themeColors.primary }
                 ]}
               >
                 <Text
                   variant="titleSmall"
                   style={[
                     styles.segmentText,
-                    recordType === 'income' && styles.activeSegmentText
+                    {
+                      color:
+                        recordType === 'income'
+                          ? themeColors.background
+                          : themeColors.textSecondary
+                    }
                   ]}
                 >
                   {labels.income}
@@ -244,10 +256,13 @@ export default function EditLedgerRecordScreen() {
               keyboardType="decimal-pad"
               error={amountText.length > 0 && !isAmountValid}
               left={<TextInput.Affix text="¥" />}
-              style={styles.input}
+              style={[styles.input, { backgroundColor: themeColors.surfaceElevated }]}
+              textColor={themeColors.text}
+              outlineColor={themeColors.border}
+              activeOutlineColor={themeColors.primary}
             />
 
-            <Text variant="titleSmall" style={styles.sectionTitle}>
+            <Text variant="titleSmall" style={[styles.sectionTitle, { color: themeColors.text }]}>
               {labels.category}
             </Text>
             <View style={styles.categoryGrid}>
@@ -258,16 +273,23 @@ export default function EditLedgerRecordScreen() {
                   <Pressable
                     key={item.label}
                     onPress={() => setCategory(item.label)}
-                    style={[styles.categoryItem, isSelected && styles.selectedCategoryItem]}
+                    style={[
+                      styles.categoryItem,
+                      { backgroundColor: isSelected ? themeColors.primary : themeColors.surfaceElevated }
+                    ]}
                   >
                     <MaterialCommunityIcons
                       name={item.icon}
                       size={22}
-                      color={isSelected ? colors.background : colors.textSecondary}
+                      color={isSelected ? themeColors.background : themeColors.textSecondary}
                     />
                     <Text
                       variant="labelMedium"
-                      style={[styles.categoryText, isSelected && styles.selectedCategoryText]}
+                      style={[
+                        styles.categoryText,
+                        { color: isSelected ? themeColors.background : themeColors.textSecondary },
+                        isSelected && styles.selectedCategoryText
+                      ]}
                     >
                       {item.label}
                     </Text>
@@ -298,7 +320,10 @@ export default function EditLedgerRecordScreen() {
               onChangeText={setNote}
               multiline
               numberOfLines={3}
-              style={styles.noteInput}
+              style={[styles.noteInput, { backgroundColor: themeColors.surfaceElevated }]}
+              textColor={themeColors.text}
+              outlineColor={themeColors.border}
+              activeOutlineColor={themeColors.primary}
             />
 
             <Button

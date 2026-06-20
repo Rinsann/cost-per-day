@@ -1,28 +1,41 @@
 import { Stack } from 'expo-router';
-import { StatusBar, StyleSheet } from 'react-native';
+import { StatusBar } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
-import { appTheme } from '@/theme/theme';
+import { AppThemeProvider, useAppTheme } from '@/context/AppThemeContext';
 
 export default function RootLayout() {
   return (
-    <SafeAreaProvider style={styles.provider}>
-      <PaperProvider theme={appTheme}>
-        <StatusBar backgroundColor={appTheme.colors.background} barStyle="light-content" />
+    <AppThemeProvider>
+      <RootLayoutContent />
+    </AppThemeProvider>
+  );
+}
+
+function RootLayoutContent() {
+  const { colors, paperTheme, resolvedTheme } = useAppTheme();
+
+  return (
+    <SafeAreaProvider style={{ backgroundColor: colors.background, flex: 1 }}>
+      <PaperProvider theme={paperTheme}>
+        <StatusBar
+          backgroundColor={colors.background}
+          barStyle={resolvedTheme === 'dark' ? 'light-content' : 'dark-content'}
+        />
         <Stack
           screenOptions={{
             headerStyle: {
-              backgroundColor: appTheme.colors.background
+              backgroundColor: colors.background
             },
-            headerTintColor: appTheme.colors.onSurface,
+            headerTintColor: colors.text,
             headerShadowVisible: false,
             headerTitleStyle: {
               fontSize: 20,
               fontWeight: '700'
             },
             contentStyle: {
-              backgroundColor: appTheme.colors.background
+              backgroundColor: colors.background
             }
           }}
         >
@@ -86,10 +99,3 @@ export default function RootLayout() {
     </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  provider: {
-    backgroundColor: appTheme.colors.background,
-    flex: 1
-  }
-});

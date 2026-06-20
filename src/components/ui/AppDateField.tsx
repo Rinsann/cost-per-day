@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from 'react-native-paper';
 
-import { colors } from '@/theme/colors';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { getDateString, getLocalDateFromString } from '@/utils/formatDate';
@@ -69,6 +69,7 @@ export function AppDateField({
   onChange,
   value
 }: AppDateFieldProps) {
+  const { colors: themeColors } = useAppTheme();
   const safeMaxDate = getLocalDateFromString(maxDate) ? maxDate : getDateString(new Date());
   const safeMinDate =
     getLocalDateFromString(minDate) && minDate <= safeMaxDate ? minDate : DEFAULT_MIN_DATE;
@@ -127,49 +128,68 @@ export function AppDateField({
 
   return (
     <>
-      <Pressable onPress={openPicker} style={[styles.field, error && styles.fieldError]}>
+      <Pressable
+        onPress={openPicker}
+        style={[
+          styles.field,
+          {
+            backgroundColor: themeColors.inputBackground,
+            borderColor: error ? themeColors.danger : themeColors.inputBorder
+          }
+        ]}
+      >
         <View style={styles.fieldTextWrap}>
-          <Text style={styles.fieldLabel}>{label}</Text>
-          <Text variant="titleSmall" style={styles.fieldValue} numberOfLines={1}>
+          <Text style={[styles.fieldLabel, { color: themeColors.textSecondary }]}>{label}</Text>
+          <Text variant="titleSmall" style={[styles.fieldValue, { color: themeColors.text }]} numberOfLines={1}>
             {displayValue}
           </Text>
         </View>
-        <MaterialCommunityIcons name="calendar-month-outline" color={colors.primary} size={20} />
+        <MaterialCommunityIcons name="calendar-month-outline" color={themeColors.primary} size={20} />
       </Pressable>
       {helperText ? (
-        <Text style={[styles.helperText, error && styles.errorText]}>{helperText}</Text>
+        <Text style={[styles.helperText, { color: error ? themeColors.danger : themeColors.textSecondary }]}>
+          {helperText}
+        </Text>
       ) : null}
 
       <Modal animationType="slide" onRequestClose={() => setVisible(false)} transparent visible={visible}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.sheet}>
-            <View style={styles.sheetHandle} />
-            <Text variant="titleMedium" style={styles.sheetTitle}>
+        <View style={[styles.modalOverlay, { backgroundColor: themeColors.overlay }]}>
+          <View style={[styles.sheet, { backgroundColor: themeColors.surfaceElevated }]}>
+            <View style={[styles.sheetHandle, { backgroundColor: themeColors.textSecondary }]} />
+            <Text variant="titleMedium" style={[styles.sheetTitle, { color: themeColors.text }]}>
               {labels.selectDate}
             </Text>
             <View style={styles.yearControl}>
               <Pressable
                 disabled={!canGoPreviousYear}
                 onPress={() => changeYear(draftYear - 1)}
-                style={[styles.yearButton, !canGoPreviousYear && styles.disabledOption]}
+                style={[
+                  styles.yearButton,
+                  { backgroundColor: themeColors.card },
+                  !canGoPreviousYear && styles.disabledOption
+                ]}
               >
                 <MaterialCommunityIcons
                   name="chevron-left"
-                  color={canGoPreviousYear ? colors.text : colors.textSecondary}
+                  color={canGoPreviousYear ? themeColors.text : themeColors.textSecondary}
                   size={22}
                 />
               </Pressable>
-              <Text variant="headlineSmall" style={styles.yearText}>
+              <Text variant="headlineSmall" style={[styles.yearText, { color: themeColors.text }]}>
                 {draftYear}年
               </Text>
               <Pressable
                 disabled={!canGoNextYear}
                 onPress={() => changeYear(draftYear + 1)}
-                style={[styles.yearButton, !canGoNextYear && styles.disabledOption]}
+                style={[
+                  styles.yearButton,
+                  { backgroundColor: themeColors.card },
+                  !canGoNextYear && styles.disabledOption
+                ]}
               >
                 <MaterialCommunityIcons
                   name="chevron-right"
-                  color={canGoNextYear ? colors.text : colors.textSecondary}
+                  color={canGoNextYear ? themeColors.text : themeColors.textSecondary}
                   size={22}
                 />
               </Pressable>
@@ -215,11 +235,11 @@ export function AppDateField({
             </ScrollView>
 
             <View style={styles.sheetActions}>
-              <Pressable onPress={() => setVisible(false)} style={styles.secondaryAction}>
-                <Text style={styles.secondaryActionText}>{labels.cancel}</Text>
+              <Pressable onPress={() => setVisible(false)} style={[styles.secondaryAction, { backgroundColor: themeColors.card }]}>
+                <Text style={[styles.secondaryActionText, { color: themeColors.text }]}>{labels.cancel}</Text>
               </Pressable>
-              <Pressable onPress={confirmDate} style={styles.primaryAction}>
-                <Text style={styles.primaryActionText}>{labels.confirm}</Text>
+              <Pressable onPress={confirmDate} style={[styles.primaryAction, { backgroundColor: themeColors.primary }]}>
+                <Text style={[styles.primaryActionText, { color: themeColors.background }]}>{labels.confirm}</Text>
               </Pressable>
             </View>
           </View>
@@ -240,17 +260,25 @@ function ChoiceButton({
   label: string;
   onPress: () => void;
 }) {
+  const { colors: themeColors } = useAppTheme();
+
   return (
     <Pressable
       disabled={disabled}
       onPress={onPress}
       style={[
         styles.choiceButton,
-        active && styles.choiceButtonActive,
+        { backgroundColor: active ? themeColors.primary : themeColors.card },
         disabled && styles.disabledOption
       ]}
     >
-      <Text style={[styles.choiceText, active && styles.choiceTextActive]} numberOfLines={1}>
+      <Text
+        style={[
+          styles.choiceText,
+          { color: active ? themeColors.background : themeColors.textSecondary }
+        ]}
+        numberOfLines={1}
+      >
         {label}
       </Text>
     </Pressable>
@@ -260,8 +288,6 @@ function ChoiceButton({
 const styles = StyleSheet.create({
   field: {
     alignItems: 'center',
-    backgroundColor: colors.cardAlt,
-    borderColor: colors.border,
     borderRadius: radius.lg,
     borderWidth: 1,
     flexDirection: 'row',
@@ -269,39 +295,28 @@ const styles = StyleSheet.create({
     minHeight: 48,
     paddingHorizontal: spacing.md
   },
-  fieldError: {
-    borderColor: colors.danger
-  },
   fieldTextWrap: {
     flex: 1,
     marginRight: spacing.sm
   },
   fieldLabel: {
-    color: colors.textSecondary,
     fontSize: 12,
     fontWeight: '800'
   },
   fieldValue: {
-    color: colors.text,
     fontWeight: '900',
     marginTop: 2
   },
   helperText: {
-    color: colors.textSecondary,
     fontSize: 12,
     lineHeight: 18,
     marginTop: spacing.xs
   },
-  errorText: {
-    color: colors.danger
-  },
   modalOverlay: {
-    backgroundColor: 'rgba(0,0,0,0.54)',
     flex: 1,
     justifyContent: 'flex-end'
   },
   sheet: {
-    backgroundColor: colors.surfaceElevated,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     maxHeight: '86%',
@@ -309,7 +324,6 @@ const styles = StyleSheet.create({
   },
   sheetHandle: {
     alignSelf: 'center',
-    backgroundColor: colors.textSecondary,
     borderRadius: radius.full,
     height: 4,
     marginBottom: spacing.lg,
@@ -317,7 +331,6 @@ const styles = StyleSheet.create({
     width: 56
   },
   sheetTitle: {
-    color: colors.text,
     fontWeight: '900',
     marginBottom: spacing.md
   },
@@ -329,7 +342,6 @@ const styles = StyleSheet.create({
   },
   yearButton: {
     alignItems: 'center',
-    backgroundColor: colors.card,
     borderRadius: radius.full,
     height: 40,
     justifyContent: 'center',
@@ -339,7 +351,6 @@ const styles = StyleSheet.create({
     opacity: 0.38
   },
   yearText: {
-    color: colors.text,
     fontWeight: '900'
   },
   sheetBody: {
@@ -358,7 +369,6 @@ const styles = StyleSheet.create({
   },
   choiceButton: {
     alignItems: 'center',
-    backgroundColor: colors.card,
     borderRadius: radius.lg,
     flexBasis: '21%',
     flexGrow: 1,
@@ -366,16 +376,9 @@ const styles = StyleSheet.create({
     minHeight: 38,
     paddingHorizontal: spacing.sm
   },
-  choiceButtonActive: {
-    backgroundColor: colors.primary
-  },
   choiceText: {
-    color: colors.textSecondary,
     fontSize: 13,
     fontWeight: '800'
-  },
-  choiceTextActive: {
-    color: colors.background
   },
   sheetActions: {
     flexDirection: 'row',
@@ -384,26 +387,22 @@ const styles = StyleSheet.create({
   },
   primaryAction: {
     alignItems: 'center',
-    backgroundColor: colors.primary,
     borderRadius: radius.lg,
     flex: 1,
     justifyContent: 'center',
     minHeight: 48
   },
   primaryActionText: {
-    color: colors.background,
     fontWeight: '900'
   },
   secondaryAction: {
     alignItems: 'center',
-    backgroundColor: colors.card,
     borderRadius: radius.lg,
     flex: 1,
     justifyContent: 'center',
     minHeight: 48
   },
   secondaryActionText: {
-    color: colors.text,
     fontWeight: '900'
   }
 });

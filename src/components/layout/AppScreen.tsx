@@ -1,8 +1,8 @@
 import { PropsWithChildren } from 'react';
-import { ScrollView, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { ScrollView, StyleProp, View, ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { colors } from '@/theme/colors';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { spacing } from '@/theme/spacing';
 
 export type AppScreenProps = PropsWithChildren<{
@@ -19,10 +19,20 @@ export function AppScreen({
   contentStyle,
   scroll = true
 }: AppScreenProps) {
+  const { colors } = useAppTheme();
+  const containerStyle = {
+    backgroundColor: colors.background,
+    flex: 1
+  } as const;
+  const contentBaseStyle = {
+    flexGrow: 1,
+    padding: spacing.md
+  } as const;
+
   if (!scroll) {
     return (
-      <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-        <View style={[styles.content, { paddingBottom: bottomPadding }, contentStyle]}>
+      <SafeAreaView style={containerStyle} edges={['top', 'left', 'right']}>
+        <View style={[contentBaseStyle, { paddingBottom: bottomPadding }, contentStyle]}>
           {children}
         </View>
       </SafeAreaView>
@@ -30,9 +40,9 @@ export function AppScreen({
   }
 
   return (
-    <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
+    <SafeAreaView style={containerStyle} edges={['top', 'left', 'right']}>
       <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }, contentStyle]}
+        contentContainerStyle={[contentBaseStyle, { paddingBottom: bottomPadding }, contentStyle]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -41,14 +51,3 @@ export function AppScreen({
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    backgroundColor: colors.background,
-    flex: 1
-  },
-  content: {
-    flexGrow: 1,
-    padding: spacing.md
-  }
-});

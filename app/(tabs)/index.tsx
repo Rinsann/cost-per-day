@@ -5,6 +5,7 @@ import { Button, Card, IconButton, Menu, Searchbar, Text } from 'react-native-pa
 
 import { AppScreen } from '@/components/layout/AppScreen';
 import { messages } from '@/constants/messages';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
@@ -73,40 +74,41 @@ type ProductCardProps = {
 };
 
 function ProductCard({ product }: ProductCardProps) {
+  const { colors: themeColors } = useAppTheme();
   const targetMetrics = getTargetProgress(product);
 
   return (
     <Card
       mode="contained"
-      style={styles.productCard}
+      style={[styles.productCard, { backgroundColor: themeColors.card }]}
       onPress={() => router.push(`/product/${product.id}`)}
     >
       <Card.Content>
         <View style={styles.cardHeader}>
           <View style={styles.productTitleWrap}>
-            <Text variant="titleMedium" style={styles.productName}>
+            <Text variant="titleMedium" style={[styles.productName, { color: themeColors.text }]}>
               {product.name}
             </Text>
-            <Text variant="bodySmall" style={styles.productMeta}>
+            <Text variant="bodySmall" style={[styles.productMeta, { color: themeColors.textSecondary }]}>
               {categoryLabels[product.categoryId]}
             </Text>
           </View>
-          <Text variant="titleMedium" style={styles.dailyCost}>
+          <Text variant="titleMedium" style={[styles.dailyCost, { color: themeColors.primary }]}>
             {formatCurrency(product.dailyCost)}
           </Text>
         </View>
 
         <View style={styles.cardFooter}>
-          <Text variant="bodyMedium" style={styles.productInfo}>
+          <Text variant="bodyMedium" style={[styles.productInfo, { color: themeColors.textSecondary }]}>
             {labels.price} {formatCurrency(product.price)}
           </Text>
-          <Text variant="bodyMedium" style={styles.productInfo}>
+          <Text variant="bodyMedium" style={[styles.productInfo, { color: themeColors.textSecondary }]}>
             {labels.used} {product.usedDays} {labels.days}
           </Text>
         </View>
 
         {targetMetrics ? (
-          <Text variant="bodySmall" style={styles.targetInfo}>
+          <Text variant="bodySmall" style={[styles.targetInfo, { color: themeColors.primary }]}>
             {targetMetrics.isReached
               ? labels.targetReached
               : `${labels.targetPrefix} ${formatCurrency(targetMetrics.targetDailyCost)}${
@@ -129,32 +131,37 @@ type RecentTargetsCardProps = {
 };
 
 function RecentTargetsCard({ items }: RecentTargetsCardProps) {
+  const { colors: themeColors } = useAppTheme();
+
   return (
-    <Card mode="contained" style={styles.recentTargetCard}>
+    <Card mode="contained" style={[styles.recentTargetCard, { backgroundColor: themeColors.card }]}>
       <Card.Content>
-        <Text variant="titleMedium" style={styles.recentTargetTitle}>
+        <Text variant="titleMedium" style={[styles.recentTargetTitle, { color: themeColors.text }]}>
           {labels.recentTargets}
         </Text>
         <View style={styles.recentTargetList}>
           {items.map(({ product, targetProgress }) => (
-            <View key={product.id} style={styles.recentTargetItem}>
+            <View
+              key={product.id}
+              style={[styles.recentTargetItem, { backgroundColor: themeColors.cardAlt }]}
+            >
               <View style={styles.recentTargetTextWrap}>
-                <Text variant="titleSmall" style={styles.productName}>
+                <Text variant="titleSmall" style={[styles.productName, { color: themeColors.text }]}>
                   {product.name}
                 </Text>
                 {targetProgress.isReached ? (
-                  <Text variant="bodySmall" style={styles.recentTargetReached}>
+                  <Text variant="bodySmall" style={[styles.recentTargetReached, { color: themeColors.primary }]}>
                     {labels.targetReached}
                   </Text>
                 ) : (
                   <>
-                    <Text variant="bodySmall" style={styles.productMeta}>
+                    <Text variant="bodySmall" style={[styles.productMeta, { color: themeColors.textSecondary }]}>
                       {formatCurrency(targetProgress.currentDailyCost)}
                       {labels.perDay} {'->'} {labels.targetPrefix}{' '}
                       {formatCurrency(targetProgress.targetDailyCost)}
                       {labels.perDay}
                     </Text>
-                    <Text variant="bodySmall" style={styles.productMeta}>
+                    <Text variant="bodySmall" style={[styles.productMeta, { color: themeColors.textSecondary }]}>
                       {labels.remainingPrefix} {targetProgress.remainingDays} {labels.days}
                     </Text>
                   </>
@@ -163,7 +170,7 @@ function RecentTargetsCard({ items }: RecentTargetsCardProps) {
               <IconButton
                 icon="chevron-right"
                 size={18}
-                iconColor={colors.textSecondary}
+                iconColor={themeColors.textSecondary}
                 onPress={() => router.push(`/product/${product.id}`)}
                 style={styles.recentTargetIcon}
               />
@@ -176,6 +183,7 @@ function RecentTargetsCard({ items }: RecentTargetsCardProps) {
 }
 
 export default function HomeScreen() {
+  const { colors: themeColors } = useAppTheme();
   const [query, setQuery] = useState('');
   const [sortMode, setSortMode] = useState<SortMode>('dailyCostDesc');
   const [sortMenuVisible, setSortMenuVisible] = useState(false);
@@ -261,45 +269,45 @@ export default function HomeScreen() {
   return (
     <AppScreen>
         <View style={styles.header}>
-          <Text variant="headlineSmall" style={styles.title}>
+          <Text variant="headlineSmall" style={[styles.title, { color: themeColors.text }]}>
             {labels.title}
           </Text>
         </View>
 
-        <Card mode="contained" style={styles.totalCard}>
+        <Card mode="contained" style={[styles.totalCard, { backgroundColor: themeColors.cardAlt }]}>
           <Card.Content>
             <View style={styles.totalHeader}>
-              <Text variant="labelLarge" style={styles.totalLabel}>
+              <Text variant="labelLarge" style={[styles.totalLabel, { color: themeColors.textSecondary }]}>
                 {labels.currentDailyCost}
               </Text>
               <View style={styles.headerActions}>
                 <IconButton
                   icon="plus-circle-outline"
-                  iconColor={colors.primary}
+                  iconColor={themeColors.primary}
                   size={18}
                   onPress={() => router.push('/add')}
                   style={styles.headerActionButton}
                 />
                 <IconButton
                   icon="chart-box-outline"
-                  iconColor={colors.textSecondary}
+                  iconColor={themeColors.textSecondary}
                   size={18}
                   onPress={() => router.push('/stats')}
                   style={styles.headerActionButton}
                 />
                 <IconButton
                   icon="cog-outline"
-                  iconColor={colors.textSecondary}
+                  iconColor={themeColors.textSecondary}
                   size={18}
                   onPress={() => router.push('/settings')}
                   style={styles.headerActionButton}
                 />
               </View>
             </View>
-            <Text variant="displaySmall" style={styles.totalValue}>
+            <Text variant="displaySmall" style={[styles.totalValue, { color: themeColors.text }]}>
               {formatCurrency(currentDailyCost)}
             </Text>
-            <Text variant="bodySmall" style={styles.totalHint}>
+            <Text variant="bodySmall" style={[styles.totalHint, { color: themeColors.textSecondary }]}>
               {labels.currentDailyCostHint}
             </Text>
           </Card.Content>
@@ -311,12 +319,14 @@ export default function HomeScreen() {
           value={query}
           onChangeText={setQuery}
           placeholder={labels.searchPlaceholder}
-          style={styles.searchbar}
-          inputStyle={styles.searchInput}
+          style={[styles.searchbar, { backgroundColor: themeColors.card }]}
+          inputStyle={[styles.searchInput, { color: themeColors.text }]}
+          iconColor={themeColors.textSecondary}
+          placeholderTextColor={themeColors.textSecondary}
         />
 
         <View style={styles.toolbar}>
-          <Text variant="titleMedium" style={styles.sectionTitle}>
+          <Text variant="titleMedium" style={[styles.sectionTitle, { color: themeColors.text }]}>
             {labels.productSection}
           </Text>
 
@@ -329,7 +339,7 @@ export default function HomeScreen() {
                 icon="sort"
                 mode="text"
                 onPress={() => setSortMenuVisible(true)}
-                textColor={colors.primary}
+                textColor={themeColors.primary}
               >
                 {sortLabels[sortMode]}
               </Button>
@@ -364,12 +374,12 @@ export default function HomeScreen() {
           ))}
 
           {visibleProducts.length === 0 ? (
-            <Card mode="contained" style={styles.emptyCard}>
+            <Card mode="contained" style={[styles.emptyCard, { backgroundColor: themeColors.card }]}>
               <Card.Content>
-                <Text variant="titleMedium" style={styles.emptyTitle}>
+                <Text variant="titleMedium" style={[styles.emptyTitle, { color: themeColors.text }]}>
                   {products.length === 0 ? messages.empty.productsTitle : labels.emptyTitle}
                 </Text>
-                <Text variant="bodyMedium" style={styles.emptyText}>
+                <Text variant="bodyMedium" style={[styles.emptyText, { color: themeColors.textSecondary }]}>
                   {products.length === 0 ? messages.empty.productsDescription : labels.emptyHint}
                 </Text>
               </Card.Content>

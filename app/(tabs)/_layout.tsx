@@ -7,8 +7,8 @@ import { Text } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { QuickExpenseSheet } from '@/components/expense/QuickExpenseSheet';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { ExpenseRecordsProvider } from '@/context/ExpenseRecordsContext';
-import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 
 type TabIconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -63,6 +63,7 @@ type AppTabBarProps = {
 
 function AppTabBar({ state, navigation, onQuickPress }: AppTabBarProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useAppTheme();
 
   function renderTabButton(route: (typeof state.routes)[number], index: number) {
     const meta = tabMeta[route.name];
@@ -90,10 +91,28 @@ function AppTabBar({ state, navigation, onQuickPress }: AppTabBarProps) {
   }
 
   return (
-    <View style={[styles.tabBarWrap, { paddingBottom: Math.max(insets.bottom, 8) }]}>
+    <View
+      style={[
+        styles.tabBarWrap,
+        {
+          backgroundColor: colors.tabBar,
+          borderTopColor: colors.outline,
+          paddingBottom: Math.max(insets.bottom, 8)
+        }
+      ]}
+    >
       <View style={styles.tabBar}>
         {state.routes.slice(0, 2).map(renderTabButton)}
-        <Pressable onPress={onQuickPress} style={styles.quickButton}>
+        <Pressable
+          onPress={onQuickPress}
+          style={[
+            styles.quickButton,
+            {
+              backgroundColor: colors.primary,
+              shadowColor: colors.primary
+            }
+          ]}
+        >
           <MaterialCommunityIcons name="plus" color={colors.background} size={30} />
         </Pressable>
         {state.routes.slice(2).map((route, index) => renderTabButton(route, index + 2))}
@@ -131,8 +150,6 @@ export default function TabLayout() {
 
 const styles = StyleSheet.create({
   tabBarWrap: {
-    backgroundColor: colors.background,
-    borderTopColor: colors.outline,
     borderTopWidth: 1,
     paddingHorizontal: spacing.md,
     paddingTop: spacing.sm
@@ -155,12 +172,10 @@ const styles = StyleSheet.create({
   },
   quickButton: {
     alignItems: 'center',
-    backgroundColor: colors.primary,
     borderRadius: 22,
     height: 56,
     justifyContent: 'center',
     marginHorizontal: spacing.sm,
-    shadowColor: colors.primary,
     shadowOffset: { height: 8, width: 0 },
     shadowOpacity: 0.24,
     shadowRadius: 14,

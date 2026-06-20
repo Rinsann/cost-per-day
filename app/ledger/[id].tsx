@@ -14,6 +14,7 @@ import {
 import { AppScreen } from '@/components/layout/AppScreen';
 import { AppCard } from '@/components/ui/AppCard';
 import { getExpenseCategoryIcon } from '@/constants/expenseCategories';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { ledgerRepository } from '@/repositories/ledgerRepository';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -71,13 +72,15 @@ type DetailRowProps = {
   valueColor?: string;
 };
 
-function DetailRow({ label, value, valueColor = colors.text }: DetailRowProps) {
+function DetailRow({ label, value, valueColor }: DetailRowProps) {
+  const { colors: themeColors } = useAppTheme();
+
   return (
-    <View style={styles.detailRow}>
-      <Text variant="bodyMedium" style={styles.detailLabel}>
+    <View style={[styles.detailRow, { borderBottomColor: themeColors.border }]}>
+      <Text variant="bodyMedium" style={[styles.detailLabel, { color: themeColors.textSecondary }]}>
         {label}
       </Text>
-      <Text variant="bodyLarge" style={[styles.detailValue, { color: valueColor }]}>
+      <Text variant="bodyLarge" style={[styles.detailValue, { color: valueColor ?? themeColors.text }]}>
         {value}
       </Text>
     </View>
@@ -85,6 +88,7 @@ function DetailRow({ label, value, valueColor = colors.text }: DetailRowProps) {
 }
 
 export default function LedgerDetailScreen() {
+  const { colors: themeColors } = useAppTheme();
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const recordId = getParamValue(params.id);
   const [record, setRecord] = useState<ExpenseRecord | null>(null);
@@ -141,7 +145,7 @@ export default function LedgerDetailScreen() {
   }
 
   const recordType = record ? getRecordType(record) : 'expense';
-  const amountColor = recordType === 'income' ? colors.income : colors.expense;
+  const amountColor = recordType === 'income' ? themeColors.income : themeColors.expense;
 
   return (
     <AppScreen>
@@ -153,13 +157,13 @@ export default function LedgerDetailScreen() {
                 <View style={styles.headerActions}>
                   <IconButton
                     icon="pencil-outline"
-                    iconColor={colors.primary}
+                    iconColor={themeColors.primary}
                     accessibilityLabel={labels.edit}
                     onPress={() => router.push(`/ledger/${record.id}/edit`)}
                   />
                   <IconButton
                     icon="delete-outline"
-                    iconColor={colors.danger}
+                    iconColor={themeColors.danger}
                     accessibilityLabel={labels.delete}
                     onPress={() => setDeleteDialogVisible(true)}
                   />
@@ -171,14 +175,14 @@ export default function LedgerDetailScreen() {
 
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator color={colors.primary} />
+          <ActivityIndicator color={themeColors.primary} />
         </View>
       ) : null}
 
       {!loading && !record ? (
         <AppCard>
           <Card.Content style={styles.emptyContent}>
-            <Text variant="titleLarge" style={styles.emptyTitle}>
+            <Text variant="titleLarge" style={[styles.emptyTitle, { color: themeColors.text }]}>
               {labels.notFound}
             </Text>
             <Button mode="contained" onPress={() => router.replace('/ledger')}>
@@ -192,7 +196,7 @@ export default function LedgerDetailScreen() {
         <View style={styles.content}>
           <AppCard elevated style={styles.heroCard}>
             <Card.Content style={styles.heroContent}>
-              <View style={styles.recordIcon}>
+              <View style={[styles.recordIcon, { backgroundColor: themeColors.surface }]}>
                 <IconButton
                   icon={getExpenseCategoryIcon(record.category, recordType)}
                   iconColor={amountColor}
@@ -200,14 +204,14 @@ export default function LedgerDetailScreen() {
                   style={styles.recordIconButton}
                 />
               </View>
-              <Text variant="labelLarge" style={styles.heroLabel}>
+              <Text variant="labelLarge" style={[styles.heroLabel, { color: themeColors.textSecondary }]}>
                 {recordType === 'income' ? labels.income : labels.expense}
               </Text>
               <Text variant="displaySmall" style={[styles.amountText, { color: amountColor }]}>
                 {recordType === 'income' ? '+' : '-'}
                 {formatCurrency(record.amount)}
               </Text>
-              <Text variant="titleMedium" style={styles.categoryText}>
+              <Text variant="titleMedium" style={[styles.categoryText, { color: themeColors.text }]}>
                 {record.category}
               </Text>
             </Card.Content>
@@ -229,10 +233,10 @@ export default function LedgerDetailScreen() {
 
           <AppCard>
             <Card.Content>
-              <Text variant="titleMedium" style={styles.cardTitle}>
+              <Text variant="titleMedium" style={[styles.cardTitle, { color: themeColors.text }]}>
                 {labels.note}
               </Text>
-              <Text variant="bodyMedium" style={styles.noteText}>
+              <Text variant="bodyMedium" style={[styles.noteText, { color: themeColors.textSecondary }]}>
                 {record.note ?? labels.noNote}
               </Text>
             </Card.Content>
@@ -244,11 +248,15 @@ export default function LedgerDetailScreen() {
         <Dialog
           visible={deleteDialogVisible}
           onDismiss={() => setDeleteDialogVisible(false)}
-          style={styles.dialog}
+          style={[styles.dialog, { backgroundColor: themeColors.surfaceElevated }]}
         >
-          <Dialog.Title style={styles.dialogTitle}>{labels.deleteTitle}</Dialog.Title>
+          <Dialog.Title style={[styles.dialogTitle, { color: themeColors.text }]}>
+            {labels.deleteTitle}
+          </Dialog.Title>
           <Dialog.Content>
-            <Text style={styles.dialogDescription}>{labels.deleteDescription}</Text>
+            <Text style={[styles.dialogDescription, { color: themeColors.textSecondary }]}>
+              {labels.deleteDescription}
+            </Text>
           </Dialog.Content>
           <View style={styles.dialogActions}>
             <Button mode="text" disabled={deleting} onPress={() => setDeleteDialogVisible(false)}>
@@ -258,7 +266,7 @@ export default function LedgerDetailScreen() {
               mode="text"
               loading={deleting}
               disabled={deleting}
-              textColor={colors.danger}
+              textColor={themeColors.danger}
               onPress={handleDelete}
             >
               {labels.delete}

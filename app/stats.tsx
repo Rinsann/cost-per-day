@@ -6,6 +6,7 @@ import { Button, Card, List, Text } from 'react-native-paper';
 import { Screen } from '@/components/layout/Screen';
 import { AppCard } from '@/components/ui/AppCard';
 import { messages } from '@/constants/messages';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { getProducts } from '@/storage/productStorage';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -38,12 +39,14 @@ type OverviewItemProps = {
 };
 
 function OverviewItem({ label, value }: OverviewItemProps) {
+  const { colors: themeColors } = useAppTheme();
+
   return (
-    <View style={styles.overviewItem}>
-      <Text variant="bodySmall" style={styles.mutedText}>
+    <View style={[styles.overviewItem, { backgroundColor: themeColors.card }]}>
+      <Text variant="bodySmall" style={[styles.mutedText, { color: themeColors.textSecondary }]}>
         {label}
       </Text>
-      <Text variant="titleLarge" style={styles.overviewValue}>
+      <Text variant="titleLarge" style={[styles.overviewValue, { color: themeColors.primary }]}>
         {value}
       </Text>
     </View>
@@ -57,21 +60,28 @@ type ProductRankCardProps = {
 };
 
 function ProductRankCard({ title, products, mode }: ProductRankCardProps) {
+  const { colors: themeColors } = useAppTheme();
+
   return (
     <AppCard style={styles.card}>
       <Card.Content>
-        <Text variant="titleMedium" style={styles.sectionTitle}>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: themeColors.text }]}>
           {title}
         </Text>
         {products.map((product) => (
           <List.Item
             key={product.id}
             title={product.name}
-            titleStyle={styles.listTitle}
+            titleStyle={[styles.listTitle, { color: themeColors.text }]}
             description={`${product.categoryName} / ${labels.used} ${product.usedDays} ${labels.days}`}
-            descriptionStyle={styles.listDescription}
+            descriptionStyle={[styles.listDescription, { color: themeColors.textSecondary }]}
             right={() => (
-              <Text style={mode === 'cost' ? styles.costValue : styles.daysValue}>
+              <Text
+                style={[
+                  mode === 'cost' ? styles.costValue : styles.daysValue,
+                  { color: mode === 'cost' ? themeColors.primary : themeColors.text }
+                ]}
+              >
                 {mode === 'cost'
                   ? formatCurrency(product.dailyCost)
                   : `${product.usedDays} ${labels.days}`}
@@ -89,23 +99,27 @@ type CategoryStatsCardProps = {
 };
 
 function CategoryStatsCard({ categories }: CategoryStatsCardProps) {
+  const { colors: themeColors } = useAppTheme();
+
   return (
     <AppCard style={styles.card}>
       <Card.Content>
-        <Text variant="titleMedium" style={styles.sectionTitle}>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: themeColors.text }]}>
           {labels.categoryStats}
         </Text>
         {categories.map((category) => (
           <List.Item
             key={category.categoryId}
             title={category.categoryName}
-            titleStyle={styles.listTitle}
+            titleStyle={[styles.listTitle, { color: themeColors.text }]}
             description={`${category.productCount} ${labels.countUnit} / ${labels.categoryAmount} ${formatCurrency(
               category.totalAmount
             )}`}
-            descriptionStyle={styles.listDescription}
+            descriptionStyle={[styles.listDescription, { color: themeColors.textSecondary }]}
             right={() => (
-              <Text style={styles.costValue}>{formatCurrency(category.currentDailyCost)}</Text>
+              <Text style={[styles.costValue, { color: themeColors.primary }]}>
+                {formatCurrency(category.currentDailyCost)}
+              </Text>
             )}
           />
         ))}
@@ -115,6 +129,7 @@ function CategoryStatsCard({ categories }: CategoryStatsCardProps) {
 }
 
 export default function StatsScreen() {
+  const { colors: themeColors } = useAppTheme();
   const [products, setProducts] = useState<Product[]>([]);
 
   useFocusEffect(
@@ -140,10 +155,10 @@ export default function StatsScreen() {
       <Screen>
         <AppCard style={styles.card}>
           <Card.Content style={styles.emptyContent}>
-            <Text variant="titleLarge" style={styles.emptyTitle}>
+            <Text variant="titleLarge" style={[styles.emptyTitle, { color: themeColors.text }]}>
               {messages.empty.statsTitle}
             </Text>
-            <Text variant="bodyMedium" style={styles.emptyHint}>
+            <Text variant="bodyMedium" style={[styles.emptyHint, { color: themeColors.textSecondary }]}>
               {messages.empty.statsDescription}
             </Text>
             <Button mode="contained" onPress={() => router.push('/add')} style={styles.addButton}>
@@ -157,9 +172,9 @@ export default function StatsScreen() {
 
   return (
     <Screen>
-      <AppCard style={styles.heroCard}>
+      <AppCard style={[styles.heroCard, { backgroundColor: themeColors.cardAlt }]}>
         <Card.Content>
-          <Text variant="titleMedium" style={styles.heroTitle}>
+          <Text variant="titleMedium" style={[styles.heroTitle, { color: themeColors.text }]}>
             {labels.overview}
           </Text>
           <View style={styles.overviewGrid}>

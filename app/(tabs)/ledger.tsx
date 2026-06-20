@@ -6,6 +6,7 @@ import { Card, Text } from 'react-native-paper';
 
 import { Screen } from '@/components/layout/Screen';
 import { getExpenseCategoryIcon } from '@/constants/expenseCategories';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { useExpenseRecords } from '@/context/ExpenseRecordsContext';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -47,6 +48,7 @@ function getRecordIcon(record: ExpenseRecord) {
 }
 
 export default function LedgerTab() {
+  const { colors: themeColors } = useAppTheme();
   const { records, refreshRecords } = useExpenseRecords();
   const now = new Date();
   const today = getDateString(now);
@@ -89,31 +91,31 @@ export default function LedgerTab() {
   }, [now, recentRecords]);
 
   const monthBalance = monthSummary.income - monthSummary.expense;
-  const monthBalanceColor = monthBalance >= 0 ? colors.income : colors.expense;
+  const monthBalanceColor = monthBalance >= 0 ? themeColors.income : themeColors.expense;
 
   return (
     <Screen>
       <View style={styles.header}>
-        <Text variant="headlineSmall" style={styles.title}>
+        <Text variant="headlineSmall" style={[styles.title, { color: themeColors.text }]}>
           {labels.title}
         </Text>
       </View>
 
-      <Card mode="contained" style={styles.heroCard}>
+      <Card mode="contained" style={[styles.heroCard, { backgroundColor: themeColors.cardAlt }]}>
         <Card.Content>
           <Text variant="labelLarge" style={styles.heroLabel}>
             {labels.monthExpense}
           </Text>
-          <Text variant="displaySmall" style={styles.monthExpenseValue}>
+          <Text variant="displaySmall" style={[styles.monthExpenseValue, { color: themeColors.text }]}>
             {formatMoney(monthSummary.expense)}
           </Text>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
               <View style={styles.summaryIcon}>
-                <MaterialCommunityIcons name="arrow-down-left" color={colors.primary} size={18} />
+                <MaterialCommunityIcons name="arrow-down-left" color={themeColors.primary} size={18} />
               </View>
               <View>
-                <Text variant="bodySmall" style={styles.mutedText}>
+                <Text variant="bodySmall" style={[styles.mutedText, { color: themeColors.textSecondary }]}>
                   {labels.monthIncome}
                 </Text>
                 <Text variant="titleSmall" style={styles.incomeValue}>
@@ -131,7 +133,7 @@ export default function LedgerTab() {
                 <MaterialCommunityIcons name="wallet-outline" color={monthBalanceColor} size={18} />
               </View>
               <View>
-                <Text variant="bodySmall" style={styles.mutedText}>
+                <Text variant="bodySmall" style={[styles.mutedText, { color: themeColors.textSecondary }]}>
                   {labels.monthBalance}
                 </Text>
                 <Text variant="titleSmall" style={[styles.balanceSummaryValue, { color: monthBalanceColor }]}>
@@ -144,18 +146,18 @@ export default function LedgerTab() {
       </Card>
 
       <View style={styles.sectionHeader}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>
+        <Text variant="titleMedium" style={[styles.sectionTitle, { color: themeColors.textSecondary }]}>
           {labels.recentRecords}
         </Text>
       </View>
 
       {recordGroups.length === 0 ? (
-        <Card mode="contained" style={styles.emptyCard}>
+        <Card mode="contained" style={[styles.emptyCard, { backgroundColor: themeColors.card }]}>
           <Card.Content>
-            <Text variant="titleMedium" style={styles.emptyTitle}>
+            <Text variant="titleMedium" style={[styles.emptyTitle, { color: themeColors.text }]}>
               {labels.emptyTitle}
             </Text>
-            <Text variant="bodyMedium" style={styles.emptyDescription}>
+            <Text variant="bodyMedium" style={[styles.emptyDescription, { color: themeColors.textSecondary }]}>
               {labels.emptyDescription}
             </Text>
           </Card.Content>
@@ -165,7 +167,7 @@ export default function LedgerTab() {
           {recordGroups.map((group) => (
             <View key={group.date} style={styles.recordGroup}>
               <View style={styles.groupHeader}>
-                <Text variant="labelLarge" style={styles.groupDate}>
+                <Text variant="labelLarge" style={[styles.groupDate, { color: themeColors.textSecondary }]}>
                   {group.label}
                 </Text>
                 <View style={styles.groupSummary}>
@@ -181,23 +183,24 @@ export default function LedgerTab() {
                   ) : null}
                 </View>
               </View>
-              <View style={styles.recordList}>
+              <View style={[styles.recordList, { backgroundColor: themeColors.card }]}>
                 {group.records.map((record, index) => {
                   const isIncome = getRecordType(record) === 'income';
-                  const amountColor = isIncome ? colors.income : colors.expense;
+                  const amountColor = isIncome ? themeColors.income : themeColors.expense;
 
                   return (
                     <Pressable
                       key={record.id}
                       onPress={() => router.push(`/ledger/${record.id}`)}
-                      android_ripple={{ color: 'rgba(255, 255, 255, 0.06)' }}
+                      android_ripple={{ color: themeColors.ripple }}
                       style={({ pressed }) => [
                         styles.recordItem,
+                        { borderBottomColor: themeColors.outline },
                         index === group.records.length - 1 && styles.recordItemLast,
-                        pressed && styles.recordItemPressed
+                        pressed && { backgroundColor: themeColors.surfacePressed }
                       ]}
                     >
-                      <View style={styles.recordIcon}>
+                      <View style={[styles.recordIcon, { backgroundColor: themeColors.cardAlt }]}>
                         <MaterialCommunityIcons
                           name={getRecordIcon(record)}
                           color={amountColor}
@@ -205,10 +208,10 @@ export default function LedgerTab() {
                         />
                       </View>
                       <View style={styles.recordMain}>
-                        <Text variant="titleSmall" style={styles.recordTitle}>
+                        <Text variant="titleSmall" style={[styles.recordTitle, { color: themeColors.text }]}>
                           {record.note || record.category}
                         </Text>
-                        <Text variant="bodySmall" style={styles.recordMeta}>
+                        <Text variant="bodySmall" style={[styles.recordMeta, { color: themeColors.textSecondary }]}>
                           {record.category}
                         </Text>
                       </View>
@@ -226,12 +229,15 @@ export default function LedgerTab() {
 
       <Pressable
         onPress={() => router.push('/insights')}
-        style={({ pressed }) => [styles.viewAllButton, pressed && styles.viewAllButtonPressed]}
+        style={({ pressed }) => [
+          styles.viewAllButton,
+          pressed && { backgroundColor: themeColors.surfacePressed }
+        ]}
       >
-        <Text variant="titleSmall" style={styles.viewAllText}>
+        <Text variant="titleSmall" style={[styles.viewAllText, { color: themeColors.primary }]}>
           {labels.viewAllRecords}
         </Text>
-        <MaterialCommunityIcons name="chevron-right" color={colors.primary} size={20} />
+        <MaterialCommunityIcons name="chevron-right" color={themeColors.primary} size={20} />
       </Pressable>
     </Screen>
   );
@@ -246,7 +252,6 @@ const styles = StyleSheet.create({
     fontWeight: '900'
   },
   heroCard: {
-    backgroundColor: colors.cardAlt,
     borderRadius: 24,
     marginBottom: spacing.lg
   },
@@ -302,7 +307,6 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
   emptyCard: {
-    backgroundColor: colors.card,
     borderRadius: 24
   },
   emptyTitle: {
@@ -352,7 +356,6 @@ const styles = StyleSheet.create({
     color: colors.income
   },
   recordList: {
-    backgroundColor: colors.card,
     borderRadius: 24,
     overflow: 'hidden'
   },
@@ -367,12 +370,9 @@ const styles = StyleSheet.create({
   recordItemLast: {
     borderBottomWidth: 0
   },
-  recordItemPressed: {
-    backgroundColor: colors.cardAlt
-  },
+  recordItemPressed: {},
   recordIcon: {
     alignItems: 'center',
-    backgroundColor: colors.cardAlt,
     borderRadius: radius.full,
     height: 44,
     justifyContent: 'center',
@@ -397,6 +397,7 @@ const styles = StyleSheet.create({
   viewAllButton: {
     alignItems: 'center',
     alignSelf: 'center',
+    borderRadius: radius.full,
     flexDirection: 'row',
     gap: spacing.xs,
     marginTop: spacing.md,

@@ -5,6 +5,7 @@ import { Button, Card, HelperText, Menu, Text, TextInput } from 'react-native-pa
 import { AppCard } from '@/components/ui/AppCard';
 import { AppDateField } from '@/components/ui/AppDateField';
 import { productCategories } from '@/constants/categories';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
@@ -52,6 +53,7 @@ export function ProductForm({
   submittingLabel,
   onSubmit
 }: ProductFormProps) {
+  const { colors: themeColors } = useAppTheme();
   const [name, setName] = useState(initialProduct?.name ?? '');
   const [categoryId, setCategoryId] = useState<ProductCategoryId>(
     initialProduct?.categoryId ?? 'digital'
@@ -128,9 +130,9 @@ export function ProductForm({
   }
 
   return (
-    <AppCard style={styles.card}>
+    <AppCard style={[styles.card, { backgroundColor: themeColors.surface }]}>
       <Card.Content style={styles.content}>
-        <Text variant="titleLarge" style={styles.title}>
+        <Text variant="titleLarge" style={[styles.title, { color: themeColors.text }]}>
           {title}
         </Text>
 
@@ -142,7 +144,10 @@ export function ProductForm({
             onChangeText={setName}
             error={hasNameError}
             returnKeyType="next"
-            style={styles.input}
+            style={[styles.input, { backgroundColor: themeColors.inputBackground }]}
+            textColor={themeColors.text}
+            outlineColor={themeColors.inputBorder}
+            activeOutlineColor={themeColors.primary}
           />
           <HelperText type="error" visible={hasNameError}>
             {labels.required}
@@ -159,7 +164,10 @@ export function ProductForm({
                 mode="outlined"
                 value={selectedCategoryName}
                 editable={false}
-                style={styles.input}
+                style={[styles.input, { backgroundColor: themeColors.inputBackground }]}
+                textColor={themeColors.text}
+                outlineColor={themeColors.inputBorder}
+                activeOutlineColor={themeColors.primary}
                 right={
                   <TextInput.Icon
                     icon="menu-down"
@@ -197,7 +205,10 @@ export function ProductForm({
             onChangeText={setPrice}
             error={hasPriceError}
             keyboardType="decimal-pad"
-            style={styles.input}
+            style={[styles.input, { backgroundColor: themeColors.inputBackground }]}
+            textColor={themeColors.text}
+            outlineColor={themeColors.inputBorder}
+            activeOutlineColor={themeColors.primary}
             left={<TextInput.Affix text="¥" />}
           />
           <HelperText type="error" visible={hasPriceError}>
@@ -231,7 +242,10 @@ export function ProductForm({
             error={hasTargetDailyCostError}
             keyboardType="decimal-pad"
             placeholder={labels.targetDailyCostPlaceholder}
-            style={styles.input}
+            style={[styles.input, { backgroundColor: themeColors.inputBackground }]}
+            textColor={themeColors.text}
+            outlineColor={themeColors.inputBorder}
+            activeOutlineColor={themeColors.primary}
             left={<TextInput.Affix text="¥" />}
           />
           <HelperText type={hasTargetDailyCostError ? 'error' : 'info'} visible>
@@ -248,7 +262,10 @@ export function ProductForm({
           onChangeText={setNote}
           multiline
           numberOfLines={4}
-          style={styles.input}
+          style={[styles.input, { backgroundColor: themeColors.inputBackground }]}
+          textColor={themeColors.text}
+          outlineColor={themeColors.inputBorder}
+          activeOutlineColor={themeColors.primary}
         />
 
         <Button
@@ -268,7 +285,6 @@ export function ProductForm({
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
     borderRadius: 24
   },
   content: {
@@ -279,9 +295,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     marginBottom: spacing.sm
   },
-  input: {
-    backgroundColor: colors.cardAlt
-  },
+  input: {},
   categoryPressable: {
     bottom: 0,
     left: 0,

@@ -6,6 +6,7 @@ import { ActivityIndicator, Button, Card, Text } from 'react-native-paper';
 import { Screen } from '@/components/layout/Screen';
 import { ProductForm, ProductFormValues } from '@/components/product/ProductForm';
 import { AppCard } from '@/components/ui/AppCard';
+import { useAppTheme } from '@/context/AppThemeContext';
 import { getProductById, updateProduct } from '@/storage/productStorage';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -31,6 +32,7 @@ function getParamValue(value: string | string[] | undefined) {
 }
 
 export default function EditProductScreen() {
+  const { colors: themeColors } = useAppTheme();
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const productId = getParamValue(params.id);
   const [product, setProduct] = useState<Product | null>(null);
@@ -88,14 +90,14 @@ export default function EditProductScreen() {
     <Screen>
       {loading ? (
         <View style={styles.loadingWrap}>
-          <ActivityIndicator color={colors.primary} />
+          <ActivityIndicator color={themeColors.primary} />
         </View>
       ) : null}
 
       {!loading && !product ? (
         <AppCard style={styles.card}>
           <Card.Content style={styles.emptyContent}>
-            <Text variant="titleLarge" style={styles.emptyTitle}>
+            <Text variant="titleLarge" style={[styles.emptyTitle, { color: themeColors.text }]}>
               {labels.notFound}
             </Text>
             <Button mode="contained" onPress={() => router.replace('/')} style={styles.homeButton}>
@@ -126,7 +128,6 @@ const styles = StyleSheet.create({
     minHeight: 220
   },
   card: {
-    backgroundColor: colors.card,
     borderRadius: 24
   },
   emptyContent: {

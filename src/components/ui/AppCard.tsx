@@ -1,8 +1,8 @@
 import { PropsWithChildren } from 'react';
-import { StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import { StyleProp, ViewStyle } from 'react-native';
 import { Card } from 'react-native-paper';
 
-import { colors } from '@/theme/colors';
+import { useAppTheme } from '@/context/AppThemeContext';
 
 type AppCardProps = PropsWithChildren<{
   elevated?: boolean;
@@ -11,25 +11,23 @@ type AppCardProps = PropsWithChildren<{
 }>;
 
 export function AppCard({ children, elevated = false, onPress, style }: AppCardProps) {
+  const { colors } = useAppTheme();
+
   return (
     <Card
       mode="contained"
       onPress={onPress}
-      style={[styles.card, elevated ? styles.elevated : null, style]}
+      style={[
+        {
+          backgroundColor: elevated ? colors.surfaceElevated : colors.surface,
+          borderColor: colors.border,
+          borderRadius: 24,
+          borderWidth: 1
+        },
+        style
+      ]}
     >
       {children}
     </Card>
   );
 }
-
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: 24,
-    borderWidth: 1
-  },
-  elevated: {
-    backgroundColor: colors.surfaceElevated
-  }
-});
