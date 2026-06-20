@@ -1,10 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo } from 'react';
-import { Alert, StyleSheet, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Card, Text } from 'react-native-paper';
 
 import { Screen } from '@/components/layout/Screen';
+import { getExpenseCategoryIcon } from '@/constants/expenseCategories';
 import { useExpenseRecords } from '@/context/ExpenseRecordsContext';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -46,20 +47,10 @@ function getRecordType(record: ExpenseRecord) {
 
 function getRecordIcon(record: ExpenseRecord) {
   if (getRecordType(record) === 'income') {
-    return 'cash';
+    return getExpenseCategoryIcon(record.category, 'income');
   }
 
-  const icons: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
-    '\u9910\u996e': 'food',
-    '\u4ea4\u901a': 'subway-variant',
-    '\u8d2d\u7269': 'shopping-outline',
-    '\u5c45\u4f4f': 'home-city-outline',
-    '\u5a31\u4e50': 'gamepad-variant-outline',
-    '\u533b\u7597': 'pill',
-    '\u5b66\u4e60': 'bookshelf'
-  };
-
-  return icons[record.category] ?? 'receipt-text-outline';
+  return getExpenseCategoryIcon(record.category, 'expense');
 }
 
 export default function LedgerTab() {
@@ -180,7 +171,15 @@ export default function LedgerTab() {
             const amountColor = isIncome ? colors.income : colors.expense;
 
             return (
-              <View key={record.id} style={styles.recordItem}>
+              <Pressable
+                key={record.id}
+                onPress={() => router.push(`/ledger/${record.id}`)}
+                android_ripple={{ color: 'rgba(255, 255, 255, 0.06)' }}
+                style={({ pressed }) => [
+                  styles.recordItem,
+                  pressed && styles.recordItemPressed
+                ]}
+              >
                 <View style={styles.recordIcon}>
                   <MaterialCommunityIcons
                     name={getRecordIcon(record)}
@@ -200,7 +199,7 @@ export default function LedgerTab() {
                   {isIncome ? '+' : '-'}
                   {formatCurrency(record.amount)}
                 </Text>
-              </View>
+              </Pressable>
             );
           })}
         </View>
@@ -299,6 +298,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.md,
     padding: spacing.md
+  },
+  recordItemPressed: {
+    backgroundColor: colors.cardAlt
   },
   recordIcon: {
     alignItems: 'center',

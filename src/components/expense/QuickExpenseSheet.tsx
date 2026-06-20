@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
@@ -13,16 +13,12 @@ import {
 import { Button, Text, TextInput } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { expenseCategories, incomeCategories } from '@/constants/expenseCategories';
 import { useExpenseRecords } from '@/context/ExpenseRecordsContext';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { ExpenseRecordType } from '@/types/expense';
-
-type CategoryItem = {
-  label: string;
-  icon: ComponentProps<typeof MaterialCommunityIcons>['name'];
-};
 
 type QuickExpenseSheetProps = {
   visible: boolean;
@@ -40,25 +36,6 @@ const labels = {
   saveFailedTitle: '\u4fdd\u5b58\u5931\u8d25',
   saveFailedDescription: '\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002'
 };
-
-const expenseCategories: CategoryItem[] = [
-  { label: '\u9910\u996e', icon: 'food' },
-  { label: '\u4ea4\u901a', icon: 'subway-variant' },
-  { label: '\u8d2d\u7269', icon: 'shopping-outline' },
-  { label: '\u5c45\u4f4f', icon: 'home-city-outline' },
-  { label: '\u5a31\u4e50', icon: 'gamepad-variant-outline' },
-  { label: '\u533b\u7597', icon: 'pill' },
-  { label: '\u5b66\u4e60', icon: 'bookshelf' },
-  { label: '\u5176\u4ed6', icon: 'ticket-percent-outline' }
-];
-
-const incomeCategories: CategoryItem[] = [
-  { label: '\u5de5\u8d44', icon: 'cash' },
-  { label: '\u5956\u91d1', icon: 'gift-outline' },
-  { label: '\u526f\u4e1a', icon: 'briefcase-outline' },
-  { label: '\u9000\u6b3e', icon: 'cash-refund' },
-  { label: '\u5176\u4ed6', icon: 'dots-horizontal-circle-outline' }
-];
 
 const keypadItems = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', 'backspace'];
 

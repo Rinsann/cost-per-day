@@ -1,6 +1,6 @@
 import { createContext, PropsWithChildren, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-import { addExpenseRecord, getExpenseRecords } from '@/storage/expenseStorage';
+import { ledgerRepository } from '@/repositories/ledgerRepository';
 import { ExpenseRecord } from '@/types/expense';
 
 type AddExpenseRecordInput = Omit<ExpenseRecord, 'id' | 'createdAt'>;
@@ -21,12 +21,12 @@ export function ExpenseRecordsProvider({ children }: PropsWithChildren) {
   const [records, setRecords] = useState<ExpenseRecord[]>([]);
 
   const refreshRecords = useCallback(async () => {
-    const storedRecords = await getExpenseRecords();
+    const storedRecords = await ledgerRepository.getAllRecords();
     setRecords(storedRecords);
   }, []);
 
   const addRecord = useCallback(async (input: AddExpenseRecordInput) => {
-    const record = await addExpenseRecord(input);
+    const record = await ledgerRepository.createRecord(input);
 
     setRecords((currentRecords) => sortRecords([record, ...currentRecords]));
 

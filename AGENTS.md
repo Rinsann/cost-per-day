@@ -64,6 +64,7 @@ UI 设计参考：
 - 不做云同步
 - 不修改 Product 数据结构
 - 不改变当前成本分析功能
+- 记账数据访问优先通过 ledgerRepository，不要在页面中直接散落调用 AsyncStorage；后续接后端时优先替换 repository 底层实现。
 
 ## UI Consistency Rules
 

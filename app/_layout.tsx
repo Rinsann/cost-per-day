@@ -52,6 +52,18 @@ export default function RootLayout() {
             }}
           />
           <Stack.Screen
+            name="ledger/[id]"
+            options={{
+              title: '\u8bb0\u8d26\u8be6\u60c5'
+            }}
+          />
+          <Stack.Screen
+            name="ledger/[id]/edit"
+            options={{
+              title: '\u7f16\u8f91\u8bb0\u8d26'
+            }}
+          />
+          <Stack.Screen
             name="stats"
             options={{
               title: '\u6570\u636e\u7edf\u8ba1'

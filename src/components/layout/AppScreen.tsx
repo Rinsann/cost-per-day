@@ -6,15 +6,25 @@ import { colors } from '@/theme/colors';
 import { spacing } from '@/theme/spacing';
 
 export type AppScreenProps = PropsWithChildren<{
+  bottomPadding?: number;
   contentStyle?: StyleProp<ViewStyle>;
   scroll?: boolean;
 }>;
 
-export function AppScreen({ children, contentStyle, scroll = true }: AppScreenProps) {
+const DEFAULT_BOTTOM_PADDING = 12;
+
+export function AppScreen({
+  bottomPadding = DEFAULT_BOTTOM_PADDING,
+  children,
+  contentStyle,
+  scroll = true
+}: AppScreenProps) {
   if (!scroll) {
     return (
       <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
-        <View style={[styles.content, contentStyle]}>{children}</View>
+        <View style={[styles.content, { paddingBottom: bottomPadding }, contentStyle]}>
+          {children}
+        </View>
       </SafeAreaView>
     );
   }
@@ -22,7 +32,7 @@ export function AppScreen({ children, contentStyle, scroll = true }: AppScreenPr
   return (
     <SafeAreaView style={styles.container} edges={['top', 'left', 'right']}>
       <ScrollView
-        contentContainerStyle={[styles.content, contentStyle]}
+        contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }, contentStyle]}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
@@ -39,7 +49,6 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    padding: spacing.md,
-    paddingBottom: 128
+    padding: spacing.md
   }
 });
