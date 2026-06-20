@@ -13,12 +13,14 @@ import {
 import { Button, Text, TextInput } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AppDateField } from '@/components/ui/AppDateField';
 import { expenseCategories, incomeCategories } from '@/constants/expenseCategories';
 import { useExpenseRecords } from '@/context/ExpenseRecordsContext';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { ExpenseRecordType } from '@/types/expense';
+import { getDateString } from '@/utils/formatDate';
 
 type QuickExpenseSheetProps = {
   visible: boolean;
@@ -28,24 +30,20 @@ type QuickExpenseSheetProps = {
 const labels = {
   expense: '\u652f\u51fa',
   income: '\u6536\u5165',
+  date: '日期',
+  today: '今天',
   note: '\u5907\u6ce8\uff08\u9009\u586b\uff09',
   save: '\u8bb0\u4e00\u7b14',
   saving: '\u4fdd\u5b58\u4e2d...',
   invalidTitle: '\u91d1\u989d\u65e0\u6548',
   invalidDescription: '\u8bf7\u5148\u8f93\u5165\u5927\u4e8e 0 \u7684\u91d1\u989d\u3002',
+  invalidDateTitle: '日期无效',
+  futureDateDescription: '记账日期不能晚于今天。',
   saveFailedTitle: '\u4fdd\u5b58\u5931\u8d25',
   saveFailedDescription: '\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002'
 };
 
 const keypadItems = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', 'backspace'];
-
-function getDateString(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-
-  return `${year}-${month}-${day}`;
-}
 
 function getAmountValue(amountText: string) {
   const amount = Number(amountText);
@@ -97,12 +95,14 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   const [amountText, setAmountText] = useState('');
   const [category, setCategory] = useState(expenseCategories[0].label);
   const [note, setNote] = useState('');
+  const [selectedDate, setSelectedDate] = useState(getDateString(new Date()));
   const [saving, setSaving] = useState(false);
 
   const categories = recordType === 'expense' ? expenseCategories : incomeCategories;
   const amount = getAmountValue(amountText);
   const isAmountValid = isValidAmountText(amountText) && amount > 0;
   const saveColor = recordType === 'expense' ? colors.expense : colors.primary;
+  const todayString = getDateString(new Date());
 
   const amountLabel = useMemo(() => {
     return getAmountLabel(amountText);
@@ -136,11 +136,18 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     triggerAmountFeedback();
   }, [amountText, triggerAmountFeedback]);
 
+  useEffect(() => {
+    if (visible) {
+      setSelectedDate(getDateString(new Date()));
+    }
+  }, [visible]);
+
   function resetForm() {
     setRecordType('expense');
     setAmountText('');
     setCategory(expenseCategories[0].label);
     setNote('');
+    setSelectedDate(getDateString(new Date()));
   }
 
   function selectRecordType(nextType: ExpenseRecordType) {
@@ -158,6 +165,11 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
       return;
     }
 
+    if (selectedDate > todayString) {
+      Alert.alert(labels.invalidDateTitle, labels.futureDateDescription);
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -166,7 +178,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
         amount,
         category,
         note: note.trim() || undefined,
-        date: getDateString(new Date())
+        date: selectedDate
       });
 
       resetForm();
@@ -257,6 +269,16 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                   </Pressable>
                 );
               })}
+            </View>
+
+            <View style={styles.dateWrap}>
+              <AppDateField
+                label={labels.date}
+                value={selectedDate}
+                maxDate={todayString}
+                onChange={setSelectedDate}
+                formatValue={(value) => (value === todayString ? labels.today : value)}
+              />
             </View>
 
             <TextInput
@@ -424,6 +446,9 @@ const styles = StyleSheet.create({
     height: 48,
     marginTop: spacing.sm,
     overflow: 'hidden'
+  },
+  dateWrap: {
+    marginTop: spacing.sm
   },
   keypad: {
     flexDirection: 'row',

@@ -17,6 +17,7 @@ import Svg, { Circle } from 'react-native-svg';
 
 import { Screen } from '@/components/layout/Screen';
 import { AppCard } from '@/components/ui/AppCard';
+import { AppDateField } from '@/components/ui/AppDateField';
 import {
   expenseCategories,
   getExpenseCategoryIcon,
@@ -126,7 +127,7 @@ const labels = {
   rangeIncome: '范围收入',
   rangeInvalidAfterMax: '结束日期不能晚于今天。',
   rangeInvalidBeforeMin: '开始日期不能早于最早账单日期。',
-  rangeInvalidFormat: '请使用 YYYY-MM-DD 格式。',
+  rangeInvalidFormat: '请选择有效日期。',
   rangeInvalidOrder: '开始日期不能晚于结束日期。',
   rangeInvalidTitle: '日期范围无效',
   recent7Days: '最近7天',
@@ -979,18 +980,38 @@ export default function InsightsTab() {
   }
 
   function resetFilters() {
-    setDraftFilters(DEFAULT_FILTERS);
-    setDraftUseCustomRange(false);
-
+    const nextMode: StandardRangeMode = rangeMode === 'custom' ? standardRangeMode : rangeMode;
+    const nextRangeInfo = getRangeInfo(
+      nextMode,
+      currentYear,
+      currentMonth,
+      currentQuarter,
+      todayString,
+      todayString
+    );
     const nextCustomRange = getDefaultCustomRange(
-      rangeInfo.startDate,
-      rangeInfo.endDate,
+      nextRangeInfo.startDate,
+      nextRangeInfo.endDate,
       minSelectableDate,
       todayString
     );
 
+    setRangeMode(nextMode);
+    setStandardRangeMode(nextMode);
+    setSelectedYear(currentYear);
+    setSelectedMonth(currentMonth);
+    setSelectedQuarter(currentQuarter);
+    setDraftYear(currentYear);
+    setDraftMonth(currentMonth);
+    setDraftQuarter(currentQuarter);
+    setFilters(DEFAULT_FILTERS);
+    setDraftFilters(DEFAULT_FILTERS);
+    setCustomStartDate(nextCustomRange.startDate);
+    setCustomEndDate(nextCustomRange.endDate);
+    setDraftUseCustomRange(false);
     setDraftCustomStartDate(nextCustomRange.startDate);
     setDraftCustomEndDate(nextCustomRange.endDate);
+    playChartAnimations();
   }
 
   function applyDraftShortcut(shortcut: DateRangeShortcut) {
@@ -1761,31 +1782,27 @@ function FilterSheet({
                 </Text>
                 <View style={styles.dateInputRow}>
                   <View style={styles.dateInputWrap}>
-                    <Text style={styles.dateInputLabel}>{labels.startDate}</Text>
-                    <TextInput
-                      keyboardType="numbers-and-punctuation"
-                      onChangeText={(value) => {
+                    <AppDateField
+                      label={labels.startDate}
+                      value={customStartDate}
+                      minDate={minSelectableDate}
+                      maxDate={maxSelectableDate}
+                      onChange={(value) => {
                         onUseCustomRangeChange(true);
                         onCustomStartDateChange(value);
                       }}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={colors.textSecondary}
-                      style={styles.dateInput}
-                      value={customStartDate}
                     />
                   </View>
                   <View style={styles.dateInputWrap}>
-                    <Text style={styles.dateInputLabel}>{labels.endDate}</Text>
-                    <TextInput
-                      keyboardType="numbers-and-punctuation"
-                      onChangeText={(value) => {
+                    <AppDateField
+                      label={labels.endDate}
+                      value={customEndDate}
+                      minDate={minSelectableDate}
+                      maxDate={maxSelectableDate}
+                      onChange={(value) => {
                         onUseCustomRangeChange(true);
                         onCustomEndDateChange(value);
                       }}
-                      placeholder="YYYY-MM-DD"
-                      placeholderTextColor={colors.textSecondary}
-                      style={styles.dateInput}
-                      value={customEndDate}
                     />
                   </View>
                 </View>
@@ -2375,24 +2392,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm
   },
   dateInputWrap: {
-    flex: 1,
-    gap: spacing.xs
-  },
-  dateInputLabel: {
-    color: colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '800'
-  },
-  dateInput: {
-    backgroundColor: colors.surface,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    borderWidth: 1,
-    color: colors.text,
-    fontSize: 14,
-    fontWeight: '800',
-    minHeight: 42,
-    paddingHorizontal: spacing.sm
+    flex: 1
   },
   shortcutRow: {
     flexDirection: 'row',

@@ -3,13 +3,13 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Button, Card, HelperText, Menu, Text, TextInput } from 'react-native-paper';
 
 import { AppCard } from '@/components/ui/AppCard';
+import { AppDateField } from '@/components/ui/AppDateField';
 import { productCategories } from '@/constants/categories';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { Product, ProductCategoryId } from '@/types/product';
-import { getTodayDateString } from '@/utils/date';
-import { isFutureDateString } from '@/utils/formatDate';
+import { getDateString, isFutureDateString, isValidDateString } from '@/utils/formatDate';
 
 export type ProductFormValues = {
   name: string;
@@ -41,28 +41,9 @@ const labels = {
   required: '\u8be5\u9879\u5fc5\u586b',
   invalidPrice: '\u8bf7\u8f93\u5165\u6709\u6548\u7684\u8d2d\u4e70\u4ef7\u683c',
   invalidTargetDailyCost: '\u8bf7\u8f93\u5165\u5927\u4e8e 0 \u7684\u6570\u5b57',
-  invalidDate: '\u8bf7\u4f7f\u7528 YYYY-MM-DD \u683c\u5f0f',
+  invalidDate: '请选择有效日期',
   futurePurchaseDate: '购买日期不能晚于今天。'
 };
-
-function isValidDateString(value: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-
-  if (!match) {
-    return false;
-  }
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const date = new Date(year, month - 1, day);
-
-  return (
-    date.getFullYear() === year &&
-    date.getMonth() === month - 1 &&
-    date.getDate() === day
-  );
-}
 
 export function ProductForm({
   initialProduct,
@@ -80,7 +61,7 @@ export function ProductForm({
     initialProduct?.targetDailyCost ? String(initialProduct.targetDailyCost) : ''
   );
   const [purchaseDate, setPurchaseDate] = useState(
-    initialProduct?.purchaseDate ?? getTodayDateString()
+    initialProduct?.purchaseDate ?? getDateString(new Date())
   );
   const [note, setNote] = useState(initialProduct?.note ?? '');
   const [categoryMenuVisible, setCategoryMenuVisible] = useState(false);
@@ -101,6 +82,7 @@ export function ProductForm({
   const normalizedName = name.trim();
   const normalizedPrice = Number(price);
   const normalizedTargetDailyCost = Number(targetDailyCost);
+  const todayString = getDateString(new Date());
   const hasTargetDailyCostValue = targetDailyCost.trim().length > 0;
   const hasNameError = submitted && normalizedName.length === 0;
   const hasPriceError =
@@ -224,19 +206,20 @@ export function ProductForm({
         </View>
 
         <View>
-          <TextInput
+          <AppDateField
             label={labels.purchaseDate}
-            mode="outlined"
             value={purchaseDate}
-            onChangeText={setPurchaseDate}
+            maxDate={todayString}
+            onChange={setPurchaseDate}
             error={hasDateError}
-            keyboardType="numbers-and-punctuation"
-            placeholder="YYYY-MM-DD"
-            style={styles.input}
+            helperText={
+              hasDateError
+                ? hasFuturePurchaseDateError
+                  ? labels.futurePurchaseDate
+                  : labels.invalidDate
+                : undefined
+            }
           />
-          <HelperText type="error" visible={hasDateError}>
-            {hasFuturePurchaseDateError ? labels.futurePurchaseDate : labels.invalidDate}
-          </HelperText>
         </View>
 
         <View>

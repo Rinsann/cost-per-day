@@ -6,13 +6,14 @@ import { ActivityIndicator, Button, Card, Text, TextInput } from 'react-native-p
 
 import { AppScreen } from '@/components/layout/AppScreen';
 import { AppCard } from '@/components/ui/AppCard';
+import { AppDateField } from '@/components/ui/AppDateField';
 import { expenseCategories, incomeCategories } from '@/constants/expenseCategories';
 import { ledgerRepository } from '@/repositories/ledgerRepository';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { ExpenseRecord, ExpenseRecordType } from '@/types/expense';
-import { isFutureDateString } from '@/utils/formatDate';
+import { getDateString, isFutureDateString, isValidDateString } from '@/utils/formatDate';
 
 const labels = {
   title: '编辑记账',
@@ -27,7 +28,8 @@ const labels = {
   notFound: '未找到这条记录',
   backToLedger: '返回记账',
   invalidTitle: '内容无效',
-  invalidDescription: '请确认金额大于 0，日期格式为 YYYY-MM-DD。',
+  invalidDescription: '请确认金额大于 0，并选择有效日期。',
+  invalidDateDescription: '请选择有效日期。',
   futureDateDescription: '记账日期不能晚于今天。',
   saveFailedTitle: '保存失败',
   saveFailedDescription: '请稍后再试。'
@@ -43,25 +45,6 @@ function getParamValue(value: string | string[] | undefined) {
 
 function getRecordType(record: ExpenseRecord) {
   return record.type === 'income' ? 'income' : 'expense';
-}
-
-function isValidDateString(value: string) {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
-
-  if (!match) {
-    return false;
-  }
-
-  const year = Number(match[1]);
-  const month = Number(match[2]);
-  const day = Number(match[3]);
-  const date = new Date(year, month - 1, day);
-
-  return (
-    date.getFullYear() === year &&
-    date.getMonth() === month - 1 &&
-    date.getDate() === day
-  );
 }
 
 function normalizeAmountInput(value: string) {
@@ -93,6 +76,7 @@ export default function EditLedgerRecordScreen() {
   const [date, setDate] = useState('');
 
   const categories = recordType === 'expense' ? expenseCategories : incomeCategories;
+  const todayString = getDateString(new Date());
   const isAmountValid = isValidAmountText(amountText);
   const isDateFormatValid = isValidDateString(date);
   const isDateFuture = isFutureDateString(date);
@@ -292,15 +276,19 @@ export default function EditLedgerRecordScreen() {
               })}
             </View>
 
-            <TextInput
+            <AppDateField
               label={labels.date}
-              mode="outlined"
               value={date}
-              onChangeText={setDate}
-              keyboardType="numbers-and-punctuation"
-              placeholder="YYYY-MM-DD"
+              maxDate={todayString}
+              onChange={setDate}
               error={date.length > 0 && !isDateValid}
-              style={styles.input}
+              helperText={
+                date.length > 0 && !isDateValid
+                  ? isDateFuture
+                    ? labels.futureDateDescription
+                    : labels.invalidDateDescription
+                  : undefined
+              }
             />
 
             <TextInput

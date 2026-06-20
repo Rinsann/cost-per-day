@@ -18,7 +18,7 @@ export function formatDayRangeLabel(startDay: number, endDay: number) {
   return `${startDay}-${endDay}日`;
 }
 
-function getDateString(date: Date) {
+export function getDateString(date: Date) {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const day = String(date.getDate()).padStart(2, '0');
@@ -26,7 +26,7 @@ function getDateString(date: Date) {
   return `${year}-${month}-${day}`;
 }
 
-function getLocalDateFromString(value: string) {
+export function getLocalDateFromString(value: string) {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value);
 
   if (!match) {
@@ -47,6 +47,10 @@ function getLocalDateFromString(value: string) {
   }
 
   return date;
+}
+
+export function isValidDateString(value: string) {
+  return getLocalDateFromString(value) !== null;
 }
 
 export function isFutureDateString(value: string, today = new Date()) {
