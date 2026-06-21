@@ -82,18 +82,6 @@ function RootLayoutContent() {
               title: '\u6570\u636e\u7edf\u8ba1'
             }}
           />
-          <Stack.Screen
-            name="settings"
-            options={{
-              title: '\u8bbe\u7f6e'
-            }}
-          />
-          <Stack.Screen
-            name="settings/import-json"
-            options={{
-              title: '\u7c98\u8d34 JSON \u5bfc\u5165'
-            }}
-          />
         </Stack>
       </PaperProvider>
     </SafeAreaProvider>

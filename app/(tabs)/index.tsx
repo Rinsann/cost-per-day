@@ -295,13 +295,6 @@ export default function HomeScreen() {
                   onPress={() => router.push('/stats')}
                   style={styles.headerActionButton}
                 />
-                <IconButton
-                  icon="cog-outline"
-                  iconColor={themeColors.textSecondary}
-                  size={18}
-                  onPress={() => router.push('/settings')}
-                  style={styles.headerActionButton}
-                />
               </View>
             </View>
             <Text variant="displaySmall" style={[styles.totalValue, { color: themeColors.text }]}>

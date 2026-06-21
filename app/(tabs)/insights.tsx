@@ -25,7 +25,6 @@ import {
 } from '@/constants/expenseCategories';
 import { useExpenseRecords } from '@/context/ExpenseRecordsContext';
 import { useAppTheme } from '@/context/AppThemeContext';
-import { clearLedgerMockData, seedLedgerMockData } from '@/dev/seedLedgerMockData';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
@@ -161,8 +160,6 @@ const labels = {
   loadFailedTitle: '\u8bfb\u53d6\u5931\u8d25',
   loadFailedDescription: '\u65e0\u6cd5\u8bfb\u53d6\u672c\u5730\u8bb0\u8d26\u7edf\u8ba1\u3002'
 };
-
-const isDevelopment = __DEV__;
 
 const DEFAULT_FILTERS: Filters = {
   category: 'all',
@@ -689,7 +686,6 @@ export default function InsightsTab() {
   const [draftCustomStartDate, setDraftCustomStartDate] = useState(customStartDate);
   const [draftUseCustomRange, setDraftUseCustomRange] = useState(false);
   const [filterSheetVisible, setFilterSheetVisible] = useState(false);
-  const [devToolBusy, setDevToolBusy] = useState(false);
   const minSelectableYear = useMemo(
     () => getLedgerMinSelectableYear(records, currentYear),
     [currentYear, records]
@@ -1045,48 +1041,6 @@ export default function InsightsTab() {
     setDraftUseCustomRange(true);
   }
 
-  function confirmSeedMockData() {
-    Alert.alert(labels.devDataTitle, labels.seedMockConfirmMessage, [
-      { style: 'cancel', text: labels.cancel },
-      {
-        onPress: () => {
-          setDevToolBusy(true);
-          seedLedgerMockData()
-            .then((count) => refreshRecords().then(() => count))
-            .then((count) => {
-              Alert.alert(labels.seedMockSuccess, `\u5df2\u6ce8\u5165 ${count} \u6761 mock \u8d26\u5355`);
-            })
-            .catch(() => {
-              Alert.alert(labels.loadFailedTitle, labels.seedMockFailed);
-            })
-            .finally(() => setDevToolBusy(false));
-        },
-        text: labels.confirm
-      }
-    ]);
-  }
-
-  function confirmClearMockData() {
-    Alert.alert(labels.devDataTitle, labels.clearMockConfirmMessage, [
-      { style: 'cancel', text: labels.cancel },
-      {
-        onPress: () => {
-          setDevToolBusy(true);
-          clearLedgerMockData()
-            .then((count) => refreshRecords().then(() => count))
-            .then((count) => {
-              Alert.alert(labels.clearMockSuccess, `\u5df2\u6e05\u9664 ${count} \u6761 mock \u8d26\u5355`);
-            })
-            .catch(() => {
-              Alert.alert(labels.loadFailedTitle, labels.clearMockFailed);
-            })
-            .finally(() => setDevToolBusy(false));
-        },
-        text: labels.confirm
-      }
-    ]);
-  }
-
   return (
     <Screen bottomPadding={24}>
       <Text variant="headlineSmall" style={[styles.title, { color: themeColors.text }]}>
@@ -1230,14 +1184,6 @@ export default function InsightsTab() {
 
       <BillDetails groups={detailGroups} />
 
-      {isDevelopment ? (
-        <DevMockDataCard
-          busy={devToolBusy}
-          onClear={confirmClearMockData}
-          onSeed={confirmSeedMockData}
-        />
-      ) : null}
-
       <TimeRangeSheet
         currentMonth={currentMonth}
         currentQuarter={currentQuarter}
@@ -1274,59 +1220,6 @@ export default function InsightsTab() {
         visible={filterSheetVisible}
       />
     </Screen>
-  );
-}
-
-function DevMockDataCard({
-  busy,
-  onClear,
-  onSeed
-}: {
-  busy: boolean;
-  onClear: () => void;
-  onSeed: () => void;
-}) {
-  const { colors: themeColors } = useAppTheme();
-
-  return (
-    <AppCard style={styles.sectionCard}>
-      <View style={styles.cardContent}>
-        <Text variant="titleMedium" style={[styles.sectionTitle, { color: themeColors.textSecondary }]}>
-          {labels.devDataTitle}
-        </Text>
-        <Text variant="bodyMedium" style={[styles.devDescription, { color: themeColors.textSecondary }]}>
-          {labels.devDataDescription}
-        </Text>
-        <View style={styles.devActions}>
-          <Pressable
-            disabled={busy}
-            onPress={onSeed}
-            style={[
-              styles.primaryDevAction,
-              { backgroundColor: themeColors.primary },
-              busy && styles.disabledAction
-            ]}
-          >
-            <Text style={[styles.primaryActionText, { color: themeColors.background }]}>
-              {labels.seedMock}
-            </Text>
-          </Pressable>
-          <Pressable
-            disabled={busy}
-            onPress={onClear}
-            style={[
-              styles.secondaryDevAction,
-              { backgroundColor: themeColors.card },
-              busy && styles.disabledAction
-            ]}
-          >
-            <Text style={[styles.secondaryActionText, { color: themeColors.text }]}>
-              {labels.clearMock}
-            </Text>
-          </Pressable>
-        </View>
-      </View>
-    </AppCard>
   );
 }
 
