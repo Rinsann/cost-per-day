@@ -216,12 +216,10 @@ export default function StatsScreen() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
     borderRadius: 24,
     marginBottom: spacing.md
   },
   heroCard: {
-    backgroundColor: colors.cardAlt,
     borderRadius: 24,
     marginBottom: spacing.md
   },
@@ -234,7 +232,6 @@ const styles = StyleSheet.create({
     gap: spacing.sm
   },
   overviewItem: {
-    backgroundColor: colors.card,
     borderRadius: radius.lg,
     padding: spacing.md
   },

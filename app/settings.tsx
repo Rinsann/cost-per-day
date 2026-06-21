@@ -29,22 +29,11 @@ const labels = {
   reminder: '\u63d0\u9192',
   targetReminder: '\u76ee\u6807\u63d0\u9192',
   targetReminderDescription:
-    '\u5f53\u524d\u7248\u672c\u6682\u672a\u5f00\u542f\u7cfb\u7edf\u901a\u77e5\u3002\u4f60\u53ef\u4ee5\u901a\u8fc7\u9996\u9875\u201c\u6700\u8fd1\u76ee\u6807\u201d\u67e5\u770b\u63a5\u8fd1\u76ee\u6807\u7684\u6d88\u8d39\u54c1\u3002',
-  app: '\u5e94\u7528',
-  appName: '\u5e94\u7528\u540d\u79f0',
-  currentVersion: '\u5f53\u524d\u7248\u672c',
-  buildType: '\u6784\u5efa\u7c7b\u578b',
-  techStack: '\u6280\u672f\u6808',
-  about: '\u5173\u4e8e',
-  description: '\u5e94\u7528\u8bf4\u660e',
-  versionNumber: '\u5f53\u524d\u7248\u672c\u53f7',
-  author: '\u4f5c\u8005',
-  github: 'Github \u4ed3\u5e93',
+    '\u5f53\u524d\u7248\u672c\u6682\u672a\u5f00\u542f\u6210\u672c\u6d88\u8d39\u54c1\u76ee\u6807\u63d0\u9192\u3002\u4f60\u53ef\u4ee5\u901a\u8fc7\u6210\u672c\u9996\u9875\u201c\u6700\u8fd1\u76ee\u6807\u201d\u67e5\u770b\u63a5\u8fd1\u76ee\u6807\u7684\u6d88\u8d39\u54c1\u3002',
   exportDialogTitle: `\u5bfc\u51fa ${appInfo.name} \u5907\u4efd`,
   importConfirmBody: '\n\n\u5907\u4efd\u6587\u4ef6\u5305\u542b\uff1a\n{count} \u4ef6\u6d88\u8d39\u54c1',
   cancel: '\u53d6\u6d88',
-  confirmImport: '\u786e\u8ba4\u5bfc\u5165',
-  stack: 'React Native\nExpo\nTypeScript'
+  confirmImport: '\u786e\u8ba4\u5bfc\u5165'
 };
 
 const EXPORT_FILE_NAME = 'cost-per-day-backup.json';
@@ -303,76 +292,12 @@ export default function SettingsScreen() {
           />
         </Card.Content>
       </AppCard>
-
-      <AppCard style={styles.card}>
-        <Card.Content>
-          <Text variant="titleMedium" style={sectionTitleStyle}>
-            {labels.app}
-          </Text>
-          <List.Item
-            title={labels.currentVersion}
-            titleStyle={listTitleStyle}
-            right={() => <Text style={valueTextStyle}>{appInfo.displayVersion}</Text>}
-          />
-          <List.Item
-            title={labels.buildType}
-            titleStyle={listTitleStyle}
-            right={() => <Text style={valueTextStyle}>{appInfo.buildType}</Text>}
-          />
-          <List.Item
-            title={labels.techStack}
-            description={labels.stack}
-            titleStyle={listTitleStyle}
-            descriptionStyle={listDescriptionStyle}
-            descriptionNumberOfLines={3}
-          />
-        </Card.Content>
-      </AppCard>
-
-      <AppCard style={styles.card}>
-        <Card.Content>
-          <Text variant="titleMedium" style={sectionTitleStyle}>
-            {labels.about}
-          </Text>
-          <List.Item
-            title={labels.appName}
-            titleStyle={listTitleStyle}
-            right={() => <Text style={valueTextStyle}>{appInfo.name}</Text>}
-          />
-          <List.Item
-            title={labels.description}
-            description={appInfo.description}
-            titleStyle={listTitleStyle}
-            descriptionStyle={listDescriptionStyle}
-          />
-          <List.Item
-            title={labels.versionNumber}
-            titleStyle={listTitleStyle}
-            right={() => <Text style={valueTextStyle}>{appInfo.displayVersion}</Text>}
-          />
-          <List.Item
-            title={labels.author}
-            titleStyle={listTitleStyle}
-            right={() => <Text style={valueTextStyle}>{appInfo.author}</Text>}
-          />
-          <List.Item
-            title={labels.github}
-            description={appInfo.github}
-            titleStyle={listTitleStyle}
-            descriptionStyle={listDescriptionStyle}
-            descriptionNumberOfLines={2}
-            right={(props) => <List.Icon {...props} color={themeColors.textSecondary} icon="chevron-right" />}
-            onPress={() => Alert.alert(labels.github, appInfo.github)}
-          />
-        </Card.Content>
-      </AppCard>
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
     borderRadius: 24,
     marginBottom: spacing.md
   },

@@ -93,6 +93,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   const { addRecord } = useExpenseRecords();
   const amountScale = useRef(new Animated.Value(1)).current;
   const hasMountedAmount = useRef(false);
+  const wasVisible = useRef(false);
   const [recordType, setRecordType] = useState<ExpenseRecordType>('expense');
   const [amountText, setAmountText] = useState('');
   const [category, setCategory] = useState(expenseCategories[0].label);
@@ -138,18 +139,32 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     triggerAmountFeedback();
   }, [amountText, triggerAmountFeedback]);
 
-  useEffect(() => {
-    if (visible) {
-      setSelectedDate(getDateString(new Date()));
-    }
-  }, [visible]);
-
-  function resetForm() {
+  const resetDraft = useCallback(() => {
+    amountScale.stopAnimation();
+    amountScale.setValue(1);
     setRecordType('expense');
     setAmountText('');
     setCategory(expenseCategories[0].label);
     setNote('');
     setSelectedDate(getDateString(new Date()));
+    setSaving(false);
+  }, [amountScale]);
+
+  useEffect(() => {
+    if (visible && !wasVisible.current) {
+      resetDraft();
+    }
+
+    if (!visible && wasVisible.current) {
+      resetDraft();
+    }
+
+    wasVisible.current = visible;
+  }, [resetDraft, visible]);
+
+  function handleClose() {
+    resetDraft();
+    onClose();
   }
 
   function selectRecordType(nextType: ExpenseRecordType) {
@@ -183,7 +198,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
         date: selectedDate
       });
 
-      resetForm();
+      resetDraft();
       onClose();
     } catch {
       Alert.alert(labels.saveFailedTitle, labels.saveFailedDescription);
@@ -193,9 +208,9 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   }
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <View style={styles.modalRoot}>
-        <Pressable style={[styles.backdrop, { backgroundColor: themeColors.overlay }]} onPress={onClose} />
+        <Pressable style={[styles.backdrop, { backgroundColor: themeColors.overlay }]} onPress={handleClose} />
         <View style={[styles.sheet, { backgroundColor: themeColors.card }]}>
           <View style={[styles.handle, { backgroundColor: themeColors.textSecondary }]} />
           <ScrollView

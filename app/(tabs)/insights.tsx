@@ -45,7 +45,7 @@ import {
   formatQuarterLabel,
   formatYearLabel
 } from '@/utils/formatDate';
-import { formatMoney } from '@/utils/formatMoney';
+import { formatCompactMoney, formatMoney } from '@/utils/formatMoney';
 
 type StandardRangeMode = 'month' | 'quarter' | 'year';
 type RangeMode = StandardRangeMode | 'custom';
@@ -1519,7 +1519,7 @@ function ExpenseDonutChart({
                   numberOfLines={1}
                   style={[styles.donutCenterValue, { color: themeColors.text }]}
                 >
-                  {formatMoney(totalExpense)}
+                  {formatCompactMoney(totalExpense)}
                 </Text>
               </View>
             </View>
@@ -1531,7 +1531,7 @@ function ExpenseDonutChart({
                     {item.category}
                   </Text>
                   <Text style={[styles.categoryPercent, { color: themeColors.text }]}>
-                    {item.percentage}%
+                    {item.percentage === 0 && item.amount > 0 ? '<1%' : `${item.percentage}%`}
                   </Text>
                 </View>
               ))}
@@ -2256,7 +2256,7 @@ const styles = StyleSheet.create({
   },
   donutCenter: {
     alignItems: 'center',
-    maxWidth: 82,
+    maxWidth: 70,
     position: 'absolute'
   },
   donutCenterLabel: {
@@ -2266,7 +2266,7 @@ const styles = StyleSheet.create({
   },
   donutCenterValue: {
     color: colors.text,
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '900',
     marginTop: 2,
     textAlign: 'center'

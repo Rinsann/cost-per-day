@@ -125,7 +125,6 @@ export default function PasteJsonImportScreen() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: colors.card,
     borderRadius: 24
   },
   content: {
