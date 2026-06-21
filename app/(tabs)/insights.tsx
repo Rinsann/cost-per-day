@@ -46,6 +46,22 @@ import {
   formatYearLabel
 } from '@/utils/formatDate';
 import { formatCompactMoney, formatMoney } from '@/utils/formatMoney';
+import {
+  buildChartBuckets as buildLedgerChartBuckets,
+  calculateCategoryStats as calculateLedgerCategoryStats,
+  calculateSummary as calculateLedgerSummary,
+  clampTimeSelection as clampLedgerTimeSelection,
+  filterRecordsByDateRange as filterLedgerRecordsByDateRange,
+  filterRecordsByTypeCategoryKeyword,
+  getDefaultCustomRange as getLedgerDefaultCustomRange,
+  getMinSelectableDate as getLedgerMinSelectableDate,
+  getMinSelectableYear as getLedgerMinSelectableYear,
+  getQuarterFromMonth as getLedgerQuarterFromMonth,
+  getShortcutDateRange as getLedgerShortcutDateRange,
+  isMonthAfterCurrent as isLedgerMonthAfterCurrent,
+  isQuarterAfterCurrent as isLedgerQuarterAfterCurrent,
+  isValidDateString as isLedgerValidDateText
+} from '@/utils/ledgerStats';
 
 type StandardRangeMode = 'month' | 'quarter' | 'year';
 type RangeMode = StandardRangeMode | 'custom';
@@ -653,7 +669,7 @@ export default function InsightsTab() {
   const todayString = getDateString(today);
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth() + 1;
-  const currentQuarter = getQuarterFromMonth(currentMonth);
+  const currentQuarter = getLedgerQuarterFromMonth(currentMonth);
   const barAnimation = useRef(new Animated.Value(0)).current;
   const donutAnimation = useRef(new Animated.Value(0)).current;
   const [rangeMode, setRangeMode] = useState<RangeMode>('month');
@@ -675,16 +691,16 @@ export default function InsightsTab() {
   const [filterSheetVisible, setFilterSheetVisible] = useState(false);
   const [devToolBusy, setDevToolBusy] = useState(false);
   const minSelectableYear = useMemo(
-    () => getMinSelectableYear(records, currentYear),
+    () => getLedgerMinSelectableYear(records, currentYear),
     [currentYear, records]
   );
   const maxSelectableYear = currentYear;
   const minSelectableDate = useMemo(
-    () => getMinSelectableDate(records, todayString),
+    () => getLedgerMinSelectableDate(records, todayString),
     [records, todayString]
   );
   const hasSelectableDateRecords = records.some(
-    (record) => isValidDateText(record.date) && record.date <= todayString
+    (record) => isLedgerValidDateText(record.date) && record.date <= todayString
   );
 
   const playChartAnimations = useCallback(() => {
@@ -722,7 +738,7 @@ export default function InsightsTab() {
       return;
     }
 
-    const nextCustomRange = getDefaultCustomRange(
+    const nextCustomRange = getLedgerDefaultCustomRange(
       customStartDate,
       customEndDate,
       minSelectableDate,
@@ -737,7 +753,7 @@ export default function InsightsTab() {
       setCustomEndDate(nextCustomRange.endDate);
     }
 
-    const nextSelection = clampTimeSelection({
+    const nextSelection = clampLedgerTimeSelection({
       currentMonth,
       currentQuarter,
       currentYear,
@@ -783,25 +799,25 @@ export default function InsightsTab() {
     [customEndDate, customStartDate, rangeMode, selectedMonth, selectedQuarter, selectedYear]
   );
   const rangeRecords = useMemo(
-    () => records.filter((record) => isRecordInDateRange(record, rangeInfo.startDate, rangeInfo.endDate)),
+    () => filterLedgerRecordsByDateRange(records, rangeInfo.startDate, rangeInfo.endDate),
     [rangeInfo.endDate, rangeInfo.startDate, records]
   );
   const filteredRecords = useMemo(
-    () => applyFilters(rangeRecords, filters),
+    () => filterRecordsByTypeCategoryKeyword(rangeRecords, filters),
     [filters, rangeRecords]
   );
-  const summary = useMemo(() => getSummary(filteredRecords), [filteredRecords]);
+  const summary = useMemo(() => calculateLedgerSummary(filteredRecords), [filteredRecords]);
   const barStats = useMemo(
     () =>
-      getBarStats(
-        filteredRecords,
-        rangeMode,
-        selectedYear,
-        selectedMonth,
-        selectedQuarter,
-        rangeInfo.startDate,
-        rangeInfo.endDate
-      ),
+      buildLedgerChartBuckets({
+        endDate: rangeInfo.endDate,
+        mode: rangeMode,
+        month: selectedMonth,
+        quarter: selectedQuarter,
+        records: filteredRecords,
+        startDate: rangeInfo.startDate,
+        year: selectedYear
+      }),
     [
       filteredRecords,
       rangeInfo.endDate,
@@ -813,7 +829,12 @@ export default function InsightsTab() {
     ]
   );
   const expenseRank = useMemo(
-    () => getCategoryRank(filteredRecords, summary.expense),
+    () =>
+      calculateLedgerCategoryStats(filteredRecords, summary.expense, {
+        colors: DONUT_COLORS,
+        otherLabel: labels.other,
+        validCategories: expenseCategories.map((category) => category.label)
+      }),
     [filteredRecords, summary.expense]
   );
   const detailGroups = useMemo(
@@ -838,7 +859,7 @@ export default function InsightsTab() {
   });
 
   function changeRangeMode(mode: StandardRangeMode) {
-    const nextSelection = clampTimeSelection({
+    const nextSelection = clampLedgerTimeSelection({
       currentMonth,
       currentQuarter,
       currentYear,
@@ -859,7 +880,7 @@ export default function InsightsTab() {
   }
 
   function openTimeSheet() {
-    const nextSelection = clampTimeSelection({
+    const nextSelection = clampLedgerTimeSelection({
       currentMonth,
       currentQuarter,
       currentYear,
@@ -878,7 +899,7 @@ export default function InsightsTab() {
   }
 
   function confirmTimeSelection() {
-    const nextSelection = clampTimeSelection({
+    const nextSelection = clampLedgerTimeSelection({
       currentMonth,
       currentQuarter,
       currentYear,
@@ -898,7 +919,7 @@ export default function InsightsTab() {
   }
 
   function changeDraftYear(nextYear: number) {
-    const nextSelection = clampTimeSelection({
+    const nextSelection = clampLedgerTimeSelection({
       currentMonth,
       currentQuarter,
       currentYear,
@@ -916,7 +937,7 @@ export default function InsightsTab() {
   }
 
   function changeDraftMonth(nextMonth: number) {
-    if (isMonthAfterCurrent(draftYear, nextMonth, currentYear, currentMonth)) {
+    if (isLedgerMonthAfterCurrent(draftYear, nextMonth, currentYear, currentMonth)) {
       return;
     }
 
@@ -924,7 +945,7 @@ export default function InsightsTab() {
   }
 
   function changeDraftQuarter(nextQuarter: number) {
-    if (isQuarterAfterCurrent(draftYear, nextQuarter, currentYear, currentQuarter)) {
+    if (isLedgerQuarterAfterCurrent(draftYear, nextQuarter, currentYear, currentQuarter)) {
       return;
     }
 
@@ -935,7 +956,7 @@ export default function InsightsTab() {
     setDraftFilters(filters);
     setDraftUseCustomRange(rangeMode === 'custom');
 
-    const nextCustomRange = getDefaultCustomRange(
+    const nextCustomRange = getLedgerDefaultCustomRange(
       rangeMode === 'custom' ? customStartDate : rangeInfo.startDate,
       rangeMode === 'custom' ? customEndDate : rangeInfo.endDate,
       minSelectableDate,
@@ -991,7 +1012,7 @@ export default function InsightsTab() {
       todayString,
       todayString
     );
-    const nextCustomRange = getDefaultCustomRange(
+    const nextCustomRange = getLedgerDefaultCustomRange(
       nextRangeInfo.startDate,
       nextRangeInfo.endDate,
       minSelectableDate,
@@ -1017,7 +1038,7 @@ export default function InsightsTab() {
   }
 
   function applyDraftShortcut(shortcut: DateRangeShortcut) {
-    const nextRange = getShortcutDateRange(shortcut, minSelectableDate, todayString, today);
+    const nextRange = getLedgerShortcutDateRange(shortcut, minSelectableDate, todayString, today);
 
     setDraftCustomStartDate(nextRange.startDate);
     setDraftCustomEndDate(nextRange.endDate);
@@ -1723,7 +1744,7 @@ function TimeRangeSheet({
           {mode === 'month' ? (
             <View style={styles.optionGrid}>
               {Array.from({ length: 12 }, (_, index) => index + 1).map((month) => {
-                const isDisabled = isMonthAfterCurrent(draftYear, month, currentYear, currentMonth);
+                const isDisabled = isLedgerMonthAfterCurrent(draftYear, month, currentYear, currentMonth);
 
                 return (
                   <ChoiceButton
@@ -1740,7 +1761,7 @@ function TimeRangeSheet({
           {mode === 'quarter' ? (
             <View style={styles.optionGrid}>
               {[1, 2, 3, 4].map((quarter) => {
-                const isDisabled = isQuarterAfterCurrent(draftYear, quarter, currentYear, currentQuarter);
+                const isDisabled = isLedgerQuarterAfterCurrent(draftYear, quarter, currentYear, currentQuarter);
 
                 return (
                   <ChoiceButton
