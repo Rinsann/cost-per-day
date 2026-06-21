@@ -10,6 +10,8 @@ type BackupParseResult =
       reason: 'invalid-json' | 'invalid-format';
     };
 
+const SUPPORTED_BACKUP_APP_NAMES = ['Cost Per Day', '算得值'];
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -100,7 +102,12 @@ export function parseCostPerDayBackup(rawJson: string): BackupParseResult {
     };
   }
 
-  if (!isRecord(parsed) || parsed.app !== 'Cost Per Day' || !Array.isArray(parsed.products)) {
+  if (
+    !isRecord(parsed) ||
+    typeof parsed.app !== 'string' ||
+    !SUPPORTED_BACKUP_APP_NAMES.includes(parsed.app) ||
+    !Array.isArray(parsed.products)
+  ) {
     return {
       ok: false,
       reason: 'invalid-format'

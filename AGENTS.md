@@ -2,6 +2,8 @@
 
 ## Cost Per Day App Project Rules
 
+用户可见 App 名称使用「算得值」，不要在 UI 中显示 Cost Per Day 或日均账本；代码仓库和技术标识继续使用 Cost Per Day App / cost-per-day。
+
 项目技术栈：
 - React Native
 - Expo

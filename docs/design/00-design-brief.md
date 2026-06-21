@@ -1,5 +1,11 @@
 # Cost Per Day App UI Design Brief
 
+## 应用命名
+
+- 应用中文名：算得值
+- 项目技术代号：Cost Per Day App / cost-per-day
+- 用户界面统一使用中文名「算得值」，代码仓库和技术标识继续使用英文代号。
+
 ## 设计参考来源
 
 本目录中的图片来自 Figma 生成的深色记账 App 设计稿。

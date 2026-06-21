@@ -11,7 +11,7 @@ import { spacing } from '@/theme/spacing';
 
 const labels = {
   title: '\u6211\u7684',
-  userName: 'Cost Per Day',
+  userName: '算得值',
   userStatus: '\u672c\u5730\u4f7f\u7528\u4e2d',
   days: '\u8bb0\u5f55\u5929\u6570',
   records: '\u8bb0\u8d26\u8bb0\u5f55',
@@ -51,7 +51,7 @@ export default function MeTab() {
         <Card.Content style={styles.profileContent}>
           <View style={[styles.avatar, { backgroundColor: themeColors.primary }]}>
             <Text variant="headlineMedium" style={[styles.avatarText, { color: themeColors.background }]}>
-              C
+              算
             </Text>
           </View>
           <View style={styles.profileMain}>
