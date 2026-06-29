@@ -196,6 +196,27 @@ export function filterRecordsByDateRange(records: ExpenseRecord[], startDate: st
   return records.filter((record) => isRecordInDateRange(record, startDate, endDate));
 }
 
+export function filterRecordsByMonth(records: ExpenseRecord[], year: number, month: number) {
+  const range = getMonthRange(year, month);
+
+  return filterRecordsByDateRange(records, range.startDate, range.endDate);
+}
+
+export function getAvailableRecordMonths(records: ExpenseRecord[], today = new Date()) {
+  const currentMonth = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`;
+  const months = new Set<string>([currentMonth]);
+
+  records.forEach((record) => {
+    const monthKey = record.date.slice(0, 7);
+
+    if (/^\d{4}-\d{2}$/.test(monthKey) && monthKey <= currentMonth) {
+      months.add(monthKey);
+    }
+  });
+
+  return Array.from(months).sort((a, b) => b.localeCompare(a));
+}
+
 export function filterRecordsByTypeCategoryKeyword(records: ExpenseRecord[], filters: LedgerFilters) {
   const keyword = filters.keyword.trim().toLowerCase();
 
@@ -214,7 +235,8 @@ export function filterRecordsByTypeCategoryKeyword(records: ExpenseRecord[], fil
       return true;
     }
 
-    const searchableText = `${record.note ?? ''} ${record.category}`.toLowerCase();
+    const typeLabel = recordType === 'income' ? '收入' : '支出';
+    const searchableText = `${record.note ?? ''} ${record.category} ${typeLabel}`.toLowerCase();
 
     return searchableText.includes(keyword);
   });

@@ -89,8 +89,10 @@ function DetailRow({ label, value, valueColor }: DetailRowProps) {
 
 export default function LedgerDetailScreen() {
   const { colors: themeColors } = useAppTheme();
-  const params = useLocalSearchParams<{ id?: string | string[] }>();
+  const params = useLocalSearchParams<{ from?: string | string[]; id?: string | string[] }>();
   const recordId = getParamValue(params.id);
+  const source = getParamValue(params.from);
+  const backRoute = source === 'all' ? '/ledger/all' : '/ledger';
   const [record, setRecord] = useState<ExpenseRecord | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleteDialogVisible, setDeleteDialogVisible] = useState(false);
@@ -135,7 +137,7 @@ export default function LedgerDetailScreen() {
     try {
       await ledgerRepository.deleteRecord(recordId);
       setDeleteDialogVisible(false);
-      router.replace('/ledger');
+      router.replace(backRoute);
     } catch {
       setDeleteDialogVisible(false);
       Alert.alert(labels.deleteFailedTitle, labels.deleteFailedDescription);
@@ -185,7 +187,7 @@ export default function LedgerDetailScreen() {
             <Text variant="titleLarge" style={[styles.emptyTitle, { color: themeColors.text }]}>
               {labels.notFound}
             </Text>
-            <Button mode="contained" onPress={() => router.replace('/ledger')}>
+            <Button mode="contained" onPress={() => router.replace(backRoute)}>
               {labels.backToLedger}
             </Button>
           </Card.Content>

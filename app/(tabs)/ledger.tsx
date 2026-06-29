@@ -228,7 +228,7 @@ export default function LedgerTab() {
       )}
 
       <Pressable
-        onPress={() => router.push('/insights')}
+        onPress={() => router.push('/ledger/all')}
         style={({ pressed }) => [
           styles.viewAllButton,
           pressed && { backgroundColor: themeColors.surfacePressed }

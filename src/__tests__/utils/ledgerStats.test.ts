@@ -6,8 +6,10 @@ import {
   calculateCategoryStats,
   calculateSummary,
   filterRecordsByDateRange,
+  filterRecordsByMonth,
   filterRecordsByTypeCategoryKeyword,
   formatDailySummary,
+  getAvailableRecordMonths,
   getMonthRange,
   getQuarterRange,
   getYearRange,
@@ -44,6 +46,28 @@ describe('ledgerStats utilities', () => {
     expect(teaRecords[0].id).toBe('fixture-june-tea');
   });
 
+  it('filters by month and exposes non-future selectable months', () => {
+    const juneRecords = filterRecordsByMonth(expenseRecordFixtures, 2026, 6);
+    const months = getAvailableRecordMonths(expenseRecordFixtures, new Date(2026, 5, 20));
+
+    expect(juneRecords).toHaveLength(5);
+    expect(months).toEqual(['2026-06', '2026-04', '2026-03', '2026-01', '2025-12']);
+  });
+
+  it('filters records by type label keyword', () => {
+    const juneRecords = filterRecordsByMonth(expenseRecordFixtures, 2026, 6);
+    const incomeRecords = filterRecordsByTypeCategoryKeyword(juneRecords, {
+      category: 'all',
+      keyword: '收入',
+      type: 'all'
+    });
+
+    expect(incomeRecords.map((record) => record.id)).toEqual([
+      'fixture-june-salary',
+      'fixture-june-side-income'
+    ]);
+  });
+
   it('calculates income, expense, and balance inputs without changing real amounts', () => {
     const juneRecords = filterRecordsByDateRange(expenseRecordFixtures, '2026-06-01', '2026-06-30');
     const summary = calculateSummary(juneRecords);
@@ -62,6 +86,9 @@ describe('ledgerStats utilities', () => {
     expect(groups[0].summary).toEqual({ expense: 33.25, income: 1200 });
     expect(groups[1].summary).toEqual({ expense: 9, income: 9000 });
     expect(formatDailySummary(groups[0].summary)).toBe('支:33.25  收:1,200.00');
+    expect(formatDailySummary({ expense: 9, income: 0 })).toBe('支:9.00');
+    expect(formatDailySummary({ expense: 0, income: 9000 })).toBe('收:9,000.00');
+    expect(groupRecordsByDate([], new Date(2026, 5, 20))).toEqual([]);
   });
 
   it('calculates expense category stats and merges unknown categories into other', () => {
