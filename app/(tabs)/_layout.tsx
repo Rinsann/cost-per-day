@@ -42,7 +42,7 @@ const tabMeta: Record<string, TabMeta> = {
     label: '\u7edf\u8ba1',
     icon: 'chart-bar'
   },
-  index: {
+  cost: {
     label: '\u6210\u672c',
     icon: 'chart-donut'
   },
@@ -64,10 +64,11 @@ type AppTabBarProps = {
 function AppTabBar({ state, navigation, onQuickPress }: AppTabBarProps) {
   const insets = useSafeAreaInsets();
   const { colors } = useAppTheme();
+  const visibleRoutes = state.routes.filter((route) => tabMeta[route.name]);
 
-  function renderTabButton(route: (typeof state.routes)[number], index: number) {
+  function renderTabButton(route: (typeof state.routes)[number]) {
     const meta = tabMeta[route.name];
-    const isFocused = state.index === index;
+    const isFocused = state.routes[state.index]?.key === route.key;
     const color = isFocused ? colors.primary : colors.textSecondary;
 
     function handlePress() {
@@ -102,7 +103,7 @@ function AppTabBar({ state, navigation, onQuickPress }: AppTabBarProps) {
       ]}
     >
       <View style={styles.tabBar}>
-        {state.routes.slice(0, 2).map(renderTabButton)}
+        {visibleRoutes.slice(0, 2).map(renderTabButton)}
         <Pressable
           onPress={onQuickPress}
           style={[
@@ -115,7 +116,7 @@ function AppTabBar({ state, navigation, onQuickPress }: AppTabBarProps) {
         >
           <MaterialCommunityIcons name="plus" color={colors.background} size={30} />
         </Pressable>
-        {state.routes.slice(2).map((route, index) => renderTabButton(route, index + 2))}
+        {visibleRoutes.slice(2).map(renderTabButton)}
       </View>
     </View>
   );
@@ -135,9 +136,10 @@ export default function TabLayout() {
           headerShown: false
         }}
       >
+        <Tabs.Screen name="index" options={{ href: null }} />
         <Tabs.Screen name="ledger" options={{ title: '\u8bb0\u8d26' }} />
         <Tabs.Screen name="insights" options={{ title: '\u7edf\u8ba1' }} />
-        <Tabs.Screen name="index" options={{ title: '\u6210\u672c' }} />
+        <Tabs.Screen name="cost" options={{ title: '\u6210\u672c' }} />
         <Tabs.Screen name="me" options={{ title: '\u6211\u7684' }} />
       </Tabs>
       <QuickExpenseSheet

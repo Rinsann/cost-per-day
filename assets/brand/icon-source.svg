@@ -1,0 +1,13 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1024" height="1024" fill="#3DD9AC"/>
+  <!-- 根据 Android 桌面实测，值字视觉偏右，因此手动向左校正。 -->
+  <text
+    x="487"
+    y="520"
+    fill="#FFFFFF"
+    font-family="'Noto Sans SC Black', 'Microsoft YaHei UI', 'Microsoft YaHei', sans-serif"
+    font-size="545"
+    font-weight="900"
+    text-anchor="middle"
+    dominant-baseline="middle">值</text>
+</svg>

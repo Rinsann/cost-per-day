@@ -91,9 +91,10 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   const insets = useSafeAreaInsets();
   const { colors: themeColors, resolvedTheme } = useAppTheme();
   const { addRecord } = useExpenseRecords();
-  const amountScale = useRef(new Animated.Value(1)).current;
+  const amountFeedback = useRef(new Animated.Value(0)).current;
   const hasMountedAmount = useRef(false);
   const wasVisible = useRef(false);
+  const didLongPressBackspace = useRef(false);
   const [recordType, setRecordType] = useState<ExpenseRecordType>('expense');
   const [amountText, setAmountText] = useState('');
   const [category, setCategory] = useState(expenseCategories[0].label);
@@ -111,24 +112,34 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     return getAmountLabel(amountText);
   }, [amountText]);
 
+  const amountOpacity = amountFeedback.interpolate({
+    inputRange: [0, 1],
+    outputRange: [1, 0.94]
+  });
+
+  const amountTranslateY = amountFeedback.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -1]
+  });
+
   const triggerAmountFeedback = useCallback(() => {
-    amountScale.stopAnimation();
-    amountScale.setValue(1);
+    amountFeedback.stopAnimation();
+    amountFeedback.setValue(0);
     Animated.sequence([
-      Animated.timing(amountScale, {
-        duration: 80,
-        easing: Easing.out(Easing.quad),
-        toValue: 1.045,
-        useNativeDriver: true
-      }),
-      Animated.timing(amountScale, {
-        duration: 100,
+      Animated.timing(amountFeedback, {
+        duration: 70,
         easing: Easing.out(Easing.quad),
         toValue: 1,
         useNativeDriver: true
+      }),
+      Animated.timing(amountFeedback, {
+        duration: 100,
+        easing: Easing.out(Easing.quad),
+        toValue: 0,
+        useNativeDriver: true
       })
     ]).start();
-  }, [amountScale]);
+  }, [amountFeedback]);
 
   useEffect(() => {
     if (!hasMountedAmount.current) {
@@ -140,15 +151,15 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   }, [amountText, triggerAmountFeedback]);
 
   const resetDraft = useCallback(() => {
-    amountScale.stopAnimation();
-    amountScale.setValue(1);
+    amountFeedback.stopAnimation();
+    amountFeedback.setValue(0);
     setRecordType('expense');
     setAmountText('');
     setCategory(expenseCategories[0].label);
     setNote('');
     setSelectedDate(getDateString(new Date()));
     setSaving(false);
-  }, [amountScale]);
+  }, [amountFeedback]);
 
   useEffect(() => {
     if (visible && !wasVisible.current) {
@@ -174,6 +185,19 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
 
   function handleKeyPress(value: string) {
     setAmountText((currentValue) => getNextAmountText(currentValue, value));
+  }
+
+  function handleBackspacePress() {
+    if (didLongPressBackspace.current) {
+      didLongPressBackspace.current = false;
+      return;
+    }
+
+    handleKeyPress('backspace');
+  }
+
+  function clearAmountInput() {
+    setAmountText('');
   }
 
   async function handleSave() {
@@ -256,8 +280,20 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
               </Pressable>
             </View>
 
-            <Animated.View style={{ transform: [{ scale: amountScale }] }}>
-              <Text variant="displaySmall" style={[styles.amountText, { color: themeColors.text }]}>
+            <Animated.View
+              style={[
+                styles.amountWrap,
+                {
+                  opacity: amountOpacity,
+                  transform: [{ translateY: amountTranslateY }]
+                }
+              ]}
+            >
+              <Text
+                variant="displaySmall"
+                numberOfLines={1}
+                style={[styles.amountText, { color: themeColors.text }]}
+              >
                 {amountLabel}
               </Text>
             </Animated.View>
@@ -320,7 +356,28 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
               {keypadItems.map((item) => (
                 <Pressable
                   key={item}
-                  onPress={() => handleKeyPress(item)}
+                  delayLongPress={item === 'backspace' ? 420 : undefined}
+                  onLongPress={
+                    item === 'backspace'
+                      ? () => {
+                          didLongPressBackspace.current = true;
+                          clearAmountInput();
+                        }
+                      : undefined
+                  }
+                  onPress={() => {
+                    if (item === 'backspace') {
+                      handleBackspacePress();
+                      return;
+                    }
+
+                    handleKeyPress(item);
+                  }}
+                  onPressIn={() => {
+                    if (item === 'backspace') {
+                      didLongPressBackspace.current = false;
+                    }
+                  }}
                   android_ripple={
                     resolvedTheme === 'dark'
                       ? {
@@ -443,10 +500,14 @@ const styles = StyleSheet.create({
   activeSegmentText: {
     color: colors.text
   },
+  amountWrap: {
+    marginTop: spacing.md,
+    overflow: 'visible',
+    paddingHorizontal: spacing.sm
+  },
   amountText: {
     color: colors.text,
-    fontWeight: '800',
-    marginTop: spacing.md
+    fontWeight: '800'
   },
   categoryGrid: {
     flexDirection: 'row',

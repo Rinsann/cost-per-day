@@ -100,7 +100,7 @@ export default function EditProductScreen() {
             <Text variant="titleLarge" style={[styles.emptyTitle, { color: themeColors.text }]}>
               {labels.notFound}
             </Text>
-            <Button mode="contained" onPress={() => router.replace('/')} style={styles.homeButton}>
+            <Button mode="contained" onPress={() => router.replace('/cost')} style={styles.homeButton}>
               {labels.backHome}
             </Button>
           </Card.Content>

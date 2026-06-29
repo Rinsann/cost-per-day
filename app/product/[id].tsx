@@ -163,7 +163,7 @@ export default function ProductDetailScreen() {
     await deleteProductById(productId);
     setDeleting(false);
     setDeleteDialogVisible(false);
-    router.dismissTo('/');
+    router.dismissTo('/cost');
   }
 
   return (
@@ -203,7 +203,7 @@ export default function ProductDetailScreen() {
             <Text variant="titleLarge" style={[styles.emptyTitle, { color: themeColors.text }]}>
               {messages.empty.productNotFound}
             </Text>
-            <Button mode="contained" onPress={() => router.replace('/')} style={styles.homeButton}>
+            <Button mode="contained" onPress={() => router.replace('/cost')} style={styles.homeButton}>
               {labels.backHome}
             </Button>
           </Card.Content>
