@@ -244,6 +244,10 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     }
   }
 
+  if (!visible) {
+    return null;
+  }
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <View style={styles.modalRoot}>

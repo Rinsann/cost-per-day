@@ -3,6 +3,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useMemo } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Card, Text } from 'react-native-paper';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Screen } from '@/components/layout/Screen';
 import { useAppTheme } from '@/context/AppThemeContext';
@@ -31,7 +32,7 @@ const labels = {
   today: '\u4eca\u5929',
   yesterday: '\u6628\u5929',
   recentRecords: '\u6700\u8fd1\u8d26\u5355',
-  viewAllRecords: '\u67e5\u770b\u5168\u90e8\u8d26\u5355',
+  viewAll: '\u67e5\u770b\u5168\u90e8',
   emptyTitle: '\u8fd8\u6ca1\u6709\u8bb0\u5f55',
   emptyDescription: '\u70b9\u51fb\u5e95\u90e8\u4e2d\u95f4\u7684 + \u5feb\u901f\u8bb0\u4e00\u7b14\u3002',
   loadFailedTitle: '\u8bfb\u53d6\u5931\u8d25',
@@ -39,6 +40,7 @@ const labels = {
 };
 
 export default function LedgerTab() {
+  const insets = useSafeAreaInsets();
   const { colors: themeColors } = useAppTheme();
   const { getCategoryIcon } = useExpenseCategories();
   const { records, refreshRecords } = useExpenseRecords();
@@ -84,9 +86,21 @@ export default function LedgerTab() {
 
   const monthBalance = monthSummary.income - monthSummary.expense;
   const monthBalanceColor = monthBalance >= 0 ? themeColors.income : themeColors.expense;
+  const bottomPadding = Math.max(insets.bottom, spacing.sm) + 56 + spacing.xxxl;
+
+  const openAllRecords = useCallback(() => {
+    router.push('/ledger/all');
+  }, []);
+
+  const openRecordDetail = useCallback((recordId: string) => {
+    router.push({
+      pathname: '/ledger/[id]',
+      params: { id: recordId }
+    });
+  }, []);
 
   return (
-    <Screen>
+    <Screen bottomPadding={bottomPadding}>
       <View style={styles.header}>
         <Text variant="headlineSmall" style={[styles.title, { color: themeColors.text }]}>
           {labels.title}
@@ -141,6 +155,18 @@ export default function LedgerTab() {
         <Text variant="titleMedium" style={[styles.sectionTitle, { color: themeColors.textSecondary }]}>
           {labels.recentRecords}
         </Text>
+        <Pressable
+          onPress={openAllRecords}
+          style={({ pressed }) => [
+            styles.viewAllInlineButton,
+            pressed && { backgroundColor: themeColors.surfacePressed }
+          ]}
+        >
+          <Text variant="labelLarge" style={[styles.viewAllInlineText, { color: themeColors.primary }]}>
+            {labels.viewAll}
+          </Text>
+          <MaterialCommunityIcons name="chevron-right" color={themeColors.primary} size={18} />
+        </Pressable>
       </View>
 
       {recordGroups.length === 0 ? (
@@ -183,7 +209,7 @@ export default function LedgerTab() {
                   return (
                     <Pressable
                       key={record.id}
-                      onPress={() => router.push(`/ledger/${record.id}`)}
+                      onPress={() => openRecordDetail(record.id)}
                       android_ripple={{ color: themeColors.ripple }}
                       style={({ pressed }) => [
                         styles.recordItem,
@@ -218,19 +244,6 @@ export default function LedgerTab() {
           ))}
         </View>
       )}
-
-      <Pressable
-        onPress={() => router.push('/ledger/all')}
-        style={({ pressed }) => [
-          styles.viewAllButton,
-          pressed && { backgroundColor: themeColors.surfacePressed }
-        ]}
-      >
-        <Text variant="titleSmall" style={[styles.viewAllText, { color: themeColors.primary }]}>
-          {labels.viewAllRecords}
-        </Text>
-        <MaterialCommunityIcons name="chevron-right" color={themeColors.primary} size={20} />
-      </Pressable>
     </Screen>
   );
 }
@@ -292,11 +305,28 @@ const styles = StyleSheet.create({
     fontWeight: '800'
   },
   sectionHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm,
+    justifyContent: 'space-between',
     marginBottom: spacing.sm
   },
   sectionTitle: {
     color: colors.textSecondary,
+    flex: 1,
     fontWeight: '800'
+  },
+  viewAllInlineButton: {
+    alignItems: 'center',
+    borderRadius: radius.full,
+    flexDirection: 'row',
+    gap: 2,
+    minHeight: 36,
+    paddingHorizontal: spacing.sm
+  },
+  viewAllInlineText: {
+    color: colors.primary,
+    fontWeight: '900'
   },
   emptyCard: {
     borderRadius: 24
@@ -362,7 +392,6 @@ const styles = StyleSheet.create({
   recordItemLast: {
     borderBottomWidth: 0
   },
-  recordItemPressed: {},
   recordIcon: {
     alignItems: 'center',
     borderRadius: radius.full,
@@ -386,21 +415,4 @@ const styles = StyleSheet.create({
     minWidth: 96,
     textAlign: 'right'
   },
-  viewAllButton: {
-    alignItems: 'center',
-    alignSelf: 'center',
-    borderRadius: radius.full,
-    flexDirection: 'row',
-    gap: spacing.xs,
-    marginTop: spacing.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm
-  },
-  viewAllButtonPressed: {
-    opacity: 0.72
-  },
-  viewAllText: {
-    color: colors.primary,
-    fontWeight: '900'
-  }
 });
