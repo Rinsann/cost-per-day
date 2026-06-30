@@ -13,8 +13,8 @@ import {
 
 import { AppScreen } from '@/components/layout/AppScreen';
 import { AppCard } from '@/components/ui/AppCard';
-import { getExpenseCategoryIcon } from '@/constants/expenseCategories';
 import { useAppTheme } from '@/context/AppThemeContext';
+import { useExpenseCategories } from '@/context/ExpenseCategoriesContext';
 import { ledgerRepository } from '@/repositories/ledgerRepository';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -89,6 +89,7 @@ function DetailRow({ label, value, valueColor }: DetailRowProps) {
 
 export default function LedgerDetailScreen() {
   const { colors: themeColors } = useAppTheme();
+  const { getCategoryIcon } = useExpenseCategories();
   const params = useLocalSearchParams<{ from?: string | string[]; id?: string | string[] }>();
   const recordId = getParamValue(params.id);
   const source = getParamValue(params.from);
@@ -200,7 +201,7 @@ export default function LedgerDetailScreen() {
             <Card.Content style={styles.heroContent}>
               <View style={[styles.recordIcon, { backgroundColor: themeColors.surface }]}>
                 <IconButton
-                  icon={getExpenseCategoryIcon(record.category, recordType)}
+                  icon={getCategoryIcon(record.category, recordType)}
                   iconColor={amountColor}
                   size={28}
                   style={styles.recordIconButton}

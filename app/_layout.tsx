@@ -4,11 +4,14 @@ import { PaperProvider } from 'react-native-paper';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AppThemeProvider, useAppTheme } from '@/context/AppThemeContext';
+import { ExpenseCategoriesProvider } from '@/context/ExpenseCategoriesContext';
 
 export default function RootLayout() {
   return (
     <AppThemeProvider>
-      <RootLayoutContent />
+      <ExpenseCategoriesProvider>
+        <RootLayoutContent />
+      </ExpenseCategoriesProvider>
     </AppThemeProvider>
   );
 }
@@ -80,6 +83,12 @@ function RootLayoutContent() {
             name="stats"
             options={{
               title: '\u6570\u636e\u7edf\u8ba1'
+            }}
+          />
+          <Stack.Screen
+            name="categories"
+            options={{
+              title: '\u5206\u7c7b\u7ba1\u7406'
             }}
           />
         </Stack>

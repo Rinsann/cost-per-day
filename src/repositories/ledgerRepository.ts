@@ -3,7 +3,7 @@ import {
   getExpenseRecords,
   saveExpenseRecords
 } from '@/storage/expenseStorage';
-import { ExpenseRecord } from '@/types/expense';
+import { ExpenseRecord, ExpenseRecordType } from '@/types/expense';
 
 export type LedgerRecordInput = Omit<ExpenseRecord, 'id' | 'createdAt'>;
 export type LedgerRecordPatch = Partial<Omit<ExpenseRecord, 'id' | 'createdAt'>>;
@@ -57,6 +57,36 @@ export const ledgerRepository = {
     await saveExpenseRecords(sortRecords(nextRecords));
 
     return updatedRecord;
+  },
+
+  async renameCategory(type: ExpenseRecordType, oldCategory: string, newCategory: string) {
+    if (oldCategory === newCategory) {
+      return 0;
+    }
+
+    const records = await getExpenseRecords();
+    let updatedCount = 0;
+
+    const nextRecords = records.map((record) => {
+      const recordType = record.type === 'income' ? 'income' : 'expense';
+
+      if (recordType !== type || record.category !== oldCategory) {
+        return record;
+      }
+
+      updatedCount += 1;
+
+      return {
+        ...record,
+        category: newCategory
+      };
+    });
+
+    if (updatedCount > 0) {
+      await saveExpenseRecords(sortRecords(nextRecords));
+    }
+
+    return updatedCount;
   },
 
   async deleteRecord(id: string) {

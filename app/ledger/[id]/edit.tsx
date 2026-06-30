@@ -1,14 +1,14 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { Alert, LayoutChangeEvent, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Button, Card, Text, TextInput } from 'react-native-paper';
 
 import { AppScreen } from '@/components/layout/AppScreen';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppDateField } from '@/components/ui/AppDateField';
-import { expenseCategories, incomeCategories } from '@/constants/expenseCategories';
 import { useAppTheme } from '@/context/AppThemeContext';
+import { useExpenseCategories } from '@/context/ExpenseCategoriesContext';
 import { ledgerRepository } from '@/repositories/ledgerRepository';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -66,6 +66,7 @@ function isValidAmountText(value: string) {
 
 export default function EditLedgerRecordScreen() {
   const { colors: themeColors } = useAppTheme();
+  const { expenseCategories, getCategoryIcon, incomeCategories } = useExpenseCategories();
   const scrollViewRef = useRef<ScrollView>(null);
   const noteLayoutY = useRef(0);
   const params = useLocalSearchParams<{ id?: string | string[] }>();
@@ -79,7 +80,22 @@ export default function EditLedgerRecordScreen() {
   const [note, setNote] = useState('');
   const [date, setDate] = useState('');
 
-  const categories = recordType === 'expense' ? expenseCategories : incomeCategories;
+  const sourceCategories = recordType === 'expense' ? expenseCategories : incomeCategories;
+  const categories = useMemo(() => {
+    if (!category || sourceCategories.some((item) => item.label === category)) {
+      return sourceCategories;
+    }
+
+    return [
+      {
+        icon: getCategoryIcon(category, recordType),
+        id: `current-${recordType}-${category}`,
+        label: category,
+        type: recordType
+      },
+      ...sourceCategories
+    ];
+  }, [category, getCategoryIcon, recordType, sourceCategories]);
   const todayString = getDateString(new Date());
   const isAmountValid = isValidAmountText(amountText);
   const isDateFormatValid = isValidDateString(date);
@@ -132,7 +148,7 @@ export default function EditLedgerRecordScreen() {
     setCategory((currentCategory) => {
       return nextCategories.some((item) => item.label === currentCategory)
         ? currentCategory
-        : nextCategories[0].label;
+        : nextCategories[0]?.label ?? '';
     });
   }
 

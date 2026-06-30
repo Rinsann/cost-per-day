@@ -19,12 +19,12 @@ import { Screen } from '@/components/layout/Screen';
 import { AppCard } from '@/components/ui/AppCard';
 import { AppDateField } from '@/components/ui/AppDateField';
 import {
-  expenseCategories,
-  getExpenseCategoryIcon,
-  incomeCategories
+  ExpenseCategoryIcon,
+  ManagedExpenseCategory
 } from '@/constants/expenseCategories';
 import { useExpenseRecords } from '@/context/ExpenseRecordsContext';
 import { useAppTheme } from '@/context/AppThemeContext';
+import { useExpenseCategories } from '@/context/ExpenseCategoriesContext';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
@@ -373,14 +373,18 @@ function getSummary(records: ExpenseRecord[]) {
   );
 }
 
-function getCategoryOptions(type: TypeFilter) {
+function getCategoryOptions(
+  type: TypeFilter,
+  expenseCategories: ManagedExpenseCategory[],
+  incomeCategories: ManagedExpenseCategory[]
+) {
   const sourceCategories =
     type === 'expense'
       ? expenseCategories
       : type === 'income'
         ? incomeCategories
         : [...expenseCategories, ...incomeCategories];
-  const categoryMap = new Map<string, (typeof sourceCategories)[number]>();
+  const categoryMap = new Map<string, ManagedExpenseCategory>();
 
   sourceCategories.forEach((category) => {
     if (!categoryMap.has(category.label)) {
@@ -525,12 +529,16 @@ function getBarStats(
   });
 }
 
-function getCategoryRank(records: ExpenseRecord[], totalAmount: number): CategoryRankItem[] {
+function getCategoryRank(
+  records: ExpenseRecord[],
+  totalAmount: number,
+  expenseCategoryLabels: string[]
+): CategoryRankItem[] {
   if (totalAmount <= 0) {
     return [];
   }
 
-  const validExpenseCategories = new Set(expenseCategories.map((category) => category.label));
+  const validExpenseCategories = new Set(expenseCategoryLabels);
   const normalizeCategory = (category: string) => {
     const normalizedCategory = category.trim();
 
@@ -662,6 +670,7 @@ function getCustomRangeError(startDate: string, endDate: string, minDate: string
 export default function InsightsTab() {
   const { records, refreshRecords } = useExpenseRecords();
   const { colors: themeColors } = useAppTheme();
+  const { expenseCategories, getCategoryIcon, incomeCategories } = useExpenseCategories();
   const today = new Date();
   const todayString = getDateString(today);
   const currentYear = today.getFullYear();
@@ -697,6 +706,10 @@ export default function InsightsTab() {
   );
   const hasSelectableDateRecords = records.some(
     (record) => isLedgerValidDateText(record.date) && record.date <= todayString
+  );
+  const expenseCategoryLabels = useMemo(
+    () => expenseCategories.map((category) => category.label),
+    [expenseCategories]
   );
 
   const playChartAnimations = useCallback(() => {
@@ -829,9 +842,9 @@ export default function InsightsTab() {
       calculateLedgerCategoryStats(filteredRecords, summary.expense, {
         colors: DONUT_COLORS,
         otherLabel: labels.other,
-        validCategories: expenseCategories.map((category) => category.label)
+        validCategories: expenseCategoryLabels
       }),
-    [filteredRecords, summary.expense]
+    [expenseCategoryLabels, filteredRecords, summary.expense]
   );
   const detailGroups = useMemo(
     () => groupExpenseRecordsByDate(filteredRecords, today),
@@ -1182,7 +1195,7 @@ export default function InsightsTab() {
         totalExpense={summary.expense}
       />
 
-      <BillDetails groups={detailGroups} />
+      <BillDetails groups={detailGroups} getCategoryIcon={getCategoryIcon} />
 
       <TimeRangeSheet
         currentMonth={currentMonth}
@@ -1206,6 +1219,8 @@ export default function InsightsTab() {
         customRangeAvailable={hasSelectableDateRecords}
         customStartDate={draftCustomStartDate}
         draftFilters={draftFilters}
+        expenseCategories={expenseCategories}
+        incomeCategories={incomeCategories}
         maxSelectableDate={todayString}
         minSelectableDate={minSelectableDate}
         onCancel={() => setFilterSheetVisible(false)}
@@ -1457,7 +1472,13 @@ function ExpenseDonutChart({
   );
 }
 
-function BillDetails({ groups }: { groups: ReturnType<typeof groupExpenseRecordsByDate> }) {
+function BillDetails({
+  getCategoryIcon,
+  groups
+}: {
+  getCategoryIcon: (category: string, type: ExpenseRecordType) => ExpenseCategoryIcon;
+  groups: ReturnType<typeof groupExpenseRecordsByDate>;
+}) {
   const { colors: themeColors } = useAppTheme();
 
   return (
@@ -1511,7 +1532,7 @@ function BillDetails({ groups }: { groups: ReturnType<typeof groupExpenseRecords
                       >
                         <View style={[styles.detailIcon, { backgroundColor: themeColors.cardAlt }]}>
                           <MaterialCommunityIcons
-                            name={getExpenseCategoryIcon(record.category, recordType)}
+                            name={getCategoryIcon(record.category, recordType)}
                             color={amountColor}
                             size={21}
                           />
@@ -1692,6 +1713,8 @@ function FilterSheet({
   customRangeAvailable,
   customStartDate,
   draftFilters,
+  expenseCategories,
+  incomeCategories,
   maxSelectableDate,
   minSelectableDate,
   onCancel,
@@ -1709,6 +1732,8 @@ function FilterSheet({
   customRangeAvailable: boolean;
   customStartDate: string;
   draftFilters: Filters;
+  expenseCategories: ManagedExpenseCategory[];
+  incomeCategories: ManagedExpenseCategory[];
   maxSelectableDate: string;
   minSelectableDate: string;
   onCancel: () => void;
@@ -1723,7 +1748,11 @@ function FilterSheet({
   visible: boolean;
 }) {
   const { colors: themeColors } = useAppTheme();
-  const categoryOptions = getCategoryOptions(draftFilters.type);
+  const categoryOptions = getCategoryOptions(
+    draftFilters.type,
+    expenseCategories,
+    incomeCategories
+  );
 
   function updateType(type: TypeFilter) {
     onUpdate({ ...draftFilters, category: 'all', type });

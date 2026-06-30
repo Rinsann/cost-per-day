@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
 import { EncodingType, File, Paths } from 'expo-file-system';
 import { readAsStringAsync } from 'expo-file-system/legacy';
-import { useFocusEffect } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import type { ComponentProps, ReactNode } from 'react';
 import { useCallback, useMemo, useState } from 'react';
@@ -70,6 +70,8 @@ const labels = {
   system: '跟随系统',
   light: '浅色',
   dark: '深色',
+  categoryManagement: '分类管理',
+  categoryManagementDescription: '管理记账分类和图标',
   ledgerData: '记账数据',
   productData: '成本消费品数据',
   fullBackup: '完整备份',
@@ -531,6 +533,15 @@ export default function MeTab() {
           onPress={() => setThemeSheetVisible(true)}
           title={labels.appearance}
           value={themeModeLabels[themeMode]}
+        />
+      </SectionCard>
+
+      <SectionCard title={labels.categoryManagement}>
+        <ActionRow
+          description={labels.categoryManagementDescription}
+          icon="shape-outline"
+          onPress={() => router.push('/categories')}
+          title={labels.categoryManagement}
         />
       </SectionCard>
 

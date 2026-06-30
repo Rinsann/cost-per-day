@@ -6,13 +6,9 @@ import { ActivityIndicator, Card, Text, TextInput } from 'react-native-paper';
 
 import { AppScreen } from '@/components/layout/AppScreen';
 import { AppCard } from '@/components/ui/AppCard';
-import {
-  ExpenseCategoryItem,
-  expenseCategories,
-  getExpenseCategoryIcon,
-  incomeCategories
-} from '@/constants/expenseCategories';
+import { ManagedExpenseCategory } from '@/constants/expenseCategories';
 import { useAppTheme } from '@/context/AppThemeContext';
+import { useExpenseCategories } from '@/context/ExpenseCategoriesContext';
 import { ledgerRepository } from '@/repositories/ledgerRepository';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -89,14 +85,18 @@ function formatSectionDate(date: string, label: string) {
   return label === date ? date : `${date} ${label}`;
 }
 
-function getCategoryOptions(typeFilter: LedgerTypeFilter) {
+function getCategoryOptions(
+  typeFilter: LedgerTypeFilter,
+  expenseCategories: ManagedExpenseCategory[],
+  incomeCategories: ManagedExpenseCategory[]
+) {
   const sourceCategories =
     typeFilter === 'expense'
       ? expenseCategories
       : typeFilter === 'income'
         ? incomeCategories
         : [...expenseCategories, ...incomeCategories];
-  const categoryMap = new Map<string, ExpenseCategoryItem>();
+  const categoryMap = new Map<string, ManagedExpenseCategory>();
 
   sourceCategories.forEach((category) => {
     if (!categoryMap.has(category.label)) {
@@ -107,16 +107,13 @@ function getCategoryOptions(typeFilter: LedgerTypeFilter) {
   return Array.from(categoryMap.values());
 }
 
-function getRecordIcon(record: ExpenseRecord) {
-  return getExpenseCategoryIcon(record.category, getRecordType(record));
-}
-
 function getRecordTitle(record: ExpenseRecord) {
   return record.note || record.category;
 }
 
 export default function AllLedgerRecordsScreen() {
   const { colors: themeColors } = useAppTheme();
+  const { expenseCategories, getCategoryIcon, incomeCategories } = useExpenseCategories();
   const [records, setRecords] = useState<ExpenseRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey);
@@ -158,8 +155,8 @@ export default function AllLedgerRecordsScreen() {
   }, [availableMonths, selectedMonth]);
 
   const categoryOptions = useMemo(() => {
-    return getCategoryOptions('all');
-  }, []);
+    return getCategoryOptions(typeFilter, expenseCategories, incomeCategories);
+  }, [expenseCategories, incomeCategories, typeFilter]);
 
   useEffect(() => {
     if (
@@ -268,7 +265,11 @@ export default function AllLedgerRecordsScreen() {
           ]}
         >
           <View style={[styles.recordIcon, { backgroundColor: themeColors.cardAlt }]}>
-            <MaterialCommunityIcons name={getRecordIcon(item)} color={amountColor} size={22} />
+            <MaterialCommunityIcons
+              name={getCategoryIcon(item.category, getRecordType(item))}
+              color={amountColor}
+              size={22}
+            />
           </View>
           <View style={styles.recordMain}>
             <Text variant="titleSmall" style={[styles.recordTitle, { color: themeColors.text }]} numberOfLines={1}>
@@ -284,7 +285,7 @@ export default function AllLedgerRecordsScreen() {
         </Pressable>
       );
     },
-    [themeColors]
+    [getCategoryIcon, themeColors]
   );
 
   const renderSectionHeader = useCallback(
@@ -509,7 +510,7 @@ function CategoryFilterSheet({
   onSelect,
   visible
 }: {
-  categoryOptions: ExpenseCategoryItem[];
+  categoryOptions: ManagedExpenseCategory[];
   draftCategory: string;
   onCancel: () => void;
   onConfirm: () => void;

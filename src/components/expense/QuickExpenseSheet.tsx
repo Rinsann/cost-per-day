@@ -16,8 +16,8 @@ import { Button, Text, TextInput } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AppDateField } from '@/components/ui/AppDateField';
-import { expenseCategories, incomeCategories } from '@/constants/expenseCategories';
 import { useAppTheme } from '@/context/AppThemeContext';
+import { useExpenseCategories } from '@/context/ExpenseCategoriesContext';
 import { useExpenseRecords } from '@/context/ExpenseRecordsContext';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
@@ -92,6 +92,7 @@ function getNextAmountText(currentValue: string, key: string) {
 export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) {
   const insets = useSafeAreaInsets();
   const { colors: themeColors, resolvedTheme } = useAppTheme();
+  const { expenseCategories, incomeCategories } = useExpenseCategories();
   const { addRecord } = useExpenseRecords();
   const amountFeedback = useRef(new Animated.Value(0)).current;
   const hasMountedAmount = useRef(false);
@@ -161,7 +162,13 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     setNote('');
     setSelectedDate(getDateString(new Date()));
     setSaving(false);
-  }, [amountFeedback]);
+  }, [amountFeedback, expenseCategories]);
+
+  useEffect(() => {
+    if (!categories.some((item) => item.label === category)) {
+      setCategory(categories[0]?.label ?? '');
+    }
+  }, [categories, category]);
 
   useEffect(() => {
     if (visible && !wasVisible.current) {
@@ -182,7 +189,11 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
 
   function selectRecordType(nextType: ExpenseRecordType) {
     setRecordType(nextType);
-    setCategory(nextType === 'expense' ? expenseCategories[0].label : incomeCategories[0].label);
+    setCategory(
+      nextType === 'expense'
+        ? expenseCategories[0]?.label ?? ''
+        : incomeCategories[0]?.label ?? ''
+    );
   }
 
   function handleKeyPress(value: string) {
@@ -203,7 +214,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   }
 
   async function handleSave() {
-    if (!isAmountValid) {
+    if (!isAmountValid || !category) {
       Alert.alert(labels.invalidTitle, labels.invalidDescription);
       return;
     }
@@ -431,10 +442,10 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
               <Button
                 mode="contained"
                 loading={saving}
-                disabled={saving || !isAmountValid}
-                buttonColor={isAmountValid ? saveColor : themeColors.surfacePressed}
+                disabled={saving || !isAmountValid || !category}
+                buttonColor={isAmountValid && category ? saveColor : themeColors.surfacePressed}
                 textColor={
-                  isAmountValid
+                  isAmountValid && category
                     ? recordType === 'expense'
                       ? themeColors.text
                       : themeColors.background

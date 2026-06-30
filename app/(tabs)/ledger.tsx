@@ -5,13 +5,12 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 import { Card, Text } from 'react-native-paper';
 
 import { Screen } from '@/components/layout/Screen';
-import { getExpenseCategoryIcon } from '@/constants/expenseCategories';
 import { useAppTheme } from '@/context/AppThemeContext';
+import { useExpenseCategories } from '@/context/ExpenseCategoriesContext';
 import { useExpenseRecords } from '@/context/ExpenseRecordsContext';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
-import { ExpenseRecord } from '@/types/expense';
 import {
   getMonthString,
   getRecordType,
@@ -39,16 +38,9 @@ const labels = {
   loadFailedDescription: '\u65e0\u6cd5\u8bfb\u53d6\u672c\u5730\u8bb0\u8d26\u8bb0\u5f55\u3002'
 };
 
-function getRecordIcon(record: ExpenseRecord) {
-  if (getRecordType(record) === 'income') {
-    return getExpenseCategoryIcon(record.category, 'income');
-  }
-
-  return getExpenseCategoryIcon(record.category, 'expense');
-}
-
 export default function LedgerTab() {
   const { colors: themeColors } = useAppTheme();
+  const { getCategoryIcon } = useExpenseCategories();
   const { records, refreshRecords } = useExpenseRecords();
   const now = new Date();
   const today = getDateString(now);
@@ -202,7 +194,7 @@ export default function LedgerTab() {
                     >
                       <View style={[styles.recordIcon, { backgroundColor: themeColors.cardAlt }]}>
                         <MaterialCommunityIcons
-                          name={getRecordIcon(record)}
+                          name={getCategoryIcon(record.category, getRecordType(record))}
                           color={amountColor}
                           size={22}
                         />
