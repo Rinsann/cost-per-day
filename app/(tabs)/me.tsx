@@ -657,7 +657,12 @@ export default function MeTab() {
         transparent
         visible={themeSheetVisible}
       >
-        <View style={[styles.modalOverlay, { backgroundColor: themeColors.overlay }]}>
+        <View style={styles.modalOverlay}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => setThemeSheetVisible(false)}
+            style={[StyleSheet.absoluteFill, { backgroundColor: themeColors.overlay }]}
+          />
           <View style={[styles.sheet, { backgroundColor: themeColors.surfaceElevated }]}>
             <View style={[styles.sheetHandle, { backgroundColor: themeColors.textSecondary }]} />
             <Text variant="titleMedium" style={[styles.sheetTitle, { color: themeColors.text }]}>

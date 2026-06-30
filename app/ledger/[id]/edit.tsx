@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Alert, Pressable, StyleSheet, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { Alert, LayoutChangeEvent, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Button, Card, Text, TextInput } from 'react-native-paper';
 
 import { AppScreen } from '@/components/layout/AppScreen';
@@ -66,6 +66,8 @@ function isValidAmountText(value: string) {
 
 export default function EditLedgerRecordScreen() {
   const { colors: themeColors } = useAppTheme();
+  const scrollViewRef = useRef<ScrollView>(null);
+  const noteLayoutY = useRef(0);
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const recordId = getParamValue(params.id);
   const [loading, setLoading] = useState(true);
@@ -173,8 +175,21 @@ export default function EditLedgerRecordScreen() {
     }
   }
 
+  function handleNoteLayout(event: LayoutChangeEvent) {
+    noteLayoutY.current = event.nativeEvent.layout.y;
+  }
+
+  function scrollNoteIntoView() {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({
+        animated: true,
+        y: Math.max(noteLayoutY.current - spacing.xl, 0)
+      });
+    }, 180);
+  }
+
   return (
-    <AppScreen>
+    <AppScreen bottomPadding={88} scrollRef={scrollViewRef}>
       {loading ? (
         <View style={styles.loadingWrap}>
           <ActivityIndicator color={themeColors.primary} />
@@ -313,18 +328,22 @@ export default function EditLedgerRecordScreen() {
               }
             />
 
-            <TextInput
-              label={labels.note}
-              mode="outlined"
-              value={note}
-              onChangeText={setNote}
-              multiline
-              numberOfLines={3}
-              style={[styles.noteInput, { backgroundColor: themeColors.surfaceElevated }]}
-              textColor={themeColors.text}
-              outlineColor={themeColors.border}
-              activeOutlineColor={themeColors.primary}
-            />
+            <View onLayout={handleNoteLayout}>
+              <TextInput
+                label={labels.note}
+                mode="outlined"
+                value={note}
+                onChangeText={setNote}
+                multiline
+                numberOfLines={3}
+                onFocus={scrollNoteIntoView}
+                textAlignVertical="top"
+                style={[styles.noteInput, { backgroundColor: themeColors.surfaceElevated }]}
+                textColor={themeColors.text}
+                outlineColor={themeColors.border}
+                activeOutlineColor={themeColors.primary}
+              />
+            </View>
 
             <Button
               mode="contained"

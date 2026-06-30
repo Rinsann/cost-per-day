@@ -262,6 +262,7 @@ export function ProductForm({
           onChangeText={setNote}
           multiline
           numberOfLines={4}
+          textAlignVertical="top"
           style={[styles.input, { backgroundColor: themeColors.inputBackground }]}
           textColor={themeColors.text}
           outlineColor={themeColors.inputBorder}

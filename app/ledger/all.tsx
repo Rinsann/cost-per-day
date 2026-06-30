@@ -1,7 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { Stack, router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert, FlatList, Pressable, SectionList, StyleSheet, View } from 'react-native';
+import { Alert, Modal, Pressable, ScrollView, SectionList, StyleSheet, View } from 'react-native';
 import { ActivityIndicator, Card, Text, TextInput } from 'react-native-paper';
 
 import { AppScreen } from '@/components/layout/AppScreen';
@@ -44,12 +44,25 @@ const labels = {
   title: '全部账单',
   all: '全部',
   allCategories: '全部分类',
+  cancel: '取消',
+  confirm: '确定',
+  delete: '删除',
+  deleteConfirmDescription: '删除后无法恢复。',
+  deleteConfirmTitle: '删除这条账单？',
+  deleteFailedDescription: '请稍后再试。',
+  deleteFailedTitle: '删除失败',
+  edit: '编辑',
   emptyTitle: '没有符合条件的账单',
   emptyDescription: '换个月份或筛选条件试试。',
   expense: '支出',
+  filter: '筛选',
+  filtered: '已筛选',
   income: '收入',
   loadFailedTitle: '读取失败',
   loadFailedDescription: '无法读取本地记账记录。',
+  month: '月份',
+  recordActions: '账单操作',
+  reset: '重置',
   searchPlaceholder: '搜索备注或分类',
   type: '类型',
   category: '分类'
@@ -98,6 +111,10 @@ function getRecordIcon(record: ExpenseRecord) {
   return getExpenseCategoryIcon(record.category, getRecordType(record));
 }
 
+function getRecordTitle(record: ExpenseRecord) {
+  return record.note || record.category;
+}
+
 export default function AllLedgerRecordsScreen() {
   const { colors: themeColors } = useAppTheme();
   const [records, setRecords] = useState<ExpenseRecord[]>([]);
@@ -105,7 +122,10 @@ export default function AllLedgerRecordsScreen() {
   const [selectedMonth, setSelectedMonth] = useState(getCurrentMonthKey);
   const [typeFilter, setTypeFilter] = useState<LedgerTypeFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [draftCategoryFilter, setDraftCategoryFilter] = useState('all');
+  const [filterSheetVisible, setFilterSheetVisible] = useState(false);
   const [keyword, setKeyword] = useState('');
+  const [monthSheetVisible, setMonthSheetVisible] = useState(false);
   const today = useMemo(() => new Date(), []);
 
   const loadRecords = useCallback(async () => {
@@ -138,8 +158,8 @@ export default function AllLedgerRecordsScreen() {
   }, [availableMonths, selectedMonth]);
 
   const categoryOptions = useMemo(() => {
-    return getCategoryOptions(typeFilter);
-  }, [typeFilter]);
+    return getCategoryOptions('all');
+  }, []);
 
   useEffect(() => {
     if (
@@ -149,6 +169,59 @@ export default function AllLedgerRecordsScreen() {
       setCategoryFilter('all');
     }
   }, [categoryFilter, categoryOptions]);
+
+  function openFilterSheet() {
+    setDraftCategoryFilter(categoryFilter);
+    setFilterSheetVisible(true);
+  }
+
+  function confirmCategoryFilter() {
+    setCategoryFilter(draftCategoryFilter);
+    setFilterSheetVisible(false);
+  }
+
+  function resetCategoryFilter() {
+    setDraftCategoryFilter('all');
+  }
+
+  function confirmDeleteRecord(record: ExpenseRecord) {
+    Alert.alert(labels.deleteConfirmTitle, labels.deleteConfirmDescription, [
+      {
+        text: labels.cancel,
+        style: 'cancel'
+      },
+      {
+        text: labels.delete,
+        style: 'destructive',
+        onPress: async () => {
+          try {
+            await ledgerRepository.deleteRecord(record.id);
+            await loadRecords();
+          } catch {
+            Alert.alert(labels.deleteFailedTitle, labels.deleteFailedDescription);
+          }
+        }
+      }
+    ]);
+  }
+
+  function showRecordActions(record: ExpenseRecord) {
+    Alert.alert(labels.recordActions, getRecordTitle(record), [
+      {
+        text: labels.edit,
+        onPress: () => router.push(`/ledger/${record.id}/edit`)
+      },
+      {
+        text: labels.delete,
+        style: 'destructive',
+        onPress: () => confirmDeleteRecord(record)
+      },
+      {
+        text: labels.cancel,
+        style: 'cancel'
+      }
+    ]);
+  }
 
   const monthRecords = useMemo(() => {
     const { month, year } = getMonthParts(selectedMonth);
@@ -183,6 +256,8 @@ export default function AllLedgerRecordsScreen() {
       return (
         <Pressable
           onPress={() => router.push(`/ledger/${item.id}?from=all`)}
+          onLongPress={() => showRecordActions(item)}
+          delayLongPress={420}
           android_ripple={{ color: themeColors.ripple }}
           style={({ pressed }) => [
             styles.recordItem,
@@ -249,42 +324,29 @@ export default function AllLedgerRecordsScreen() {
         activeOutlineColor={themeColors.primary}
       />
 
-      <FlatList
-        horizontal
-        data={availableMonths}
-        keyExtractor={(item) => item}
-        renderItem={({ item }) => {
-          const { month, year } = getMonthParts(item);
-          const active = selectedMonth === item;
+      <View style={styles.toolbar}>
+        <Pressable
+          onPress={() => setMonthSheetVisible(true)}
+          style={[styles.monthButton, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}
+        >
+          <MaterialCommunityIcons name="calendar-month-outline" color={themeColors.primary} size={18} />
+          <Text variant="labelLarge" style={[styles.monthButtonText, { color: themeColors.text }]} numberOfLines={1}>
+            {formatMonthLabel(getMonthParts(selectedMonth).year, getMonthParts(selectedMonth).month)}
+          </Text>
+          <MaterialCommunityIcons name="chevron-down" color={themeColors.textSecondary} size={18} />
+        </Pressable>
+        <Pressable
+          onPress={openFilterSheet}
+          style={[styles.filterButton, { backgroundColor: themeColors.card, borderColor: themeColors.border }]}
+        >
+          <MaterialCommunityIcons name="filter-variant" color={themeColors.primary} size={18} />
+          <Text variant="labelLarge" style={[styles.filterButtonText, { color: themeColors.primary }]}>
+            {categoryFilter === 'all' ? labels.filter : labels.filtered}
+          </Text>
+          {categoryFilter !== 'all' ? <View style={[styles.filterDot, { backgroundColor: themeColors.expense }]} /> : null}
+        </Pressable>
+      </View>
 
-          return (
-            <Pressable
-              onPress={() => setSelectedMonth(item)}
-              style={[
-                styles.monthChip,
-                { backgroundColor: active ? themeColors.primary : themeColors.card },
-                { borderColor: active ? themeColors.primary : themeColors.border }
-              ]}
-            >
-              <Text
-                variant="labelLarge"
-                style={[
-                  styles.chipText,
-                  { color: active ? themeColors.background : themeColors.textSecondary }
-                ]}
-              >
-                {formatMonthLabel(year, month)}
-              </Text>
-            </Pressable>
-          );
-        }}
-        contentContainerStyle={styles.monthList}
-        showsHorizontalScrollIndicator={false}
-      />
-
-      <Text variant="labelLarge" style={[styles.filterLabel, { color: themeColors.textSecondary }]}>
-        {labels.type}
-      </Text>
       <View style={styles.choiceRow}>
         {(['all', 'expense', 'income'] as LedgerTypeFilter[]).map((type) => {
           const active = typeFilter === type;
@@ -295,7 +357,6 @@ export default function AllLedgerRecordsScreen() {
               key={type}
               onPress={() => {
                 setTypeFilter(type);
-                setCategoryFilter('all');
               }}
               style={[
                 styles.choiceChip,
@@ -311,55 +372,6 @@ export default function AllLedgerRecordsScreen() {
                 ]}
               >
                 {text}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-
-      <Text variant="labelLarge" style={[styles.filterLabel, { color: themeColors.textSecondary }]}>
-        {labels.category}
-      </Text>
-      <View style={styles.categoryChips}>
-        <Pressable
-          onPress={() => setCategoryFilter('all')}
-          style={[
-            styles.choiceChip,
-            { backgroundColor: categoryFilter === 'all' ? themeColors.primary : themeColors.card },
-            { borderColor: categoryFilter === 'all' ? themeColors.primary : themeColors.border }
-          ]}
-        >
-          <Text
-            variant="labelLarge"
-            style={[
-              styles.chipText,
-              { color: categoryFilter === 'all' ? themeColors.background : themeColors.textSecondary }
-            ]}
-          >
-            {labels.allCategories}
-          </Text>
-        </Pressable>
-        {categoryOptions.map((category) => {
-          const active = categoryFilter === category.label;
-
-          return (
-            <Pressable
-              key={category.label}
-              onPress={() => setCategoryFilter(category.label)}
-              style={[
-                styles.choiceChip,
-                { backgroundColor: active ? themeColors.primary : themeColors.card },
-                { borderColor: active ? themeColors.primary : themeColors.border }
-              ]}
-            >
-              <Text
-                variant="labelLarge"
-                style={[
-                  styles.chipText,
-                  { color: active ? themeColors.background : themeColors.textSecondary }
-                ]}
-              >
-                {category.label}
               </Text>
             </Pressable>
           );
@@ -403,7 +415,185 @@ export default function AllLedgerRecordsScreen() {
           stickySectionHeadersEnabled={false}
         />
       ) : null}
+
+      <MonthSheet
+        months={availableMonths}
+        onCancel={() => setMonthSheetVisible(false)}
+        onSelect={(month) => {
+          setSelectedMonth(month);
+          setMonthSheetVisible(false);
+        }}
+        selectedMonth={selectedMonth}
+        visible={monthSheetVisible}
+      />
+      <CategoryFilterSheet
+        categoryOptions={categoryOptions}
+        draftCategory={draftCategoryFilter}
+        onCancel={() => setFilterSheetVisible(false)}
+        onConfirm={confirmCategoryFilter}
+        onReset={resetCategoryFilter}
+        onSelect={setDraftCategoryFilter}
+        visible={filterSheetVisible}
+      />
     </AppScreen>
+  );
+}
+
+function MonthSheet({
+  months,
+  onCancel,
+  onSelect,
+  selectedMonth,
+  visible
+}: {
+  months: string[];
+  onCancel: () => void;
+  onSelect: (month: string) => void;
+  selectedMonth: string;
+  visible: boolean;
+}) {
+  const { colors: themeColors } = useAppTheme();
+
+  return (
+    <Modal animationType="slide" onRequestClose={onCancel} transparent visible={visible}>
+      <View style={styles.modalOverlay}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onCancel}
+          style={[StyleSheet.absoluteFill, { backgroundColor: themeColors.overlay }]}
+        />
+        <View style={[styles.sheet, { backgroundColor: themeColors.surfaceElevated }]}>
+          <View style={[styles.sheetHandle, { backgroundColor: themeColors.textSecondary }]} />
+          <Text variant="titleMedium" style={[styles.sheetTitle, { color: themeColors.text }]}>
+            {labels.month}
+          </Text>
+          <ScrollView contentContainerStyle={styles.sheetOptions} showsVerticalScrollIndicator={false}>
+            {months.map((monthKey) => {
+              const active = selectedMonth === monthKey;
+              const { month, year } = getMonthParts(monthKey);
+
+              return (
+                <Pressable
+                  key={monthKey}
+                  onPress={() => onSelect(monthKey)}
+                  style={[
+                    styles.sheetOption,
+                    { backgroundColor: active ? themeColors.primary : themeColors.card }
+                  ]}
+                >
+                  <Text
+                    variant="labelLarge"
+                    style={[
+                      styles.chipText,
+                      { color: active ? themeColors.background : themeColors.textSecondary }
+                    ]}
+                  >
+                    {formatMonthLabel(year, month)}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      </View>
+    </Modal>
+  );
+}
+
+function CategoryFilterSheet({
+  categoryOptions,
+  draftCategory,
+  onCancel,
+  onConfirm,
+  onReset,
+  onSelect,
+  visible
+}: {
+  categoryOptions: ExpenseCategoryItem[];
+  draftCategory: string;
+  onCancel: () => void;
+  onConfirm: () => void;
+  onReset: () => void;
+  onSelect: (category: string) => void;
+  visible: boolean;
+}) {
+  const { colors: themeColors } = useAppTheme();
+
+  return (
+    <Modal animationType="slide" onRequestClose={onCancel} transparent visible={visible}>
+      <View style={styles.modalOverlay}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onCancel}
+          style={[StyleSheet.absoluteFill, { backgroundColor: themeColors.overlay }]}
+        />
+        <View style={[styles.sheet, { backgroundColor: themeColors.surfaceElevated }]}>
+          <View style={[styles.sheetHandle, { backgroundColor: themeColors.textSecondary }]} />
+          <Text variant="titleMedium" style={[styles.sheetTitle, { color: themeColors.text }]}>
+            {labels.filter}
+          </Text>
+          <ScrollView contentContainerStyle={styles.sheetOptions} showsVerticalScrollIndicator={false}>
+            <View style={styles.categoryChips}>
+              <Pressable
+                onPress={() => onSelect('all')}
+                style={[
+                  styles.choiceChip,
+                  { backgroundColor: draftCategory === 'all' ? themeColors.primary : themeColors.card },
+                  { borderColor: draftCategory === 'all' ? themeColors.primary : themeColors.border }
+                ]}
+              >
+                <Text
+                  variant="labelLarge"
+                  style={[
+                    styles.chipText,
+                    { color: draftCategory === 'all' ? themeColors.background : themeColors.textSecondary }
+                  ]}
+                >
+                  {labels.allCategories}
+                </Text>
+              </Pressable>
+              {categoryOptions.map((category) => {
+                const active = draftCategory === category.label;
+
+                return (
+                  <Pressable
+                    key={category.label}
+                    onPress={() => onSelect(category.label)}
+                    style={[
+                      styles.choiceChip,
+                      { backgroundColor: active ? themeColors.primary : themeColors.card },
+                      { borderColor: active ? themeColors.primary : themeColors.border }
+                    ]}
+                  >
+                    <Text
+                      variant="labelLarge"
+                      style={[
+                        styles.chipText,
+                        { color: active ? themeColors.background : themeColors.textSecondary }
+                      ]}
+                    >
+                      {category.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </ScrollView>
+          <View style={styles.sheetActions}>
+            <Pressable onPress={onReset} style={[styles.secondaryAction, { backgroundColor: themeColors.card }]}>
+              <Text variant="labelLarge" style={[styles.actionText, { color: themeColors.text }]}>
+                {labels.reset}
+              </Text>
+            </Pressable>
+            <Pressable onPress={onConfirm} style={[styles.primaryAction, { backgroundColor: themeColors.primary }]}>
+              <Text variant="labelLarge" style={[styles.actionText, { color: themeColors.background }]}>
+                {labels.confirm}
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </View>
+    </Modal>
   );
 }
 
@@ -426,25 +616,45 @@ const styles = StyleSheet.create({
   searchInput: {
     backgroundColor: colors.inputBackground
   },
-  monthList: {
-    gap: spacing.sm,
-    paddingVertical: spacing.xs
-  },
-  monthChip: {
-    borderRadius: radius.full,
-    borderWidth: 1,
-    marginRight: spacing.sm,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm
-  },
-  filterLabel: {
-    color: colors.textSecondary,
-    fontWeight: '900',
-    marginTop: spacing.xs
+  toolbar: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.sm
   },
   choiceRow: {
     flexDirection: 'row',
     gap: spacing.sm
+  },
+  monthButton: {
+    alignItems: 'center',
+    borderRadius: radius.full,
+    borderWidth: 1,
+    flex: 1,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    minHeight: 42,
+    paddingHorizontal: spacing.md
+  },
+  monthButtonText: {
+    flex: 1,
+    fontWeight: '900'
+  },
+  filterButton: {
+    alignItems: 'center',
+    borderRadius: radius.full,
+    borderWidth: 1,
+    flexDirection: 'row',
+    gap: spacing.xs,
+    minHeight: 42,
+    paddingHorizontal: spacing.md
+  },
+  filterButtonText: {
+    fontWeight: '900'
+  },
+  filterDot: {
+    borderRadius: radius.full,
+    height: 7,
+    width: 7
   },
   categoryChips: {
     flexDirection: 'row',
@@ -534,5 +744,59 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     lineHeight: 22,
     marginTop: spacing.sm
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end'
+  },
+  sheet: {
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    maxHeight: '72%',
+    padding: spacing.lg
+  },
+  sheetHandle: {
+    alignSelf: 'center',
+    borderRadius: radius.full,
+    height: 4,
+    marginBottom: spacing.lg,
+    opacity: 0.5,
+    width: 56
+  },
+  sheetTitle: {
+    fontWeight: '900',
+    marginBottom: spacing.md
+  },
+  sheetOptions: {
+    gap: spacing.sm,
+    paddingBottom: spacing.sm
+  },
+  sheetOption: {
+    borderRadius: radius.lg,
+    minHeight: 44,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md
+  },
+  sheetActions: {
+    flexDirection: 'row',
+    gap: spacing.md,
+    marginTop: spacing.lg
+  },
+  primaryAction: {
+    alignItems: 'center',
+    borderRadius: radius.lg,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 48
+  },
+  secondaryAction: {
+    alignItems: 'center',
+    borderRadius: radius.lg,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 48
+  },
+  actionText: {
+    fontWeight: '900'
   }
 });

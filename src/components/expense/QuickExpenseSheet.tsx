@@ -4,7 +4,9 @@ import {
   Alert,
   Animated,
   Easing,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -235,14 +237,19 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     <Modal visible={visible} transparent animationType="slide" onRequestClose={handleClose}>
       <View style={styles.modalRoot}>
         <Pressable style={[styles.backdrop, { backgroundColor: themeColors.overlay }]} onPress={handleClose} />
-        <View style={[styles.sheet, { backgroundColor: themeColors.card }]}>
-          <View style={[styles.handle, { backgroundColor: themeColors.textSecondary }]} />
-          <ScrollView
-            contentContainerStyle={styles.sheetContent}
-            keyboardShouldPersistTaps="handled"
-            showsVerticalScrollIndicator={false}
-            style={styles.sheetBody}
-          >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          pointerEvents="box-none"
+          style={styles.keyboardAvoidingSheet}
+        >
+          <View style={[styles.sheet, { backgroundColor: themeColors.card }]}>
+            <View style={[styles.handle, { backgroundColor: themeColors.textSecondary }]} />
+            <ScrollView
+              contentContainerStyle={styles.sheetContent}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+              style={styles.sheetBody}
+            >
             <View style={[styles.segment, { backgroundColor: themeColors.chipBackground }]}>
               <Pressable
                 onPress={() => selectRecordType('expense')}
@@ -345,6 +352,9 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
               onChangeText={setNote}
               placeholder={labels.note}
               mode="flat"
+              multiline
+              numberOfLines={2}
+              textAlignVertical="top"
               underlineColor="transparent"
               activeUnderlineColor="transparent"
               textColor={themeColors.text}
@@ -408,36 +418,37 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
               ))}
             </View>
 
-          </ScrollView>
-          <View
-            style={[
-              styles.footer,
-              {
-                backgroundColor: themeColors.card,
-                paddingBottom: Math.max(insets.bottom, spacing.sm)
-              }
-            ]}
-          >
-            <Button
-              mode="contained"
-              loading={saving}
-              disabled={saving || !isAmountValid}
-              buttonColor={isAmountValid ? saveColor : themeColors.surfacePressed}
-              textColor={
-                isAmountValid
-                  ? recordType === 'expense'
-                    ? themeColors.text
-                    : themeColors.background
-                  : themeColors.textSecondary
-              }
-              onPress={handleSave}
-              style={[styles.saveButton, !isAmountValid && styles.disabledSaveButton]}
-              contentStyle={styles.saveButtonContent}
+            </ScrollView>
+            <View
+              style={[
+                styles.footer,
+                {
+                  backgroundColor: themeColors.card,
+                  paddingBottom: Math.max(insets.bottom, spacing.sm)
+                }
+              ]}
             >
-              {saving ? labels.saving : labels.save}
-            </Button>
+              <Button
+                mode="contained"
+                loading={saving}
+                disabled={saving || !isAmountValid}
+                buttonColor={isAmountValid ? saveColor : themeColors.surfacePressed}
+                textColor={
+                  isAmountValid
+                    ? recordType === 'expense'
+                      ? themeColors.text
+                      : themeColors.background
+                    : themeColors.textSecondary
+                }
+                onPress={handleSave}
+                style={[styles.saveButton, !isAmountValid && styles.disabledSaveButton]}
+                contentStyle={styles.saveButtonContent}
+              >
+                {saving ? labels.saving : labels.save}
+              </Button>
+            </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
@@ -454,6 +465,10 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 0,
     top: 0
+  },
+  keyboardAvoidingSheet: {
+    flex: 1,
+    justifyContent: 'flex-end'
   },
   sheet: {
     borderTopLeftRadius: 28,
@@ -535,8 +550,8 @@ const styles = StyleSheet.create({
   },
   noteInput: {
     borderRadius: radius.lg,
-    height: 48,
     marginTop: spacing.sm,
+    minHeight: 48,
     overflow: 'hidden'
   },
   dateWrap: {

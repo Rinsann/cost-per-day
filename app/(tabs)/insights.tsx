@@ -1593,7 +1593,12 @@ function TimeRangeSheet({
 
   return (
     <Modal animationType="slide" onRequestClose={onCancel} transparent visible={visible}>
-      <View style={[styles.modalOverlay, { backgroundColor: themeColors.overlay }]}>
+      <View style={styles.modalOverlay}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onCancel}
+          style={[StyleSheet.absoluteFill, { backgroundColor: themeColors.overlay }]}
+        />
         <View style={[styles.sheet, { backgroundColor: themeColors.surfaceElevated }]}>
           <View style={[styles.sheetHandle, { backgroundColor: themeColors.textSecondary }]} />
           <Text variant="titleMedium" style={[styles.sheetTitle, { color: themeColors.text }]}>
@@ -1726,7 +1731,12 @@ function FilterSheet({
 
   return (
     <Modal animationType="slide" onRequestClose={onCancel} transparent visible={visible}>
-      <View style={[styles.modalOverlay, { backgroundColor: themeColors.overlay }]}>
+      <View style={styles.modalOverlay}>
+        <Pressable
+          accessibilityRole="button"
+          onPress={onCancel}
+          style={[StyleSheet.absoluteFill, { backgroundColor: themeColors.overlay }]}
+        />
         <View style={[styles.sheet, { backgroundColor: themeColors.surfaceElevated }]}>
           <View style={[styles.sheetHandle, { backgroundColor: themeColors.textSecondary }]} />
           <Text variant="titleMedium" style={[styles.sheetTitle, { color: themeColors.text }]}>
