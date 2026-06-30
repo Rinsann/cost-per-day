@@ -226,14 +226,29 @@ export default function LedgerTab() {
                         />
                       </View>
                       <View style={styles.recordMain}>
-                        <Text variant="titleSmall" style={[styles.recordTitle, { color: themeColors.text }]}>
-                          {record.note || record.category}
-                        </Text>
-                        <Text variant="bodySmall" style={[styles.recordMeta, { color: themeColors.textSecondary }]}>
+                        <Text
+                          ellipsizeMode="tail"
+                          numberOfLines={1}
+                          variant="titleSmall"
+                          style={[styles.recordTitle, { color: themeColors.text }]}
+                        >
                           {record.category}
                         </Text>
+                        <Text
+                          ellipsizeMode="tail"
+                          numberOfLines={1}
+                          variant="bodySmall"
+                          style={[styles.recordMeta, { color: themeColors.textSecondary }]}
+                        >
+                          {record.note?.trim() || record.category}
+                        </Text>
                       </View>
-                      <Text variant="titleSmall" style={[styles.recordAmount, { color: amountColor }]}>
+                      <Text
+                        ellipsizeMode="tail"
+                        numberOfLines={1}
+                        variant="titleSmall"
+                        style={[styles.recordAmount, { color: amountColor }]}
+                      >
                         {formatMoney(record.amount, { sign: isIncome ? 'income' : 'expense' })}
                       </Text>
                     </Pressable>
@@ -400,7 +415,8 @@ const styles = StyleSheet.create({
     width: 44
   },
   recordMain: {
-    flex: 1
+    flex: 1,
+    minWidth: 0
   },
   recordTitle: {
     color: colors.text,
@@ -408,9 +424,11 @@ const styles = StyleSheet.create({
   },
   recordMeta: {
     color: colors.textSecondary,
+    fontWeight: '700',
     marginTop: spacing.xs
   },
   recordAmount: {
+    flexShrink: 0,
     fontWeight: '900',
     minWidth: 96,
     textAlign: 'right'

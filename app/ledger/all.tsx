@@ -272,14 +272,29 @@ export default function AllLedgerRecordsScreen() {
             />
           </View>
           <View style={styles.recordMain}>
-            <Text variant="titleSmall" style={[styles.recordTitle, { color: themeColors.text }]} numberOfLines={1}>
-              {item.note || item.category}
+            <Text
+              ellipsizeMode="tail"
+              numberOfLines={1}
+              variant="titleSmall"
+              style={[styles.recordTitle, { color: themeColors.text }]}
+            >
+              {item.category}
             </Text>
-            <Text variant="bodySmall" style={[styles.recordMeta, { color: themeColors.textSecondary }]}>
-              {item.category} · {item.date}
+            <Text
+              ellipsizeMode="tail"
+              numberOfLines={1}
+              variant="bodySmall"
+              style={[styles.recordMeta, { color: themeColors.textSecondary }]}
+            >
+              {item.note?.trim() || item.category}
             </Text>
           </View>
-          <Text variant="titleSmall" style={[styles.recordAmount, { color: amountColor }]} numberOfLines={1}>
+          <Text
+            ellipsizeMode="tail"
+            numberOfLines={1}
+            variant="titleSmall"
+            style={[styles.recordAmount, { color: amountColor }]}
+          >
             {formatMoney(item.amount, { sign: isIncome ? 'income' : 'expense' })}
           </Text>
         </Pressable>
@@ -718,7 +733,8 @@ const styles = StyleSheet.create({
     width: 44
   },
   recordMain: {
-    flex: 1
+    flex: 1,
+    minWidth: 0
   },
   recordTitle: {
     color: colors.text,
@@ -726,9 +742,11 @@ const styles = StyleSheet.create({
   },
   recordMeta: {
     color: colors.textSecondary,
+    fontWeight: '700',
     marginTop: spacing.xs
   },
   recordAmount: {
+    flexShrink: 0,
     fontWeight: '900',
     maxWidth: 120,
     minWidth: 90,
