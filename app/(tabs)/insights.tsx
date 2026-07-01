@@ -1788,7 +1788,12 @@ function FilterSheet({
               ))}
             </View>
             <Text style={[styles.filterLabel, { color: themeColors.textSecondary }]}>{labels.allCategories}</Text>
-            <View style={styles.optionGrid}>
+            <ScrollView
+              contentContainerStyle={styles.optionGrid}
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={categoryOptions.length > 12}
+              style={styles.categoryFilterScroll}
+            >
               <ChoiceButton
                 active={draftFilters.category === 'all'}
                 label={labels.allCategories}
@@ -1802,7 +1807,7 @@ function FilterSheet({
                   onPress={() => onUpdate({ ...draftFilters, category: category.label })}
                 />
               ))}
-            </View>
+            </ScrollView>
             <Text style={[styles.filterLabel, { color: themeColors.textSecondary }]}>{labels.keyword}</Text>
             <TextInput
               onChangeText={(keyword) => onUpdate({ ...draftFilters, keyword })}
@@ -2390,6 +2395,10 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.sm,
     marginBottom: spacing.md
+  },
+  categoryFilterScroll: {
+    flexGrow: 0,
+    height: 144
   },
   choiceRow: {
     flexDirection: 'row',

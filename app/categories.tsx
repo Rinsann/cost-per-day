@@ -209,7 +209,7 @@ export default function CategoriesScreen() {
                     <MaterialCommunityIcons
                       name={category.icon}
                       color={group.type === 'expense' ? themeColors.expense : themeColors.income}
-                      size={22}
+                      size={20}
                     />
                   </View>
                   <Text
@@ -291,34 +291,36 @@ function CategoryDraftSheet({
             {labels.icon}
           </Text>
           <ScrollView
-            contentContainerStyle={styles.iconGrid}
             horizontal={false}
+            nestedScrollEnabled
             showsVerticalScrollIndicator={false}
             style={styles.iconScroll}
           >
-            {categoryIconOptions.map((icon) => {
-              const active = draft.icon === icon;
+            <View style={styles.iconGrid}>
+              {categoryIconOptions.map((icon) => {
+                const active = draft.icon === icon;
 
-              return (
-                <Pressable
-                  key={icon}
-                  onPress={() => onChange({ ...draft, icon })}
-                  style={[
-                    styles.iconOption,
-                    {
-                      backgroundColor: active ? themeColors.primary : themeColors.card,
-                      borderColor: active ? themeColors.primary : themeColors.border
-                    }
-                  ]}
-                >
-                  <MaterialCommunityIcons
-                    name={icon}
-                    color={active ? themeColors.background : themeColors.textSecondary}
-                    size={22}
-                  />
-                </Pressable>
-              );
-            })}
+                return (
+                  <Pressable
+                    key={icon}
+                    onPress={() => onChange({ ...draft, icon })}
+                    style={[
+                      styles.iconOption,
+                      {
+                        backgroundColor: active ? themeColors.primary : themeColors.card,
+                        borderColor: active ? themeColors.primary : themeColors.border
+                      }
+                    ]}
+                  >
+                    <MaterialCommunityIcons
+                      name={icon}
+                      color={active ? themeColors.background : themeColors.textSecondary}
+                      size={20}
+                    />
+                  </Pressable>
+                );
+              })}
+            </View>
           </ScrollView>
 
           <View style={styles.sheetActions}>
@@ -350,10 +352,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg
   },
   sectionCard: {
-    marginBottom: spacing.md
+    marginBottom: spacing.sm
   },
   sectionContent: {
-    gap: spacing.md
+    gap: spacing.sm
   },
   sectionHeader: {
     alignItems: 'center',
@@ -379,24 +381,24 @@ const styles = StyleSheet.create({
     fontWeight: '900'
   },
   categoryList: {
-    gap: spacing.sm
+    gap: spacing.xs
   },
   categoryRow: {
     alignItems: 'center',
     borderRadius: radius.lg,
     flexDirection: 'row',
-    gap: spacing.md,
-    minHeight: 58,
+    gap: spacing.sm,
+    minHeight: 48,
     overflow: 'hidden',
-    paddingHorizontal: spacing.md
+    paddingHorizontal: spacing.sm
   },
   categoryIcon: {
     alignItems: 'center',
     backgroundColor: colors.card,
     borderRadius: radius.full,
-    height: 38,
+    height: 34,
     justifyContent: 'center',
-    width: 38
+    width: 34
   },
   categoryName: {
     color: colors.text,
@@ -418,14 +420,14 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     borderRadius: radius.full,
     height: 4,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
     opacity: 0.5,
     width: 56
   },
   sheetTitle: {
     color: colors.text,
     fontWeight: '900',
-    marginBottom: spacing.md
+    marginBottom: spacing.sm
   },
   nameInput: {
     backgroundColor: colors.card
@@ -434,12 +436,12 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontSize: 13,
     fontWeight: '900',
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
     marginTop: spacing.md
   },
   iconScroll: {
     flexGrow: 0,
-    maxHeight: 188
+    height: 148
   },
   iconGrid: {
     flexDirection: 'row',
@@ -451,16 +453,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: radius.lg,
     borderWidth: 1,
-    height: 44,
+    height: 40,
     justifyContent: 'center',
-    width: 44
+    width: 40
   },
   sheetActions: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: spacing.sm,
     justifyContent: 'flex-end',
-    marginTop: spacing.lg
+    marginTop: spacing.md
   },
   saveButton: {
     borderRadius: radius.lg,

@@ -47,6 +47,7 @@ const labels = {
 };
 
 const keypadItems = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', 'backspace'];
+const categoryGridVisibleHeight = 152;
 
 function getAmountValue(amountText: string) {
   const amount = Number(amountText);
@@ -320,7 +321,12 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
               </Text>
             </Animated.View>
 
-            <View style={styles.categoryGrid}>
+            <ScrollView
+              contentContainerStyle={styles.categoryGrid}
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={categories.length > 12}
+              style={styles.categoryScroll}
+            >
               {categories.map((item) => {
                 const isSelected = category === item.label;
 
@@ -335,7 +341,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                   >
                     <MaterialCommunityIcons
                       name={item.icon}
-                      size={24}
+                      size={19}
                       color={isSelected ? themeColors.background : themeColors.textSecondary}
                     />
                     <Text
@@ -350,7 +356,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                   </Pressable>
                 );
               })}
-            </View>
+            </ScrollView>
 
             <View style={styles.dateWrap}>
               <AppDateField
@@ -493,6 +499,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.sm
   },
   sheetBody: {
+    flexGrow: 0,
     flexShrink: 1
   },
   sheetContent: {
@@ -531,7 +538,7 @@ const styles = StyleSheet.create({
     color: colors.text
   },
   amountWrap: {
-    marginTop: spacing.md,
+    marginTop: spacing.sm,
     overflow: 'visible',
     paddingHorizontal: spacing.sm
   },
@@ -542,14 +549,19 @@ const styles = StyleSheet.create({
   categoryGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
-    marginTop: spacing.md
+    gap: spacing.xs,
+    paddingBottom: spacing.xs
+  },
+  categoryScroll: {
+    flexGrow: 0,
+    height: categoryGridVisibleHeight,
+    marginTop: spacing.md,
   },
   categoryItem: {
     alignItems: 'center',
     borderRadius: radius.lg,
-    minHeight: 58,
-    paddingVertical: 6,
+    height: 44,
+    paddingVertical: 3,
     width: '23%'
   },
   selectedCategoryItem: {
@@ -557,7 +569,10 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     color: colors.textSecondary,
-    marginTop: spacing.xs
+    fontSize: 11,
+    fontWeight: '800',
+    lineHeight: 13,
+    marginTop: 2
   },
   selectedCategoryText: {
     color: colors.background,
@@ -566,7 +581,7 @@ const styles = StyleSheet.create({
   noteInput: {
     borderRadius: radius.lg,
     marginTop: spacing.sm,
-    minHeight: 48,
+    minHeight: 44,
     overflow: 'hidden'
   },
   dateWrap: {
@@ -575,16 +590,16 @@ const styles = StyleSheet.create({
   keypad: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: spacing.sm,
+    gap: spacing.xs,
     marginTop: spacing.sm
   },
   keypadButton: {
     alignItems: 'center',
     borderRadius: radius.lg,
-    height: 44,
+    height: 40,
     justifyContent: 'center',
     overflow: 'hidden',
-    width: '31.7%'
+    width: '32.5%'
   },
   keypadButtonPressed: {
     transform: [{ scale: 0.96 }]
@@ -600,7 +615,7 @@ const styles = StyleSheet.create({
     opacity: 0.72
   },
   saveButtonContent: {
-    minHeight: 52
+    minHeight: 48
   },
   footer: {
     paddingTop: spacing.sm

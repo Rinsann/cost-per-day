@@ -548,7 +548,12 @@ function CategoryFilterSheet({
           <Text variant="titleMedium" style={[styles.sheetTitle, { color: themeColors.text }]}>
             {labels.filter}
           </Text>
-          <ScrollView contentContainerStyle={styles.sheetOptions} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            contentContainerStyle={styles.sheetOptions}
+            nestedScrollEnabled
+            showsVerticalScrollIndicator={categoryOptions.length > 12}
+            style={styles.categoryFilterScroll}
+          >
             <View style={styles.categoryChips}>
               <Pressable
                 onPress={() => onSelect('all')}
@@ -789,6 +794,10 @@ const styles = StyleSheet.create({
   sheetOptions: {
     gap: spacing.sm,
     paddingBottom: spacing.sm
+  },
+  categoryFilterScroll: {
+    flexGrow: 0,
+    height: 156
   },
   sheetOption: {
     borderRadius: radius.lg,
