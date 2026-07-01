@@ -91,6 +91,18 @@ function RootLayoutContent() {
               title: '\u5206\u7c7b\u7ba1\u7406'
             }}
           />
+          <Stack.Screen
+            name="settings/appearance"
+            options={{
+              title: '\u504f\u597d\u8bbe\u7f6e'
+            }}
+          />
+          <Stack.Screen
+            name="settings/data"
+            options={{
+              title: '\u6570\u636e\u7ba1\u7406'
+            }}
+          />
         </Stack>
       </PaperProvider>
     </SafeAreaProvider>
