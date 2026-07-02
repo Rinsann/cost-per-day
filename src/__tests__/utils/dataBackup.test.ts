@@ -45,6 +45,18 @@ const products: Product[] = [
   }
 ];
 
+const monthlyBudget = {
+  amount: 2600,
+  enabled: true,
+  updatedAt: '2026-07-02T08:00:00.000Z'
+};
+
+const defaultMonthlyBudget = {
+  amount: 0,
+  enabled: false,
+  updatedAt: ''
+};
+
 describe('dataBackup utilities', () => {
   it('creates a ledger backup and excludes mock records by default', () => {
     const backup = createDataBackup({
@@ -77,6 +89,7 @@ describe('dataBackup utilities', () => {
       type: 'full',
       expenseRecords,
       products,
+      monthlyBudget,
       exportedAt: '2026-06-20T12:00:00.000Z'
     });
 
@@ -84,6 +97,7 @@ describe('dataBackup utilities', () => {
     expect(productsBackup.data.products).toEqual(products);
     expect(fullBackup.data.expenseRecords).toEqual([expenseRecords[0]]);
     expect(fullBackup.data.products).toEqual(products);
+    expect(fullBackup.data.monthlyBudget).toEqual(monthlyBudget);
   });
 
   it('parses a valid backup after serialization', () => {
@@ -91,11 +105,109 @@ describe('dataBackup utilities', () => {
       type: 'full',
       expenseRecords,
       products,
+      monthlyBudget,
       exportedAt: '2026-06-20T12:00:00.000Z'
     });
     const parsed = parseDataBackup(serializeDataBackup(backup));
 
     expect(parsed).toEqual({
+      ok: true,
+      backup
+    });
+  });
+
+  it('includes monthly budget in full backups', () => {
+    const backup = createDataBackup({
+      type: 'full',
+      expenseRecords,
+      products,
+      monthlyBudget,
+      exportedAt: '2026-06-20T12:00:00.000Z'
+    });
+
+    expect(backup.data.monthlyBudget).toEqual(monthlyBudget);
+  });
+
+  it('parses old full backups without monthly budget as default budget', () => {
+    const parsed = parseDataBackup(
+      JSON.stringify({
+        schemaVersion: 1,
+        appName: DATA_BACKUP_APP_NAME,
+        exportedAt: '2026-06-20T12:00:00.000Z',
+        type: 'full',
+        data: {
+          expenseRecords: [expenseRecords[0]],
+          products
+        }
+      })
+    );
+
+    expect(parsed).toEqual({
+      ok: true,
+      backup: {
+        schemaVersion: 1,
+        appName: DATA_BACKUP_APP_NAME,
+        exportedAt: '2026-06-20T12:00:00.000Z',
+        type: 'full',
+        data: {
+          expenseRecords: [expenseRecords[0]],
+          products,
+          monthlyBudget: defaultMonthlyBudget
+        }
+      }
+    });
+  });
+
+  it('falls back to default budget when monthly budget field is invalid', () => {
+    const parsed = parseDataBackup(
+      JSON.stringify({
+        schemaVersion: 1,
+        appName: DATA_BACKUP_APP_NAME,
+        exportedAt: '2026-06-20T12:00:00.000Z',
+        type: 'full',
+        data: {
+          expenseRecords: [],
+          products: [],
+          monthlyBudget: {
+            amount: 'bad',
+            enabled: true,
+            updatedAt: 123
+          }
+        }
+      })
+    );
+
+    expect(parsed).toEqual({
+      ok: true,
+      backup: {
+        schemaVersion: 1,
+        appName: DATA_BACKUP_APP_NAME,
+        exportedAt: '2026-06-20T12:00:00.000Z',
+        type: 'full',
+        data: {
+          expenseRecords: [],
+          products: [],
+          monthlyBudget: defaultMonthlyBudget
+        }
+      }
+    });
+  });
+
+  it('backs up and parses disabled zero monthly budget', () => {
+    const disabledBudget = {
+      amount: 0,
+      enabled: false,
+      updatedAt: '2026-07-02T08:00:00.000Z'
+    };
+    const backup = createDataBackup({
+      type: 'full',
+      expenseRecords: [],
+      products: [],
+      monthlyBudget: disabledBudget,
+      exportedAt: '2026-06-20T12:00:00.000Z'
+    });
+
+    expect(parseDataBackup(serializeDataBackup(backup))).toEqual({
       ok: true,
       backup
     });

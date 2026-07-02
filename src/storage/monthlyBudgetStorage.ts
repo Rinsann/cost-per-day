@@ -66,3 +66,16 @@ export async function saveMonthlyBudget(input: Pick<MonthlyBudget, 'amount' | 'e
 
   return budget;
 }
+
+export async function restoreMonthlyBudget(input: MonthlyBudget) {
+  const amount = Number.isFinite(input.amount) ? Math.max(input.amount, 0) : 0;
+  const budget: MonthlyBudget = {
+    amount,
+    enabled: input.enabled && amount > 0,
+    updatedAt: typeof input.updatedAt === 'string' ? input.updatedAt : ''
+  };
+
+  await AsyncStorage.setItem(MONTHLY_BUDGET_STORAGE_KEY, JSON.stringify(budget));
+
+  return budget;
+}

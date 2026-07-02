@@ -1,6 +1,7 @@
 import { ExpenseRecord } from '@/types/expense';
 import { Product, ProductCategoryId } from '@/types/product';
 import { isValidDateString } from '@/utils/formatDate';
+import type { MonthlyBudget } from '@/storage/monthlyBudgetStorage';
 
 export const DATA_BACKUP_SCHEMA_VERSION = 1;
 export const DATA_BACKUP_APP_NAME = '算得值';
@@ -16,6 +17,7 @@ export type DataBackup = {
   data: {
     expenseRecords: ExpenseRecord[];
     products: Product[];
+    monthlyBudget?: MonthlyBudget;
   };
 };
 
@@ -52,6 +54,12 @@ const PRODUCT_CATEGORY_IDS: ProductCategoryId[] = [
   'office',
   'other'
 ];
+
+const DEFAULT_BACKUP_MONTHLY_BUDGET: MonthlyBudget = {
+  amount: 0,
+  enabled: false,
+  updatedAt: ''
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -158,6 +166,28 @@ function parseProduct(value: unknown): Product | null {
   };
 }
 
+function normalizeMonthlyBudget(value: unknown): MonthlyBudget {
+  if (!isRecord(value)) {
+    return DEFAULT_BACKUP_MONTHLY_BUDGET;
+  }
+
+  const { amount, enabled, updatedAt } = value;
+
+  if (typeof amount !== 'number' || !Number.isFinite(amount) || amount < 0) {
+    return DEFAULT_BACKUP_MONTHLY_BUDGET;
+  }
+
+  if (typeof enabled !== 'boolean') {
+    return DEFAULT_BACKUP_MONTHLY_BUDGET;
+  }
+
+  return {
+    amount,
+    enabled: enabled && amount > 0,
+    updatedAt: typeof updatedAt === 'string' ? updatedAt : ''
+  };
+}
+
 function parseArray<T>(value: unknown, parser: (item: unknown) => T | null) {
   if (!Array.isArray(value)) {
     return null;
@@ -180,26 +210,34 @@ export function createDataBackup({
   type,
   expenseRecords,
   products,
+  monthlyBudget,
   exportedAt = new Date().toISOString()
 }: {
   type: DataBackupType;
   expenseRecords?: ExpenseRecord[];
   products?: Product[];
+  monthlyBudget?: MonthlyBudget;
   exportedAt?: string;
 }): DataBackup {
   const realExpenseRecords = (expenseRecords ?? []).filter(
     (record) => !isMockLedgerRecord(record)
   );
 
+  const data: DataBackup['data'] = {
+    expenseRecords: type === 'products' ? [] : realExpenseRecords,
+    products: type === 'ledger' ? [] : products ?? []
+  };
+
+  if (type === 'full') {
+    data.monthlyBudget = normalizeMonthlyBudget(monthlyBudget);
+  }
+
   return {
     schemaVersion: DATA_BACKUP_SCHEMA_VERSION,
     appName: DATA_BACKUP_APP_NAME,
     exportedAt,
     type,
-    data: {
-      expenseRecords: type === 'products' ? [] : realExpenseRecords,
-      products: type === 'ledger' ? [] : products ?? []
-    }
+    data
   };
 }
 
@@ -271,7 +309,10 @@ export function parseDataBackup(rawJson: string): DataBackupParseResult {
       type: parsed.type,
       data: {
         expenseRecords,
-        products
+        products,
+        ...(parsed.type === 'full'
+          ? { monthlyBudget: normalizeMonthlyBudget(parsed.data.monthlyBudget) }
+          : {})
       }
     }
   };

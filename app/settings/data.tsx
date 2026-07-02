@@ -20,6 +20,11 @@ import { useAppTheme } from '@/context/AppThemeContext';
 import { useExpenseRecords } from '@/context/ExpenseRecordsContext';
 import { clearLedgerMockData, seedLedgerMockData } from '@/dev/seedLedgerMockData';
 import { ledgerRepository } from '@/repositories/ledgerRepository';
+import {
+  DEFAULT_MONTHLY_BUDGET,
+  getMonthlyBudget,
+  restoreMonthlyBudget
+} from '@/storage/monthlyBudgetStorage';
 import { getProducts, saveProducts } from '@/storage/productStorage';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
@@ -200,14 +205,16 @@ export default function DataSettingsScreen() {
 
     try {
       await runBusyAction(action, async () => {
-        const [storedRecords, storedProducts] = await Promise.all([
+        const [storedRecords, storedProducts, monthlyBudget] = await Promise.all([
           ledgerRepository.getAllRecords(),
-          getProducts()
+          getProducts(),
+          getMonthlyBudget()
         ]);
         const backup = createDataBackup({
           type,
           expenseRecords: storedRecords,
-          products: storedProducts
+          products: storedProducts,
+          monthlyBudget
         });
 
         await shareJsonFile(type, backup);
@@ -269,6 +276,10 @@ export default function DataSettingsScreen() {
       await saveProducts(productMerge.merged);
       productsAdded = productMerge.addedCount;
       productsSkipped = productMerge.skippedCount;
+    }
+
+    if (targetType === 'full') {
+      await restoreMonthlyBudget(backup.data.monthlyBudget ?? DEFAULT_MONTHLY_BUDGET);
     }
 
     await refreshRecords();
