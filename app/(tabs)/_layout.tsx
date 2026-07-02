@@ -8,7 +8,6 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { QuickExpenseSheet } from '@/components/expense/QuickExpenseSheet';
 import { useAppTheme } from '@/context/AppThemeContext';
-import { ExpenseRecordsProvider } from '@/context/ExpenseRecordsContext';
 import { spacing } from '@/theme/spacing';
 
 type TabIconName = ComponentProps<typeof MaterialCommunityIcons>['name'];
@@ -126,7 +125,7 @@ export default function TabLayout() {
   const [quickSheetVisible, setQuickSheetVisible] = useState(false);
 
   return (
-    <ExpenseRecordsProvider>
+    <>
       <Tabs
         initialRouteName="ledger"
         tabBar={(props) => (
@@ -146,7 +145,7 @@ export default function TabLayout() {
         visible={quickSheetVisible}
         onClose={() => setQuickSheetVisible(false)}
       />
-    </ExpenseRecordsProvider>
+    </>
   );
 }
 

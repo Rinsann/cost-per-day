@@ -1,7 +1,12 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { EncodingType, File, Paths } from 'expo-file-system';
-import { readAsStringAsync } from 'expo-file-system/legacy';
+import {
+  cacheDirectory,
+  documentDirectory,
+  getInfoAsync,
+  readAsStringAsync,
+  writeAsStringAsync
+} from 'expo-file-system/legacy';
 import { Stack, useFocusEffect } from 'expo-router';
 import * as Sharing from 'expo-sharing';
 import type { ComponentProps, ReactNode } from 'react';
@@ -51,6 +56,8 @@ type BusyAction =
   | null;
 
 type ParseFailureReason = Extract<ReturnType<typeof parseDataBackup>, { ok: false }>['reason'];
+
+const fileEncoding = 'utf8' as const;
 
 const labels = {
   title: '数据管理',
@@ -164,11 +171,25 @@ export default function DataSettingsScreen() {
       throw new Error(labels.noSharing);
     }
 
-    const backupFile = new File(Paths.document, getBackupFileName(type));
-    backupFile.create({ overwrite: true });
-    backupFile.write(serializeDataBackup(backup));
+    const backupDirectory = cacheDirectory ?? documentDirectory;
 
-    await Sharing.shareAsync(backupFile.uri, {
+    if (!backupDirectory) {
+      throw new Error('Backup directory is unavailable.');
+    }
+
+    const backupFileUri = `${backupDirectory}${getBackupFileName(type)}`;
+
+    await writeAsStringAsync(backupFileUri, serializeDataBackup(backup), {
+      encoding: fileEncoding
+    });
+
+    const backupFileInfo = await getInfoAsync(backupFileUri);
+
+    if (!backupFileInfo.exists) {
+      throw new Error('Backup file was not created.');
+    }
+
+    await Sharing.shareAsync(backupFileUri, {
       mimeType: 'application/json',
       dialogTitle: `${labels.appName} ${labels.fullBackup}`
     });
@@ -177,8 +198,8 @@ export default function DataSettingsScreen() {
   async function handleExportData(type: DataBackupType) {
     const action = `export-${type}` as Exclude<BusyAction, null>;
 
-    await runBusyAction(action, async () => {
-      try {
+    try {
+      await runBusyAction(action, async () => {
         const [storedRecords, storedProducts] = await Promise.all([
           ledgerRepository.getAllRecords(),
           getProducts()
@@ -191,21 +212,16 @@ export default function DataSettingsScreen() {
 
         await shareJsonFile(type, backup);
         Alert.alert(labels.exportSuccessTitle, labels.exportSuccessDescription);
-      } catch {
-        Alert.alert(labels.exportFailed, labels.exportFailedDescription);
-      }
-    });
+      });
+    } catch {
+      Alert.alert(labels.exportFailed, labels.exportFailedDescription);
+    }
   }
 
   async function readPickedBackupFile(asset: PickedBackupAsset) {
-    try {
-      const backupFile = new File(asset.uri);
-      return await backupFile.text();
-    } catch {
-      return await readAsStringAsync(asset.uri, {
-        encoding: EncodingType.UTF8
-      });
-    }
+    return await readAsStringAsync(asset.uri, {
+      encoding: fileEncoding
+    });
   }
 
   async function pickBackupJson() {

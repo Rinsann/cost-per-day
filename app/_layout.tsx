@@ -5,12 +5,15 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AppThemeProvider, useAppTheme } from '@/context/AppThemeContext';
 import { ExpenseCategoriesProvider } from '@/context/ExpenseCategoriesContext';
+import { ExpenseRecordsProvider } from '@/context/ExpenseRecordsContext';
 
 export default function RootLayout() {
   return (
     <AppThemeProvider>
       <ExpenseCategoriesProvider>
-        <RootLayoutContent />
+        <ExpenseRecordsProvider>
+          <RootLayoutContent />
+        </ExpenseRecordsProvider>
       </ExpenseCategoriesProvider>
     </AppThemeProvider>
   );
