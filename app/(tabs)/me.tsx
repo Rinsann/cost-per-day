@@ -33,6 +33,8 @@ const labels = {
   ledgerSettings: '记账设置',
   categoryManagement: '分类管理',
   categoryManagementDescription: '管理记账分类和图标',
+  monthlyBudget: '月度预算',
+  monthlyBudgetDescription: '设置本月总预算参考',
   dataManagement: '数据管理',
   dataManagementDescription: '导入、导出、备份和清空本地数据',
   system: '跟随系统',
@@ -141,6 +143,12 @@ export default function MeTab() {
       </SectionCard>
 
       <SectionCard title={labels.ledgerSettings}>
+        <ActionRow
+          description={labels.monthlyBudgetDescription}
+          icon="wallet-outline"
+          onPress={() => router.push('/settings/budget')}
+          title={labels.monthlyBudget}
+        />
         <ActionRow
           description={labels.categoryManagementDescription}
           icon="shape-outline"

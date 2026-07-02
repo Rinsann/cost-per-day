@@ -25,10 +25,16 @@ import {
 import { useExpenseRecords } from '@/context/ExpenseRecordsContext';
 import { useAppTheme } from '@/context/AppThemeContext';
 import { useExpenseCategories } from '@/context/ExpenseCategoriesContext';
+import {
+  DEFAULT_MONTHLY_BUDGET,
+  getMonthlyBudget,
+  MonthlyBudget
+} from '@/storage/monthlyBudgetStorage';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { ExpenseRecord, ExpenseRecordType } from '@/types/expense';
+import { calculateMonthlyBudgetStatus } from '@/utils/budget';
 import {
   ExpenseRecordSummary,
   getDateString,
@@ -133,6 +139,11 @@ const labels = {
   keyword: '\u5173\u952e\u8bcd',
   keywordPlaceholder: '\u641c\u7d22\u5907\u6ce8 / \u5206\u7c7b',
   monthChart: '\u6536\u652f\u5bf9\u6bd4',
+  monthlyBudget: '本月预算',
+  budgetSpent: '已支出',
+  budgetRemaining: '剩余',
+  budgetOver: '超出',
+  budgetUsed: '已用',
   noRecordsTitle: '\u8fd8\u6ca1\u6709\u8bb0\u8d26\u6570\u636e',
   noRecordsDescription: '\u5148\u70b9\u51fb\u5e95\u90e8 + \u8bb0\u4e00\u7b14\uff0c\u7edf\u8ba1\u4f1a\u81ea\u52a8\u66f4\u65b0\u3002',
   noFilteredRecords: '\u5f53\u524d\u6761\u4ef6\u4e0b\u6ca1\u6709\u8bb0\u5f55',
@@ -695,6 +706,7 @@ export default function InsightsTab() {
   const [draftCustomStartDate, setDraftCustomStartDate] = useState(customStartDate);
   const [draftUseCustomRange, setDraftUseCustomRange] = useState(false);
   const [filterSheetVisible, setFilterSheetVisible] = useState(false);
+  const [budget, setBudget] = useState<MonthlyBudget>(DEFAULT_MONTHLY_BUDGET);
   const minSelectableYear = useMemo(
     () => getLedgerMinSelectableYear(records, currentYear),
     [currentYear, records]
@@ -737,6 +749,11 @@ export default function InsightsTab() {
       refreshRecords().catch(() => {
         Alert.alert(labels.loadFailedTitle, labels.loadFailedDescription);
       });
+      getMonthlyBudget()
+        .then(setBudget)
+        .catch(() => {
+          setBudget(DEFAULT_MONTHLY_BUDGET);
+        });
       playChartAnimations();
     }, [playChartAnimations, refreshRecords])
   );
@@ -850,6 +867,16 @@ export default function InsightsTab() {
     () => groupExpenseRecordsByDate(filteredRecords, today),
     [filteredRecords, today]
   );
+  const currentMonthExpense = useMemo(() => calculateLedgerSummary(rangeRecords).expense, [rangeRecords]);
+  const budgetStatus = useMemo(
+    () =>
+      calculateMonthlyBudgetStatus({
+        budgetAmount: budget.amount,
+        currentDate: today,
+        monthlyExpense: currentMonthExpense
+      }),
+    [budget.amount, currentMonthExpense, today]
+  );
   const maxBarAmount = Math.max(
     ...barStats.map((item) => Math.max(item.income, item.expense)),
     0
@@ -858,6 +885,12 @@ export default function InsightsTab() {
   const balanceColor = balance >= 0 ? themeColors.income : themeColors.expense;
   const hasAnyRecords = records.length > 0;
   const hasActiveFilters = isFilterActive(filters) || rangeMode === 'custom';
+  const shouldShowBudget =
+    budget.enabled &&
+    budget.amount > 0 &&
+    rangeMode === 'month' &&
+    selectedYear === currentYear &&
+    selectedMonth === currentMonth;
   const donutScale = donutAnimation.interpolate({
     inputRange: [0, 1],
     outputRange: [0.86, 1]
@@ -1181,6 +1214,8 @@ export default function InsightsTab() {
         </Text>
       </View>
 
+      {shouldShowBudget ? <BudgetProgressCard status={budgetStatus} /> : null}
+
       <MonthlyBarChart
         animation={barAnimation}
         maxAmount={maxBarAmount}
@@ -1273,6 +1308,79 @@ function MetricCard({
         </Text>
       </View>
     </AppCard>
+  );
+}
+
+function BudgetProgressCard({
+  status
+}: {
+  status: ReturnType<typeof calculateMonthlyBudgetStatus>;
+}) {
+  const { colors: themeColors } = useAppTheme();
+  const statusColor = status.isOverBudget ? themeColors.expense : themeColors.primary;
+
+  return (
+    <AppCard style={styles.sectionCard}>
+      <View style={styles.cardContent}>
+        <View style={styles.budgetHeader}>
+          <Text variant="titleMedium" style={[styles.sectionTitle, styles.budgetTitle, { color: themeColors.textSecondary }]}>
+            {labels.monthlyBudget}
+          </Text>
+          <Text style={[styles.budgetPercent, { color: statusColor }]} numberOfLines={1}>
+            {labels.budgetUsed} {Math.round(status.usedPercent)}%
+          </Text>
+        </View>
+        <View style={[styles.budgetTrack, { backgroundColor: themeColors.outline }]}>
+          <View
+            style={[
+              styles.budgetFill,
+              {
+                backgroundColor: statusColor,
+                width: `${Math.min(status.usedPercent, 100)}%`
+              }
+            ]}
+          />
+        </View>
+        <View style={styles.budgetStatsRow}>
+          <BudgetStat label={labels.monthlyBudget} value={formatCompactMoney(status.budgetAmount)} />
+          <BudgetStat label={labels.budgetSpent} value={formatCompactMoney(status.usedAmount)} />
+          <BudgetStat
+            label={status.isOverBudget ? labels.budgetOver : labels.budgetRemaining}
+            value={formatCompactMoney(status.isOverBudget ? status.overAmount : status.remainingAmount)}
+            valueColor={statusColor}
+          />
+        </View>
+      </View>
+    </AppCard>
+  );
+}
+
+function BudgetStat({
+  label,
+  value,
+  valueColor
+}: {
+  label: string;
+  value: string;
+  valueColor?: string;
+}) {
+  const { colors: themeColors } = useAppTheme();
+
+  return (
+    <View style={styles.budgetStat}>
+      <Text style={[styles.budgetStatLabel, { color: themeColors.textSecondary }]} numberOfLines={1}>
+        {label}
+      </Text>
+      <Text
+        adjustsFontSizeToFit
+        ellipsizeMode="tail"
+        minimumFontScale={0.72}
+        numberOfLines={1}
+        style={[styles.budgetStatValue, { color: valueColor ?? themeColors.text }]}
+      >
+        {value}
+      </Text>
+    </View>
   );
 }
 
@@ -2110,6 +2218,48 @@ const styles = StyleSheet.create({
     color: colors.textSecondary,
     fontWeight: '900',
     marginBottom: spacing.md
+  },
+  budgetHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    gap: spacing.md,
+    justifyContent: 'space-between'
+  },
+  budgetTitle: {
+    flex: 1,
+    marginBottom: 0
+  },
+  budgetPercent: {
+    fontSize: 13,
+    fontWeight: '900'
+  },
+  budgetTrack: {
+    borderRadius: radius.full,
+    height: 8,
+    marginTop: spacing.md,
+    overflow: 'hidden'
+  },
+  budgetFill: {
+    borderRadius: radius.full,
+    height: '100%'
+  },
+  budgetStatsRow: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.md
+  },
+  budgetStat: {
+    flex: 1,
+    minWidth: 0
+  },
+  budgetStatLabel: {
+    fontSize: 11,
+    fontWeight: '800'
+  },
+  budgetStatValue: {
+    fontSize: 13,
+    fontWeight: '900',
+    marginTop: 2
   },
   emptyInlineText: {
     color: colors.textSecondary,

@@ -101,6 +101,12 @@ function RootLayoutContent() {
             }}
           />
           <Stack.Screen
+            name="settings/budget"
+            options={{
+              title: '月度预算'
+            }}
+          />
+          <Stack.Screen
             name="settings/data"
             options={{
               title: '\u6570\u636e\u7ba1\u7406'
