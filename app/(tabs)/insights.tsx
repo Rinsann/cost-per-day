@@ -1525,6 +1525,7 @@ function BillDetails({
                     const recordType = getRecordType(record);
                     const isIncome = recordType === 'income';
                     const amountColor = isIncome ? themeColors.income : themeColors.expense;
+                    const notePreview = record.note?.trim();
 
                     return (
                       <Pressable
@@ -1547,22 +1548,25 @@ function BillDetails({
                         </View>
                         <View style={styles.detailMain}>
                           <Text
+                            ellipsizeMode="tail"
                             variant="titleSmall"
                             style={[styles.detailTitle, { color: themeColors.text }]}
                             numberOfLines={1}
                           >
-                            {record.note || record.category}
+                            {record.category}
                           </Text>
                           <Text
+                            ellipsizeMode="tail"
                             variant="bodySmall"
                             style={[styles.detailMeta, { color: themeColors.textSecondary }]}
                             numberOfLines={1}
                           >
-                            {record.category} · {record.date}
+                            {notePreview || record.date}
                           </Text>
                         </View>
                         <Text
                           adjustsFontSizeToFit
+                          ellipsizeMode="tail"
                           minimumFontScale={0.72}
                           numberOfLines={1}
                           variant="titleSmall"
@@ -2331,6 +2335,7 @@ const styles = StyleSheet.create({
   },
   detailMain: {
     flex: 1,
+    flexShrink: 1,
     minWidth: 0
   },
   detailTitle: {
@@ -2342,6 +2347,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   detailAmount: {
+    flexShrink: 0,
     fontWeight: '900',
     maxWidth: 116,
     minWidth: 88,
