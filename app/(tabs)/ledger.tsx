@@ -35,6 +35,7 @@ const labels = {
   viewAll: '\u67e5\u770b\u5168\u90e8',
   emptyTitle: '\u8fd8\u6ca1\u6709\u8bb0\u5f55',
   emptyDescription: '\u70b9\u51fb\u5e95\u90e8\u4e2d\u95f4\u7684 + \u5feb\u901f\u8bb0\u4e00\u7b14\u3002',
+  spendingReminder: '买之前想一想，用多久才算值。',
   loadFailedTitle: '\u8bfb\u53d6\u5931\u8d25',
   loadFailedDescription: '\u65e0\u6cd5\u8bfb\u53d6\u672c\u5730\u8bb0\u8d26\u8bb0\u5f55\u3002'
 };
@@ -86,7 +87,7 @@ export default function LedgerTab() {
 
   const monthBalance = monthSummary.income - monthSummary.expense;
   const monthBalanceColor = monthBalance >= 0 ? themeColors.income : themeColors.expense;
-  const bottomPadding = Math.max(insets.bottom, spacing.sm) + 56 + spacing.xxxl;
+  const bottomPadding = Math.max(insets.bottom, spacing.sm) + 44;
 
   const openAllRecords = useCallback(() => {
     router.push('/ledger/all');
@@ -292,6 +293,17 @@ export default function LedgerTab() {
           ))}
         </View>
       )}
+
+      <View style={styles.spendingReminderWrap}>
+        <Text
+          ellipsizeMode="tail"
+          numberOfLines={1}
+          variant="bodySmall"
+          style={[styles.spendingReminder, { color: themeColors.textSecondary }]}
+        >
+          {labels.spendingReminder}
+        </Text>
+      </View>
     </Screen>
   );
 }
@@ -398,6 +410,18 @@ const styles = StyleSheet.create({
   },
   recordGroups: {
     gap: spacing.md
+  },
+  spendingReminderWrap: {
+    alignSelf: 'stretch',
+    height: 44,
+    justifyContent: 'center',
+    marginTop: spacing.sm,
+  },
+  spendingReminder: {
+    lineHeight: 18,
+    opacity: 0.72,
+    textAlign: 'center',
+    textAlignVertical: 'center'
   },
   recordGroup: {
     gap: spacing.sm
