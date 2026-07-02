@@ -80,7 +80,14 @@ function DetailRow({ label, value, valueColor }: DetailRowProps) {
       <Text variant="bodyMedium" style={[styles.detailLabel, { color: themeColors.textSecondary }]}>
         {label}
       </Text>
-      <Text variant="bodyLarge" style={[styles.detailValue, { color: valueColor ?? themeColors.text }]}>
+      <Text
+        adjustsFontSizeToFit
+        ellipsizeMode="tail"
+        minimumFontScale={0.62}
+        numberOfLines={1}
+        variant="bodyLarge"
+        style={[styles.detailValue, { color: valueColor ?? themeColors.text }]}
+      >
         {value}
       </Text>
     </View>
@@ -210,7 +217,14 @@ export default function LedgerDetailScreen() {
               <Text variant="labelLarge" style={[styles.heroLabel, { color: themeColors.textSecondary }]}>
                 {recordType === 'income' ? labels.income : labels.expense}
               </Text>
-              <Text variant="displaySmall" style={[styles.amountText, { color: amountColor }]}>
+              <Text
+                adjustsFontSizeToFit
+                ellipsizeMode="tail"
+                minimumFontScale={0.58}
+                numberOfLines={1}
+                variant="displaySmall"
+                style={[styles.amountText, { color: amountColor }]}
+              >
                 {recordType === 'income' ? '+' : '-'}
                 {formatCurrency(record.amount)}
               </Text>
@@ -314,7 +328,8 @@ const styles = StyleSheet.create({
   },
   amountText: {
     fontWeight: '900',
-    marginTop: spacing.xs
+    marginTop: spacing.xs,
+    maxWidth: '100%'
   },
   categoryText: {
     color: colors.text,
@@ -330,12 +345,14 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm
   },
   detailLabel: {
-    color: colors.textSecondary
+    color: colors.textSecondary,
+    flexShrink: 0
   },
   detailValue: {
     flex: 1,
     fontWeight: '800',
     marginLeft: spacing.md,
+    minWidth: 0,
     textAlign: 'right'
   },
   cardTitle: {

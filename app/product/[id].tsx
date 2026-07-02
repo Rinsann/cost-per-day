@@ -89,7 +89,14 @@ function MetricRow({ label, value }: MetricRowProps) {
       <Text variant="bodyMedium" style={[styles.metricLabel, { color: themeColors.textSecondary }]}>
         {label}
       </Text>
-      <Text variant="bodyLarge" style={[styles.metricValue, { color: themeColors.text }]}>
+      <Text
+        adjustsFontSizeToFit
+        ellipsizeMode="tail"
+        minimumFontScale={0.62}
+        numberOfLines={1}
+        variant="bodyLarge"
+        style={[styles.metricValue, { color: themeColors.text }]}
+      >
         {value}
       </Text>
     </View>
@@ -243,7 +250,14 @@ export default function ProductDetailScreen() {
                   <Text variant="bodySmall" style={[styles.metricLabel, { color: themeColors.textSecondary }]}>
                     {labels.current}
                   </Text>
-                  <Text variant="titleMedium" style={[styles.valueNumber, { color: themeColors.primary }]}>
+                  <Text
+                    adjustsFontSizeToFit
+                    ellipsizeMode="tail"
+                    minimumFontScale={0.62}
+                    numberOfLines={1}
+                    variant="titleMedium"
+                    style={[styles.valueNumber, { color: themeColors.primary }]}
+                  >
                     {formatCurrency(valueMetrics.current)}
                     {labels.perDay}
                   </Text>
@@ -252,7 +266,14 @@ export default function ProductDetailScreen() {
                   <Text variant="bodySmall" style={[styles.metricLabel, { color: themeColors.textSecondary }]}>
                     {labels.after30Days}
                   </Text>
-                  <Text variant="titleMedium" style={[styles.valueNumber, { color: themeColors.primary }]}>
+                  <Text
+                    adjustsFontSizeToFit
+                    ellipsizeMode="tail"
+                    minimumFontScale={0.62}
+                    numberOfLines={1}
+                    variant="titleMedium"
+                    style={[styles.valueNumber, { color: themeColors.primary }]}
+                  >
                     {formatCurrency(valueMetrics.after30Days)}
                     {labels.perDay}
                   </Text>
@@ -261,7 +282,14 @@ export default function ProductDetailScreen() {
                   <Text variant="bodySmall" style={[styles.metricLabel, { color: themeColors.textSecondary }]}>
                     {labels.after365Days}
                   </Text>
-                  <Text variant="titleMedium" style={[styles.valueNumber, { color: themeColors.primary }]}>
+                  <Text
+                    adjustsFontSizeToFit
+                    ellipsizeMode="tail"
+                    minimumFontScale={0.62}
+                    numberOfLines={1}
+                    variant="titleMedium"
+                    style={[styles.valueNumber, { color: themeColors.primary }]}
+                  >
                     {formatCurrency(valueMetrics.after365Days)}
                     {labels.perDay}
                   </Text>
@@ -296,7 +324,14 @@ export default function ProductDetailScreen() {
                         <Text variant="bodySmall" style={[styles.metricLabel, { color: themeColors.textSecondary }]}>
                           {labels.current}
                         </Text>
-                        <Text variant="titleMedium" style={[styles.valueNumber, { color: themeColors.primary }]}>
+                        <Text
+                          adjustsFontSizeToFit
+                          ellipsizeMode="tail"
+                          minimumFontScale={0.62}
+                          numberOfLines={1}
+                          variant="titleMedium"
+                          style={[styles.valueNumber, { color: themeColors.primary }]}
+                        >
                           {formatCurrency(targetMetrics.currentDailyCost)}
                           {labels.perDay}
                         </Text>
@@ -305,7 +340,14 @@ export default function ProductDetailScreen() {
                         <Text variant="bodySmall" style={[styles.metricLabel, { color: themeColors.textSecondary }]}>
                           {labels.targetPrefix}
                         </Text>
-                        <Text variant="titleMedium" style={[styles.valueNumber, { color: themeColors.primary }]}>
+                        <Text
+                          adjustsFontSizeToFit
+                          ellipsizeMode="tail"
+                          minimumFontScale={0.62}
+                          numberOfLines={1}
+                          variant="titleMedium"
+                          style={[styles.valueNumber, { color: themeColors.primary }]}
+                        >
                           {formatCurrency(targetMetrics.targetDailyCost)}
                           {labels.perDay}
                         </Text>
@@ -465,16 +507,20 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.outline,
     borderBottomWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
+    gap: spacing.md,
     justifyContent: 'space-between',
     paddingVertical: spacing.sm
   },
   metricLabel: {
-    color: colors.textSecondary
+    color: colors.textSecondary,
+    flex: 1,
+    minWidth: 0
   },
   metricValue: {
     color: colors.text,
+    flexShrink: 1,
     fontWeight: '700',
-    marginLeft: spacing.md,
+    maxWidth: '62%',
     textAlign: 'right'
   },
   valueGrid: {
@@ -487,7 +533,8 @@ const styles = StyleSheet.create({
   valueNumber: {
     color: colors.primary,
     fontWeight: '800',
-    marginTop: spacing.xs
+    marginTop: spacing.xs,
+    maxWidth: '100%'
   },
   valueHint: {
     color: colors.textSecondary,

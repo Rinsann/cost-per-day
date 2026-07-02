@@ -24,6 +24,10 @@ function getSignPrefix(value: number, sign: MoneySign) {
     }
   }
 
+  if (value < 0) {
+    return '-';
+  }
+
   return '';
 }
 
@@ -38,18 +42,23 @@ export function formatMoney(value: number, options: FormatMoneyOptions = {}) {
   return `${signPrefix}${symbol ? '¥' : ''}${amount}`;
 }
 
+export function formatMoneyFull(value: number, options: FormatMoneyOptions = {}) {
+  return formatMoney(value, options);
+}
+
 export function formatCompactMoney(value: number, options: FormatMoneyOptions = {}) {
   const { sign = 'none', symbol = true } = options;
   const amount = Math.abs(value);
 
-  if (amount < 100000) {
+  if (amount < 10000) {
     return formatMoney(value, options);
   }
 
   const signPrefix = getSignPrefix(value, sign);
   const compactAmount = (amount / 10000).toLocaleString('zh-CN', {
-    maximumFractionDigits: 1,
-    minimumFractionDigits: 0
+    maximumFractionDigits: 2,
+    minimumFractionDigits: 2,
+    useGrouping: false
   });
 
   return `${signPrefix}${symbol ? '¥' : ''}${compactAmount}万`;

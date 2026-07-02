@@ -12,7 +12,7 @@ import {
   getLocalDateFromString,
   isValidDateString
 } from '@/utils/formatDate';
-import { formatMoney } from '@/utils/formatMoney';
+import { formatCompactMoney } from '@/utils/formatMoney';
 
 export { isValidDateString };
 
@@ -265,11 +265,11 @@ export function formatDailySummary(summary: LedgerSummary) {
   const parts: string[] = [];
 
   if (summary.expense > 0) {
-    parts.push(`支:${formatMoney(summary.expense, { symbol: false })}`);
+    parts.push(`支:${formatCompactMoney(summary.expense, { symbol: false })}`);
   }
 
   if (summary.income > 0) {
-    parts.push(`收:${formatMoney(summary.income, { symbol: false })}`);
+    parts.push(`收:${formatCompactMoney(summary.income, { symbol: false })}`);
   }
 
   return parts.join('  ');

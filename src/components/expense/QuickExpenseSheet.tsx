@@ -313,6 +313,8 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
               ]}
             >
               <Text
+                adjustsFontSizeToFit
+                minimumFontScale={0.52}
                 variant="displaySmall"
                 numberOfLines={1}
                 style={[styles.amountText, { color: themeColors.text }]}

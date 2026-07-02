@@ -75,7 +75,7 @@ describe('ledgerStats utilities', () => {
     expect(summary.income).toBe(10200);
     expect(summary.expense).toBeCloseTo(88.65);
     expect(summary.income - summary.expense).toBeCloseTo(10111.35);
-    expect(formatCompactMoney(228501.12)).toBe('¥22.9万');
+    expect(formatCompactMoney(228501.12)).toBe('¥22.85万');
   });
 
   it('groups records by date with daily summaries', () => {

@@ -20,7 +20,7 @@ import {
   getDateString,
   sortExpenseRecords
 } from '@/utils/expenseRecords';
-import { formatMoney } from '@/utils/formatMoney';
+import { formatCompactMoney } from '@/utils/formatMoney';
 
 const labels = {
   title: '\u8bb0\u8d26\u672c',
@@ -112,20 +112,34 @@ export default function LedgerTab() {
           <Text variant="labelLarge" style={styles.heroLabel}>
             {labels.monthExpense}
           </Text>
-          <Text variant="displaySmall" style={[styles.monthExpenseValue, { color: themeColors.text }]}>
-            {formatMoney(monthSummary.expense)}
+          <Text
+            adjustsFontSizeToFit
+            ellipsizeMode="tail"
+            minimumFontScale={0.58}
+            numberOfLines={1}
+            variant="displaySmall"
+            style={[styles.monthExpenseValue, { color: themeColors.text }]}
+          >
+            {formatCompactMoney(monthSummary.expense)}
           </Text>
           <View style={styles.summaryRow}>
             <View style={styles.summaryItem}>
               <View style={styles.summaryIcon}>
                 <MaterialCommunityIcons name="arrow-down-left" color={themeColors.primary} size={18} />
               </View>
-              <View>
+              <View style={styles.summaryTextWrap}>
                 <Text variant="bodySmall" style={[styles.mutedText, { color: themeColors.textSecondary }]}>
                   {labels.monthIncome}
                 </Text>
-                <Text variant="titleSmall" style={styles.incomeValue}>
-                  {formatMoney(monthSummary.income)}
+                <Text
+                  adjustsFontSizeToFit
+                  ellipsizeMode="tail"
+                  minimumFontScale={0.72}
+                  numberOfLines={1}
+                  variant="titleSmall"
+                  style={styles.incomeValue}
+                >
+                  {formatCompactMoney(monthSummary.income)}
                 </Text>
               </View>
             </View>
@@ -138,12 +152,19 @@ export default function LedgerTab() {
               >
                 <MaterialCommunityIcons name="wallet-outline" color={monthBalanceColor} size={18} />
               </View>
-              <View>
+              <View style={styles.summaryTextWrap}>
                 <Text variant="bodySmall" style={[styles.mutedText, { color: themeColors.textSecondary }]}>
                   {labels.monthBalance}
                 </Text>
-                <Text variant="titleSmall" style={[styles.balanceSummaryValue, { color: monthBalanceColor }]}>
-                  {formatMoney(monthBalance, { sign: monthBalance < 0 ? 'auto' : 'none' })}
+                <Text
+                  adjustsFontSizeToFit
+                  ellipsizeMode="tail"
+                  minimumFontScale={0.72}
+                  numberOfLines={1}
+                  variant="titleSmall"
+                  style={[styles.balanceSummaryValue, { color: monthBalanceColor }]}
+                >
+                  {formatCompactMoney(monthBalance, { sign: monthBalance < 0 ? 'auto' : 'none' })}
                 </Text>
               </View>
             </View>
@@ -190,13 +211,23 @@ export default function LedgerTab() {
                 </Text>
                 <View style={styles.groupSummary}>
                   {group.summary.expense > 0 ? (
-                    <Text variant="bodySmall" style={[styles.groupSummaryText, styles.groupExpense]}>
-                      {labels.dailyExpense}:{formatMoney(group.summary.expense, { symbol: false })}
+                    <Text
+                      ellipsizeMode="tail"
+                      numberOfLines={1}
+                      variant="bodySmall"
+                      style={[styles.groupSummaryText, styles.groupExpense]}
+                    >
+                      {labels.dailyExpense}:{formatCompactMoney(group.summary.expense, { symbol: false })}
                     </Text>
                   ) : null}
                   {group.summary.income > 0 ? (
-                    <Text variant="bodySmall" style={[styles.groupSummaryText, styles.groupIncome]}>
-                      {labels.dailyIncome}:{formatMoney(group.summary.income, { symbol: false })}
+                    <Text
+                      ellipsizeMode="tail"
+                      numberOfLines={1}
+                      variant="bodySmall"
+                      style={[styles.groupSummaryText, styles.groupIncome]}
+                    >
+                      {labels.dailyIncome}:{formatCompactMoney(group.summary.income, { symbol: false })}
                     </Text>
                   ) : null}
                 </View>
@@ -244,12 +275,14 @@ export default function LedgerTab() {
                         </Text>
                       </View>
                       <Text
+                        adjustsFontSizeToFit
                         ellipsizeMode="tail"
+                        minimumFontScale={0.72}
                         numberOfLines={1}
                         variant="titleSmall"
                         style={[styles.recordAmount, { color: amountColor }]}
                       >
-                        {formatMoney(record.amount, { sign: isIncome ? 'income' : 'expense' })}
+                        {formatCompactMoney(record.amount, { sign: isIncome ? 'income' : 'expense' })}
                       </Text>
                     </Pressable>
                   );
@@ -282,7 +315,8 @@ const styles = StyleSheet.create({
   monthExpenseValue: {
     color: colors.text,
     fontWeight: '900',
-    marginTop: spacing.sm
+    marginTop: spacing.sm,
+    maxWidth: '100%'
   },
   summaryRow: {
     alignItems: 'center',
@@ -296,7 +330,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
     flexDirection: 'row',
-    gap: spacing.sm
+    gap: spacing.sm,
+    minWidth: 0
+  },
+  summaryTextWrap: {
+    flex: 1,
+    minWidth: 0
   },
   summaryIcon: {
     alignItems: 'center',
@@ -314,10 +353,12 @@ const styles = StyleSheet.create({
   },
   incomeValue: {
     color: colors.income,
-    fontWeight: '800'
+    fontWeight: '800',
+    maxWidth: '100%'
   },
   balanceSummaryValue: {
-    fontWeight: '800'
+    fontWeight: '800',
+    maxWidth: '100%'
   },
   sectionHeader: {
     alignItems: 'center',
@@ -428,9 +469,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   recordAmount: {
-    flexShrink: 0,
+    flexShrink: 1,
     fontWeight: '900',
-    minWidth: 96,
+    maxWidth: 116,
+    minWidth: 82,
     textAlign: 'right'
   },
 });

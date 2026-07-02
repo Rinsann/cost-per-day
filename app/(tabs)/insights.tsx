@@ -44,7 +44,7 @@ import {
   formatQuarterLabel,
   formatYearLabel
 } from '@/utils/formatDate';
-import { formatCompactMoney, formatMoney } from '@/utils/formatMoney';
+import { formatCompactMoney } from '@/utils/formatMoney';
 import {
   buildChartBuckets as buildLedgerChartBuckets,
   calculateCategoryStats as calculateLedgerCategoryStats,
@@ -1150,13 +1150,13 @@ export default function InsightsTab() {
         <MetricCard
           icon="trending-up"
           label={rangeInfo.incomeLabel}
-          value={formatMoney(summary.income)}
+          value={formatCompactMoney(summary.income)}
           valueColor={themeColors.income}
         />
         <MetricCard
           icon="trending-down"
           label={rangeInfo.expenseLabel}
-          value={formatMoney(summary.expense)}
+          value={formatCompactMoney(summary.expense)}
           valueColor={themeColors.expense}
         />
       </View>
@@ -1177,7 +1177,7 @@ export default function InsightsTab() {
           variant="titleMedium"
           style={[styles.balanceValue, { color: balanceColor }]}
         >
-          {formatMoney(balance, { sign: balance < 0 ? 'auto' : 'none' })}
+          {formatCompactMoney(balance, { sign: balance < 0 ? 'auto' : 'none' })}
         </Text>
       </View>
 
@@ -1501,13 +1501,21 @@ function BillDetails({
                   </Text>
                   <View style={styles.groupSummary}>
                     {group.summary.expense > 0 ? (
-                      <Text style={[styles.groupSummaryText, styles.groupExpense]}>
-                        {labels.expense}:{formatMoney(group.summary.expense, { symbol: false })}
+                      <Text
+                        ellipsizeMode="tail"
+                        numberOfLines={1}
+                        style={[styles.groupSummaryText, styles.groupExpense]}
+                      >
+                        {labels.expense}:{formatCompactMoney(group.summary.expense, { symbol: false })}
                       </Text>
                     ) : null}
                     {group.summary.income > 0 ? (
-                      <Text style={[styles.groupSummaryText, styles.groupIncome]}>
-                        {labels.income}:{formatMoney(group.summary.income, { symbol: false })}
+                      <Text
+                        ellipsizeMode="tail"
+                        numberOfLines={1}
+                        style={[styles.groupSummaryText, styles.groupIncome]}
+                      >
+                        {labels.income}:{formatCompactMoney(group.summary.income, { symbol: false })}
                       </Text>
                     ) : null}
                   </View>
@@ -1560,7 +1568,7 @@ function BillDetails({
                           variant="titleSmall"
                           style={[styles.detailAmount, { color: amountColor }]}
                         >
-                          {formatMoney(record.amount, { sign: isIncome ? 'income' : 'expense' })}
+                          {formatCompactMoney(record.amount, { sign: isIncome ? 'income' : 'expense' })}
                         </Text>
                       </Pressable>
                     );
@@ -2068,7 +2076,8 @@ const styles = StyleSheet.create({
   },
   metricValue: {
     fontWeight: '900',
-    marginTop: spacing.sm
+    marginTop: spacing.sm,
+    maxWidth: '100%'
   },
   balanceRow: {
     alignItems: 'center',
@@ -2321,7 +2330,8 @@ const styles = StyleSheet.create({
     width: 42
   },
   detailMain: {
-    flex: 1
+    flex: 1,
+    minWidth: 0
   },
   detailTitle: {
     color: colors.text,

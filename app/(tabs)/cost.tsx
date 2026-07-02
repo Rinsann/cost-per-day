@@ -11,7 +11,7 @@ import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { getProducts } from '@/storage/productStorage';
 import { Product, ProductCategoryId } from '@/types/product';
-import { formatCurrency, getProductMetrics } from '@/utils/cost';
+import { formatCompactCurrency, getProductMetrics } from '@/utils/cost';
 import { getTargetProgress, TargetDailyCostMetrics } from '@/utils/targetCost';
 
 type SortMode =
@@ -86,32 +86,59 @@ function ProductCard({ product }: ProductCardProps) {
       <Card.Content>
         <View style={styles.cardHeader}>
           <View style={styles.productTitleWrap}>
-            <Text variant="titleMedium" style={[styles.productName, { color: themeColors.text }]}>
+            <Text
+              ellipsizeMode="tail"
+              numberOfLines={1}
+              variant="titleMedium"
+              style={[styles.productName, { color: themeColors.text }]}
+            >
               {product.name}
             </Text>
             <Text variant="bodySmall" style={[styles.productMeta, { color: themeColors.textSecondary }]}>
               {categoryLabels[product.categoryId]}
             </Text>
           </View>
-          <Text variant="titleMedium" style={[styles.dailyCost, { color: themeColors.primary }]}>
-            {formatCurrency(product.dailyCost)}
+          <Text
+            adjustsFontSizeToFit
+            ellipsizeMode="tail"
+            minimumFontScale={0.72}
+            numberOfLines={1}
+            variant="titleMedium"
+            style={[styles.dailyCost, { color: themeColors.primary }]}
+          >
+            {formatCompactCurrency(product.dailyCost)}
           </Text>
         </View>
 
         <View style={styles.cardFooter}>
-          <Text variant="bodyMedium" style={[styles.productInfo, { color: themeColors.textSecondary }]}>
-            {labels.price} {formatCurrency(product.price)}
+          <Text
+            ellipsizeMode="tail"
+            numberOfLines={1}
+            variant="bodyMedium"
+            style={[styles.productInfo, { color: themeColors.textSecondary }]}
+          >
+            {labels.price} {formatCompactCurrency(product.price)}
           </Text>
-          <Text variant="bodyMedium" style={[styles.productInfo, { color: themeColors.textSecondary }]}>
+          <Text
+            ellipsizeMode="tail"
+            numberOfLines={1}
+            variant="bodyMedium"
+            style={[styles.productInfo, { color: themeColors.textSecondary }]}
+          >
             {labels.used} {product.usedDays} {labels.days}
           </Text>
         </View>
 
         {targetMetrics ? (
-          <Text variant="bodySmall" style={[styles.targetInfo, { color: themeColors.primary }]}>
+          <Text
+            ellipsizeMode="tail"
+            numberOfLines={2}
+            variant="bodySmall"
+            style={[styles.targetInfo, { color: themeColors.primary }]}
+          >
             {targetMetrics.isReached
               ? labels.targetReached
-              : `${labels.targetPrefix} ${formatCurrency(targetMetrics.targetDailyCost)}${
+              : `${labels.targetPrefix} ${formatCompactCurrency(targetMetrics.targetDailyCost)}${
                   labels.perDay
                 } / ${labels.remainingPrefix} ${targetMetrics.remainingDays} ${labels.days}`}
           </Text>
@@ -155,10 +182,15 @@ function RecentTargetsCard({ items }: RecentTargetsCardProps) {
                   </Text>
                 ) : (
                   <>
-                    <Text variant="bodySmall" style={[styles.productMeta, { color: themeColors.textSecondary }]}>
-                      {formatCurrency(targetProgress.currentDailyCost)}
+                    <Text
+                      ellipsizeMode="tail"
+                      numberOfLines={1}
+                      variant="bodySmall"
+                      style={[styles.productMeta, { color: themeColors.textSecondary }]}
+                    >
+                      {formatCompactCurrency(targetProgress.currentDailyCost)}
                       {labels.perDay} {'->'} {labels.targetPrefix}{' '}
-                      {formatCurrency(targetProgress.targetDailyCost)}
+                      {formatCompactCurrency(targetProgress.targetDailyCost)}
                       {labels.perDay}
                     </Text>
                     <Text variant="bodySmall" style={[styles.productMeta, { color: themeColors.textSecondary }]}>
@@ -297,8 +329,15 @@ export default function HomeScreen() {
                 />
               </View>
             </View>
-            <Text variant="displaySmall" style={[styles.totalValue, { color: themeColors.text }]}>
-              {formatCurrency(currentDailyCost)}
+            <Text
+              adjustsFontSizeToFit
+              ellipsizeMode="tail"
+              minimumFontScale={0.58}
+              numberOfLines={1}
+              variant="displaySmall"
+              style={[styles.totalValue, { color: themeColors.text }]}
+            >
+              {formatCompactCurrency(currentDailyCost)}
             </Text>
             <Text variant="bodySmall" style={[styles.totalHint, { color: themeColors.textSecondary }]}>
               {labels.currentDailyCostHint}
@@ -441,7 +480,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm
   },
   recentTargetTextWrap: {
-    flex: 1
+    flex: 1,
+    minWidth: 0
   },
   recentTargetReached: {
     color: colors.primary,
@@ -485,7 +525,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between'
   },
   productTitleWrap: {
-    flex: 1
+    flex: 1,
+    minWidth: 0
   },
   productName: {
     color: colors.text,
@@ -497,7 +538,10 @@ const styles = StyleSheet.create({
   },
   dailyCost: {
     color: colors.primary,
-    fontWeight: '800'
+    flexShrink: 1,
+    fontWeight: '800',
+    maxWidth: 128,
+    textAlign: 'right'
   },
   cardFooter: {
     flexDirection: 'row',
@@ -506,7 +550,9 @@ const styles = StyleSheet.create({
     marginTop: spacing.md
   },
   productInfo: {
-    color: colors.textSecondary
+    color: colors.textSecondary,
+    flexShrink: 1,
+    maxWidth: '100%'
   },
   targetInfo: {
     color: colors.primary,

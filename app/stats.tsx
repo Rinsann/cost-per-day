@@ -12,7 +12,7 @@ import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { Product } from '@/types/product';
-import { formatCurrency } from '@/utils/cost';
+import { formatCompactCurrency } from '@/utils/cost';
 import { CategoryStatsItem, getProductStats, ProductStatsItem } from '@/utils/stats';
 
 const labels = {
@@ -46,7 +46,14 @@ function OverviewItem({ label, value }: OverviewItemProps) {
       <Text variant="bodySmall" style={[styles.mutedText, { color: themeColors.textSecondary }]}>
         {label}
       </Text>
-      <Text variant="titleLarge" style={[styles.overviewValue, { color: themeColors.primary }]}>
+      <Text
+        adjustsFontSizeToFit
+        ellipsizeMode="tail"
+        minimumFontScale={0.72}
+        numberOfLines={1}
+        variant="titleLarge"
+        style={[styles.overviewValue, { color: themeColors.primary }]}
+      >
         {value}
       </Text>
     </View>
@@ -77,13 +84,17 @@ function ProductRankCard({ title, products, mode }: ProductRankCardProps) {
             descriptionStyle={[styles.listDescription, { color: themeColors.textSecondary }]}
             right={() => (
               <Text
+                adjustsFontSizeToFit
+                ellipsizeMode="tail"
+                minimumFontScale={0.72}
+                numberOfLines={1}
                 style={[
                   mode === 'cost' ? styles.costValue : styles.daysValue,
                   { color: mode === 'cost' ? themeColors.primary : themeColors.text }
                 ]}
               >
                 {mode === 'cost'
-                  ? formatCurrency(product.dailyCost)
+                  ? formatCompactCurrency(product.dailyCost)
                   : `${product.usedDays} ${labels.days}`}
               </Text>
             )}
@@ -112,13 +123,19 @@ function CategoryStatsCard({ categories }: CategoryStatsCardProps) {
             key={category.categoryId}
             title={category.categoryName}
             titleStyle={[styles.listTitle, { color: themeColors.text }]}
-            description={`${category.productCount} ${labels.countUnit} / ${labels.categoryAmount} ${formatCurrency(
+            description={`${category.productCount} ${labels.countUnit} / ${labels.categoryAmount} ${formatCompactCurrency(
               category.totalAmount
             )}`}
             descriptionStyle={[styles.listDescription, { color: themeColors.textSecondary }]}
             right={() => (
-              <Text style={[styles.costValue, { color: themeColors.primary }]}>
-                {formatCurrency(category.currentDailyCost)}
+              <Text
+                adjustsFontSizeToFit
+                ellipsizeMode="tail"
+                minimumFontScale={0.72}
+                numberOfLines={1}
+                style={[styles.costValue, { color: themeColors.primary }]}
+              >
+                {formatCompactCurrency(category.currentDailyCost)}
               </Text>
             )}
           />
@@ -184,15 +201,15 @@ export default function StatsScreen() {
             />
             <OverviewItem
               label={labels.totalAmount}
-              value={formatCurrency(stats.overview.totalAmount)}
+              value={formatCompactCurrency(stats.overview.totalAmount)}
             />
             <OverviewItem
               label={labels.currentDailyCost}
-              value={formatCurrency(stats.overview.currentDailyCost)}
+              value={formatCompactCurrency(stats.overview.currentDailyCost)}
             />
             <OverviewItem
               label={labels.averageDailyCost}
-              value={formatCurrency(stats.overview.averageDailyCost)}
+              value={formatCompactCurrency(stats.overview.averageDailyCost)}
             />
           </View>
         </Card.Content>
@@ -258,7 +275,9 @@ const styles = StyleSheet.create({
   costValue: {
     alignSelf: 'center',
     color: colors.primary,
-    fontWeight: '800'
+    fontWeight: '800',
+    maxWidth: 112,
+    textAlign: 'right'
   },
   daysValue: {
     alignSelf: 'center',

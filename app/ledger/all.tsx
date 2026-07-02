@@ -16,7 +16,7 @@ import { spacing } from '@/theme/spacing';
 import { ExpenseRecord } from '@/types/expense';
 import { getRecordType } from '@/utils/expenseRecords';
 import { formatMonthLabel } from '@/utils/formatDate';
-import { formatMoney } from '@/utils/formatMoney';
+import { formatCompactMoney } from '@/utils/formatMoney';
 import {
   filterRecordsByMonth,
   filterRecordsByTypeCategoryKeyword,
@@ -290,12 +290,14 @@ export default function AllLedgerRecordsScreen() {
             </Text>
           </View>
           <Text
+            adjustsFontSizeToFit
             ellipsizeMode="tail"
+            minimumFontScale={0.72}
             numberOfLines={1}
             variant="titleSmall"
             style={[styles.recordAmount, { color: amountColor }]}
           >
-            {formatMoney(item.amount, { sign: isIncome ? 'income' : 'expense' })}
+            {formatCompactMoney(item.amount, { sign: isIncome ? 'income' : 'expense' })}
           </Text>
         </Pressable>
       );
@@ -314,7 +316,12 @@ export default function AllLedgerRecordsScreen() {
               {formatSectionDate(section.date, section.label)}
             </Text>
             {summaryText ? (
-              <Text variant="bodySmall" style={[styles.groupSummaryText, { color: themeColors.textSecondary }]}>
+              <Text
+                ellipsizeMode="tail"
+                numberOfLines={1}
+                variant="bodySmall"
+                style={[styles.groupSummaryText, { color: themeColors.textSecondary }]}
+              >
                 {summaryText}
               </Text>
             ) : null}
@@ -751,7 +758,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs
   },
   recordAmount: {
-    flexShrink: 0,
+    flexShrink: 1,
     fontWeight: '900',
     maxWidth: 120,
     minWidth: 90,
