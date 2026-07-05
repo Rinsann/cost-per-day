@@ -4,6 +4,7 @@ import {
   Alert,
   Animated,
   Easing,
+  Keyboard,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -28,6 +29,11 @@ import { getDateString } from '@/utils/formatDate';
 type QuickExpenseSheetProps = {
   visible: boolean;
   onClose: () => void;
+};
+
+type InputMode = 'amount' | 'note';
+type NoteInputHandle = {
+  blur: () => void;
 };
 
 const labels = {
@@ -99,12 +105,14 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   const hasMountedAmount = useRef(false);
   const wasVisible = useRef(false);
   const didLongPressBackspace = useRef(false);
+  const noteInputRef = useRef<NoteInputHandle | null>(null);
   const [recordType, setRecordType] = useState<ExpenseRecordType>('expense');
   const [amountText, setAmountText] = useState('');
   const [category, setCategory] = useState(expenseCategories[0].label);
   const [note, setNote] = useState('');
   const [selectedDate, setSelectedDate] = useState(getDateString(new Date()));
   const [saving, setSaving] = useState(false);
+  const [inputMode, setInputMode] = useState<InputMode>('amount');
 
   const categories = recordType === 'expense' ? expenseCategories : incomeCategories;
   const amount = getAmountValue(amountText);
@@ -145,6 +153,10 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     ]).start();
   }, [amountFeedback]);
 
+  const setNoteInputRef = useCallback((ref: NoteInputHandle | null) => {
+    noteInputRef.current = ref;
+  }, []);
+
   useEffect(() => {
     if (!hasMountedAmount.current) {
       hasMountedAmount.current = true;
@@ -155,6 +167,8 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   }, [amountText, triggerAmountFeedback]);
 
   const resetDraft = useCallback(() => {
+    Keyboard.dismiss();
+    noteInputRef.current?.blur();
     amountFeedback.stopAnimation();
     amountFeedback.setValue(0);
     setRecordType('expense');
@@ -163,6 +177,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     setNote('');
     setSelectedDate(getDateString(new Date()));
     setSaving(false);
+    setInputMode('amount');
   }, [amountFeedback, expenseCategories]);
 
   useEffect(() => {
@@ -183,12 +198,39 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     wasVisible.current = visible;
   }, [resetDraft, visible]);
 
+  useEffect(() => {
+    if (!visible) {
+      return undefined;
+    }
+
+    const keyboardHideSubscription = Keyboard.addListener('keyboardDidHide', () => {
+      setInputMode('amount');
+    });
+
+    return () => {
+      keyboardHideSubscription.remove();
+    };
+  }, [visible]);
+
   function handleClose() {
+    Keyboard.dismiss();
+    noteInputRef.current?.blur();
     resetDraft();
     onClose();
   }
 
+  function enterAmountMode() {
+    noteInputRef.current?.blur();
+    Keyboard.dismiss();
+    setInputMode('amount');
+  }
+
+  function enterNoteMode() {
+    setInputMode('note');
+  }
+
   function selectRecordType(nextType: ExpenseRecordType) {
+    enterAmountMode();
     setRecordType(nextType);
     setCategory(
       nextType === 'expense'
@@ -198,6 +240,10 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   }
 
   function handleKeyPress(value: string) {
+    if (inputMode !== 'amount') {
+      setInputMode('amount');
+    }
+
     setAmountText((currentValue) => getNextAmountText(currentValue, value));
   }
 
@@ -211,10 +257,15 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   }
 
   function clearAmountInput() {
+    enterAmountMode();
     setAmountText('');
   }
 
   async function handleSave() {
+    if (inputMode === 'note') {
+      Keyboard.dismiss();
+    }
+
     if (!isAmountValid || !category) {
       Alert.alert(labels.invalidTitle, labels.invalidDescription);
       return;
@@ -254,7 +305,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
       <View style={styles.modalRoot}>
         <Pressable style={[styles.backdrop, { backgroundColor: themeColors.overlay }]} onPress={handleClose} />
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : inputMode === 'note' ? 'height' : undefined}
           pointerEvents="box-none"
           style={styles.keyboardAvoidingSheet}
         >
@@ -304,6 +355,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
             </View>
 
             <Animated.View
+              onTouchStart={enterAmountMode}
               style={[
                 styles.amountWrap,
                 {
@@ -335,7 +387,10 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                 return (
                   <Pressable
                     key={item.label}
-                    onPress={() => setCategory(item.label)}
+                    onPress={() => {
+                      enterAmountMode();
+                      setCategory(item.label);
+                    }}
                     style={[
                       styles.categoryItem,
                       { backgroundColor: isSelected ? themeColors.primary : themeColors.chipBackground }
@@ -365,14 +420,19 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                 label={labels.date}
                 value={selectedDate}
                 maxDate={todayString}
-                onChange={setSelectedDate}
+                onChange={(value) => {
+                  enterAmountMode();
+                  setSelectedDate(value);
+                }}
                 formatValue={(value) => (value === todayString ? labels.today : value)}
               />
             </View>
 
             <TextInput
+              ref={setNoteInputRef}
               value={note}
               onChangeText={setNote}
+              onFocus={enterNoteMode}
               placeholder={labels.note}
               mode="flat"
               multiline
@@ -385,61 +445,63 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
               style={[styles.noteInput, { backgroundColor: themeColors.inputBackground }]}
             />
 
-            <View style={styles.keypad}>
-              {keypadItems.map((item) => (
-                <Pressable
-                  key={item}
-                  delayLongPress={item === 'backspace' ? 420 : undefined}
-                  onLongPress={
-                    item === 'backspace'
-                      ? () => {
-                          didLongPressBackspace.current = true;
-                          clearAmountInput();
-                        }
-                      : undefined
-                  }
-                  onPress={() => {
-                    if (item === 'backspace') {
-                      handleBackspacePress();
-                      return;
+            {inputMode === 'amount' ? (
+              <View style={styles.keypad}>
+                {keypadItems.map((item) => (
+                  <Pressable
+                    key={item}
+                    delayLongPress={item === 'backspace' ? 420 : undefined}
+                    onLongPress={
+                      item === 'backspace'
+                        ? () => {
+                            didLongPressBackspace.current = true;
+                            clearAmountInput();
+                          }
+                        : undefined
                     }
+                    onPress={() => {
+                      if (item === 'backspace') {
+                        handleBackspacePress();
+                        return;
+                      }
 
-                    handleKeyPress(item);
-                  }}
-                  onPressIn={() => {
-                    if (item === 'backspace') {
-                      didLongPressBackspace.current = false;
+                      handleKeyPress(item);
+                    }}
+                    onPressIn={() => {
+                      if (item === 'backspace') {
+                        didLongPressBackspace.current = false;
+                      }
+                    }}
+                    android_ripple={
+                      resolvedTheme === 'dark'
+                        ? {
+                            borderless: false,
+                            color: themeColors.ripple,
+                            radius: 18
+                          }
+                        : undefined
                     }
-                  }}
-                  android_ripple={
-                    resolvedTheme === 'dark'
-                      ? {
-                          borderless: false,
-                          color: themeColors.ripple,
-                          radius: 18
-                        }
-                      : undefined
-                  }
-                  style={({ pressed }) => [
-                    styles.keypadButton,
-                    { backgroundColor: pressed ? themeColors.surfacePressed : themeColors.inputBackground },
-                    pressed && styles.keypadButtonPressed
-                  ]}
-                >
-                  {item === 'backspace' ? (
-                    <MaterialCommunityIcons
-                      name="backspace-outline"
-                      size={22}
-                      color={themeColors.textSecondary}
-                    />
-                  ) : (
-                    <Text variant="titleMedium" style={[styles.keypadText, { color: themeColors.text }]}>
-                      {item}
-                    </Text>
-                  )}
-                </Pressable>
-              ))}
-            </View>
+                    style={({ pressed }) => [
+                      styles.keypadButton,
+                      { backgroundColor: pressed ? themeColors.surfacePressed : themeColors.inputBackground },
+                      pressed && styles.keypadButtonPressed
+                    ]}
+                  >
+                    {item === 'backspace' ? (
+                      <MaterialCommunityIcons
+                        name="backspace-outline"
+                        size={22}
+                        color={themeColors.textSecondary}
+                      />
+                    ) : (
+                      <Text variant="titleMedium" style={[styles.keypadText, { color: themeColors.text }]}>
+                        {item}
+                      </Text>
+                    )}
+                  </Pressable>
+                ))}
+              </View>
+            ) : null}
 
             </ScrollView>
             <View
