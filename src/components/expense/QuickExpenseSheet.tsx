@@ -52,7 +52,7 @@ const labels = {
   saveFailedDescription: '\u8bf7\u7a0d\u540e\u518d\u8bd5\u3002'
 };
 
-const keypadItems = ['7', '8', '9', '4', '5', '6', '1', '2', '3', '.', '0', 'backspace'];
+const keypadItems = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'backspace'];
 const categoryGridVisibleHeight = 152;
 
 function getAmountValue(amountText: string) {
