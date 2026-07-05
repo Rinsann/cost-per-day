@@ -3,6 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   ExpenseCategoryIcon,
   getDefaultManagedExpenseCategories,
+  mergeDefaultCategories,
   ManagedExpenseCategory
 } from '@/constants/expenseCategories';
 
@@ -30,23 +31,8 @@ function normalizeCategories(categories: ManagedExpenseCategory[]) {
     icon: category.icon as ExpenseCategoryIcon,
     label: category.label.trim()
   }));
-  const hasExpenseCategory = nextCategories.some((category) => category.type === 'expense');
-  const hasIncomeCategory = nextCategories.some((category) => category.type === 'income');
 
-  if (hasExpenseCategory && hasIncomeCategory) {
-    return nextCategories;
-  }
-
-  const defaultCategories = getDefaultManagedExpenseCategories();
-
-  return [
-    ...(hasExpenseCategory
-      ? nextCategories.filter((category) => category.type === 'expense')
-      : defaultCategories.filter((category) => category.type === 'expense')),
-    ...(hasIncomeCategory
-      ? nextCategories.filter((category) => category.type === 'income')
-      : defaultCategories.filter((category) => category.type === 'income'))
-  ];
+  return mergeDefaultCategories(nextCategories);
 }
 
 function parseExpenseCategories(rawValue: string | null): ManagedExpenseCategory[] {
@@ -66,9 +52,18 @@ function parseExpenseCategories(rawValue: string | null): ManagedExpenseCategory
 }
 
 export async function getExpenseCategories() {
-  const rawValue = await AsyncStorage.getItem(EXPENSE_CATEGORY_STORAGE_KEY);
+  try {
+    const rawValue = await AsyncStorage.getItem(EXPENSE_CATEGORY_STORAGE_KEY);
+    const categories = parseExpenseCategories(rawValue);
 
-  return parseExpenseCategories(rawValue);
+    if (rawValue) {
+      await AsyncStorage.setItem(EXPENSE_CATEGORY_STORAGE_KEY, JSON.stringify(categories));
+    }
+
+    return categories;
+  } catch {
+    return getDefaultManagedExpenseCategories();
+  }
 }
 
 export async function saveExpenseCategories(categories: ManagedExpenseCategory[]) {
