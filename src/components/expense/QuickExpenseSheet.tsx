@@ -20,6 +20,13 @@ import { AppDateField } from '@/components/ui/AppDateField';
 import { useAppTheme } from '@/context/AppThemeContext';
 import { useExpenseCategories } from '@/context/ExpenseCategoriesContext';
 import { useExpenseRecords } from '@/context/ExpenseRecordsContext';
+import {
+  DEFAULT_RECENT_EXPENSE_CATEGORIES,
+  getRecentExpenseCategories,
+  RecentExpenseCategories,
+  saveRecentExpenseCategory,
+  sortCategoriesByRecent
+} from '@/storage/recentExpenseCategoryStorage';
 import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
@@ -113,8 +120,15 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   const [selectedDate, setSelectedDate] = useState(getDateString(new Date()));
   const [saving, setSaving] = useState(false);
   const [inputMode, setInputMode] = useState<InputMode>('amount');
+  const [recentCategories, setRecentCategories] = useState<RecentExpenseCategories>(
+    DEFAULT_RECENT_EXPENSE_CATEGORIES
+  );
 
-  const categories = recordType === 'expense' ? expenseCategories : incomeCategories;
+  const sourceCategories = recordType === 'expense' ? expenseCategories : incomeCategories;
+  const categories = useMemo(
+    () => sortCategoriesByRecent(sourceCategories, recentCategories[recordType]),
+    [recordType, recentCategories, sourceCategories]
+  );
   const amount = getAmountValue(amountText);
   const isAmountValid = isValidAmountText(amountText) && amount > 0;
   const saveColor = recordType === 'expense' ? themeColors.expense : themeColors.primary;
@@ -173,18 +187,37 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     amountFeedback.setValue(0);
     setRecordType('expense');
     setAmountText('');
-    setCategory(expenseCategories[0].label);
+    setCategory('');
     setNote('');
     setSelectedDate(getDateString(new Date()));
     setSaving(false);
     setInputMode('amount');
-  }, [amountFeedback, expenseCategories]);
+  }, [amountFeedback]);
 
   useEffect(() => {
     if (!categories.some((item) => item.label === category)) {
       setCategory(categories[0]?.label ?? '');
     }
   }, [categories, category]);
+
+  useEffect(() => {
+    if (!visible) {
+      return;
+    }
+
+    let ignoreResult = false;
+
+    getRecentExpenseCategories().then((nextRecentCategories) => {
+      if (!ignoreResult) {
+        setRecentCategories(nextRecentCategories);
+        setCategory('');
+      }
+    });
+
+    return () => {
+      ignoreResult = true;
+    };
+  }, [visible]);
 
   useEffect(() => {
     if (visible && !wasVisible.current) {
@@ -232,11 +265,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   function selectRecordType(nextType: ExpenseRecordType) {
     enterAmountMode();
     setRecordType(nextType);
-    setCategory(
-      nextType === 'expense'
-        ? expenseCategories[0]?.label ?? ''
-        : incomeCategories[0]?.label ?? ''
-    );
+    setCategory('');
   }
 
   function handleKeyPress(value: string) {
@@ -287,6 +316,13 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
         date: selectedDate
       });
 
+      saveRecentExpenseCategory(recordType, category)
+        .then((nextRecentCategories) => {
+          if (nextRecentCategories) {
+            setRecentCategories(nextRecentCategories);
+          }
+        })
+        .catch(() => undefined);
       resetDraft();
       onClose();
     } catch {
