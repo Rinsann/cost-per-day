@@ -41,6 +41,7 @@ type QuickExpenseSheetProps = {
 type InputMode = 'amount' | 'note';
 type NoteInputHandle = {
   blur: () => void;
+  focus: () => void;
 };
 
 const labels = {
@@ -49,6 +50,10 @@ const labels = {
   date: '日期',
   today: '今天',
   note: '\u5907\u6ce8\uff08\u9009\u586b\uff09',
+  noteTitle: '\u5907\u6ce8',
+  notePlaceholder: '\u8bf7\u8f93\u5165\u5907\u6ce8',
+  noteDone: '\u5b8c\u6210',
+  noteBack: '\u8fd4\u56de\u91d1\u989d\u8f93\u5165',
   save: '\u8bb0\u4e00\u7b14',
   saving: '\u4fdd\u5b58\u4e2d...',
   invalidTitle: '\u91d1\u989d\u65e0\u6548',
@@ -113,6 +118,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   const wasVisible = useRef(false);
   const didLongPressBackspace = useRef(false);
   const noteInputRef = useRef<NoteInputHandle | null>(null);
+  const noteFocusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [recordType, setRecordType] = useState<ExpenseRecordType>('expense');
   const [amountText, setAmountText] = useState('');
   const [category, setCategory] = useState(expenseCategories[0].label);
@@ -171,6 +177,13 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     noteInputRef.current = ref;
   }, []);
 
+  const clearPendingNoteFocus = useCallback(() => {
+    if (noteFocusTimeoutRef.current) {
+      clearTimeout(noteFocusTimeoutRef.current);
+      noteFocusTimeoutRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     if (!hasMountedAmount.current) {
       hasMountedAmount.current = true;
@@ -182,6 +195,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
 
   const resetDraft = useCallback(() => {
     Keyboard.dismiss();
+    clearPendingNoteFocus();
     noteInputRef.current?.blur();
     amountFeedback.stopAnimation();
     amountFeedback.setValue(0);
@@ -192,7 +206,13 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     setSelectedDate(getDateString(new Date()));
     setSaving(false);
     setInputMode('amount');
-  }, [amountFeedback]);
+  }, [amountFeedback, clearPendingNoteFocus]);
+
+  useEffect(() => {
+    return () => {
+      clearPendingNoteFocus();
+    };
+  }, [clearPendingNoteFocus]);
 
   useEffect(() => {
     if (!categories.some((item) => item.label === category)) {
@@ -247,12 +267,14 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
 
   function handleClose() {
     Keyboard.dismiss();
+    clearPendingNoteFocus();
     noteInputRef.current?.blur();
     resetDraft();
     onClose();
   }
 
   function enterAmountMode() {
+    clearPendingNoteFocus();
     noteInputRef.current?.blur();
     Keyboard.dismiss();
     setInputMode('amount');
@@ -260,6 +282,11 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
 
   function enterNoteMode() {
     setInputMode('note');
+    clearPendingNoteFocus();
+    noteFocusTimeoutRef.current = setTimeout(() => {
+      noteInputRef.current?.focus();
+      noteFocusTimeoutRef.current = null;
+    }, 140);
   }
 
   function selectRecordType(nextType: ExpenseRecordType) {
@@ -292,6 +319,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
 
   async function handleSave() {
     if (inputMode === 'note') {
+      clearPendingNoteFocus();
       Keyboard.dismiss();
     }
 
@@ -347,227 +375,306 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
         >
           <View style={[styles.sheet, { backgroundColor: themeColors.card }]}>
             <View style={[styles.handle, { backgroundColor: themeColors.textSecondary }]} />
-            <ScrollView
-              contentContainerStyle={styles.sheetContent}
-              keyboardShouldPersistTaps="handled"
-              showsVerticalScrollIndicator={false}
-              style={styles.sheetBody}
-            >
-            <View style={[styles.segment, { backgroundColor: themeColors.chipBackground }]}>
-              <Pressable
-                onPress={() => selectRecordType('expense')}
-                style={[
-                  styles.segmentButton,
-                  recordType === 'expense' && { backgroundColor: themeColors.expense }
-                ]}
-              >
-                <Text
-                  variant="titleSmall"
-                  style={[
-                    styles.segmentText,
-                    { color: recordType === 'expense' ? themeColors.text : themeColors.textSecondary }
-                  ]}
-                >
-                  {labels.expense}
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => selectRecordType('income')}
-                style={[
-                  styles.segmentButton,
-                  recordType === 'income' && { backgroundColor: themeColors.primary }
-                ]}
-              >
-                <Text
-                  variant="titleSmall"
-                  style={[
-                    styles.segmentText,
-                    { color: recordType === 'income' ? themeColors.background : themeColors.textSecondary }
-                  ]}
-                >
-                  {labels.income}
-                </Text>
-              </Pressable>
-            </View>
-
-            <Animated.View
-              onTouchStart={enterAmountMode}
-              style={[
-                styles.amountWrap,
-                {
-                  opacity: amountOpacity,
-                  transform: [{ translateY: amountTranslateY }]
-                }
-              ]}
-            >
-              <Text
-                adjustsFontSizeToFit
-                minimumFontScale={0.52}
-                variant="displaySmall"
-                numberOfLines={1}
-                style={[styles.amountText, { color: themeColors.text }]}
-              >
-                {amountLabel}
-              </Text>
-            </Animated.View>
-
-            <ScrollView
-              contentContainerStyle={styles.categoryGrid}
-              nestedScrollEnabled
-              showsVerticalScrollIndicator={categories.length > 12}
-              style={styles.categoryScroll}
-            >
-              {categories.map((item) => {
-                const isSelected = category === item.label;
-
-                return (
-                  <Pressable
-                    key={item.label}
-                    onPress={() => {
-                      enterAmountMode();
-                      setCategory(item.label);
-                    }}
-                    style={[
-                      styles.categoryItem,
-                      { backgroundColor: isSelected ? themeColors.primary : themeColors.chipBackground }
-                    ]}
-                  >
-                    <MaterialCommunityIcons
-                      name={item.icon}
-                      size={19}
-                      color={isSelected ? themeColors.background : themeColors.textSecondary}
-                    />
+            {inputMode === 'note' ? (
+              <View style={styles.noteMode}>
+                <View style={styles.noteHeader}>
+                  <View style={styles.noteTitleWrap}>
+                    <Text variant="titleLarge" style={[styles.noteTitle, { color: themeColors.text }]}>
+                      {labels.noteTitle}
+                    </Text>
                     <Text
                       variant="labelMedium"
-                      style={[
-                        styles.categoryText,
-                        { color: isSelected ? themeColors.background : themeColors.textSecondary }
-                      ]}
+                      numberOfLines={1}
+                      style={[styles.noteSubtitle, { color: themeColors.textSecondary }]}
                     >
-                      {item.label}
+                      {labels.noteBack}
                     </Text>
-                  </Pressable>
-                );
-              })}
-            </ScrollView>
-
-            <View style={styles.dateWrap}>
-              <AppDateField
-                label={labels.date}
-                value={selectedDate}
-                maxDate={todayString}
-                onChange={(value) => {
-                  enterAmountMode();
-                  setSelectedDate(value);
-                }}
-                formatValue={(value) => (value === todayString ? labels.today : value)}
-              />
-            </View>
-
-            <TextInput
-              ref={setNoteInputRef}
-              value={note}
-              onChangeText={setNote}
-              onFocus={enterNoteMode}
-              placeholder={labels.note}
-              mode="flat"
-              multiline
-              numberOfLines={2}
-              textAlignVertical="top"
-              underlineColor="transparent"
-              activeUnderlineColor="transparent"
-              textColor={themeColors.text}
-              placeholderTextColor={themeColors.textSecondary}
-              style={[styles.noteInput, { backgroundColor: themeColors.inputBackground }]}
-            />
-
-            {inputMode === 'amount' ? (
-              <View style={styles.keypad}>
-                {keypadItems.map((item) => (
+                  </View>
                   <Pressable
-                    key={item}
-                    delayLongPress={item === 'backspace' ? 420 : undefined}
-                    onLongPress={
-                      item === 'backspace'
-                        ? () => {
-                            didLongPressBackspace.current = true;
-                            clearAmountInput();
-                          }
-                        : undefined
-                    }
-                    onPress={() => {
-                      if (item === 'backspace') {
-                        handleBackspacePress();
-                        return;
-                      }
-
-                      handleKeyPress(item);
-                    }}
-                    onPressIn={() => {
-                      if (item === 'backspace') {
-                        didLongPressBackspace.current = false;
-                      }
-                    }}
-                    android_ripple={
-                      resolvedTheme === 'dark'
-                        ? {
-                            borderless: false,
-                            color: themeColors.ripple,
-                            radius: 18
-                          }
-                        : undefined
-                    }
+                    accessibilityRole="button"
+                    onPress={enterAmountMode}
                     style={({ pressed }) => [
-                      styles.keypadButton,
-                      { backgroundColor: pressed ? themeColors.surfacePressed : themeColors.inputBackground },
-                      pressed && styles.keypadButtonPressed
+                      styles.noteBackButton,
+                      { backgroundColor: pressed ? themeColors.surfacePressed : themeColors.chipBackground }
                     ]}
                   >
-                    {item === 'backspace' ? (
-                      <MaterialCommunityIcons
-                        name="backspace-outline"
-                        size={22}
-                        color={themeColors.textSecondary}
-                      />
-                    ) : (
-                      <Text variant="titleMedium" style={[styles.keypadText, { color: themeColors.text }]}>
-                        {item}
-                      </Text>
-                    )}
+                    <MaterialCommunityIcons name="chevron-down" size={22} color={themeColors.textSecondary} />
                   </Pressable>
-                ))}
-              </View>
-            ) : null}
+                </View>
 
-            </ScrollView>
-            <View
-              style={[
-                styles.footer,
-                {
-                  backgroundColor: themeColors.card,
-                  paddingBottom: Math.max(insets.bottom, spacing.sm)
-                }
-              ]}
-            >
-              <Button
-                mode="contained"
-                loading={saving}
-                disabled={saving || !isAmountValid || !category}
-                buttonColor={isAmountValid && category ? saveColor : themeColors.surfacePressed}
-                textColor={
-                  isAmountValid && category
-                    ? recordType === 'expense'
-                      ? themeColors.text
-                      : themeColors.background
-                    : themeColors.textSecondary
-                }
-                onPress={handleSave}
-                style={[styles.saveButton, !isAmountValid && styles.disabledSaveButton]}
-                contentStyle={styles.saveButtonContent}
-              >
-                {saving ? labels.saving : labels.save}
-              </Button>
-            </View>
+                <View style={[styles.noteContext, { backgroundColor: themeColors.chipBackground }]}>
+                  <Text
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.72}
+                    numberOfLines={1}
+                    variant="titleMedium"
+                    style={[styles.noteContextAmount, { color: themeColors.text }]}
+                  >
+                    {amountLabel}
+                  </Text>
+                  <Text
+                    numberOfLines={1}
+                    variant="labelMedium"
+                    style={[styles.noteContextMeta, { color: themeColors.textSecondary }]}
+                  >
+                    {category || '-'} · {selectedDate === todayString ? labels.today : selectedDate}
+                  </Text>
+                </View>
+
+                <TextInput
+                  ref={setNoteInputRef}
+                  value={note}
+                  onChangeText={setNote}
+                  label={labels.note}
+                  placeholder={labels.notePlaceholder}
+                  mode="flat"
+                  multiline
+                  numberOfLines={3}
+                  scrollEnabled
+                  textAlignVertical="top"
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  textColor={themeColors.text}
+                  placeholderTextColor={themeColors.textSecondary}
+                  style={[styles.noteEditor, { backgroundColor: themeColors.inputBackground }]}
+                />
+
+                <Button
+                  mode="contained"
+                  buttonColor={themeColors.primary}
+                  textColor={themeColors.background}
+                  onPress={enterAmountMode}
+                  style={styles.noteDoneButton}
+                  contentStyle={styles.noteDoneButtonContent}
+                >
+                  {labels.noteDone}
+                </Button>
+              </View>
+            ) : (
+              <>
+                <ScrollView
+                  contentContainerStyle={styles.sheetContent}
+                  keyboardShouldPersistTaps="handled"
+                  showsVerticalScrollIndicator={false}
+                  style={styles.sheetBody}
+                >
+                  <View style={[styles.segment, { backgroundColor: themeColors.chipBackground }]}>
+                    <Pressable
+                      onPress={() => selectRecordType('expense')}
+                      style={[
+                        styles.segmentButton,
+                        recordType === 'expense' && { backgroundColor: themeColors.expense }
+                      ]}
+                    >
+                      <Text
+                        variant="titleSmall"
+                        style={[
+                          styles.segmentText,
+                          { color: recordType === 'expense' ? themeColors.text : themeColors.textSecondary }
+                        ]}
+                      >
+                        {labels.expense}
+                      </Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={() => selectRecordType('income')}
+                      style={[
+                        styles.segmentButton,
+                        recordType === 'income' && { backgroundColor: themeColors.primary }
+                      ]}
+                    >
+                      <Text
+                        variant="titleSmall"
+                        style={[
+                          styles.segmentText,
+                          { color: recordType === 'income' ? themeColors.background : themeColors.textSecondary }
+                        ]}
+                      >
+                        {labels.income}
+                      </Text>
+                    </Pressable>
+                  </View>
+
+                  <Animated.View
+                    onTouchStart={enterAmountMode}
+                    style={[
+                      styles.amountWrap,
+                      {
+                        opacity: amountOpacity,
+                        transform: [{ translateY: amountTranslateY }]
+                      }
+                    ]}
+                  >
+                    <Text
+                      adjustsFontSizeToFit
+                      minimumFontScale={0.52}
+                      variant="displaySmall"
+                      numberOfLines={1}
+                      style={[styles.amountText, { color: themeColors.text }]}
+                    >
+                      {amountLabel}
+                    </Text>
+                  </Animated.View>
+
+                  <ScrollView
+                    contentContainerStyle={styles.categoryGrid}
+                    nestedScrollEnabled
+                    showsVerticalScrollIndicator={categories.length > 12}
+                    style={styles.categoryScroll}
+                  >
+                    {categories.map((item) => {
+                      const isSelected = category === item.label;
+
+                      return (
+                        <Pressable
+                          key={item.label}
+                          onPress={() => {
+                            enterAmountMode();
+                            setCategory(item.label);
+                          }}
+                          style={[
+                            styles.categoryItem,
+                            { backgroundColor: isSelected ? themeColors.primary : themeColors.chipBackground }
+                          ]}
+                        >
+                          <MaterialCommunityIcons
+                            name={item.icon}
+                            size={19}
+                            color={isSelected ? themeColors.background : themeColors.textSecondary}
+                          />
+                          <Text
+                            variant="labelMedium"
+                            style={[
+                              styles.categoryText,
+                              { color: isSelected ? themeColors.background : themeColors.textSecondary }
+                            ]}
+                          >
+                            {item.label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </ScrollView>
+
+                  <View style={styles.dateWrap}>
+                    <AppDateField
+                      label={labels.date}
+                      value={selectedDate}
+                      maxDate={todayString}
+                      onChange={(value) => {
+                        enterAmountMode();
+                        setSelectedDate(value);
+                      }}
+                      formatValue={(value) => (value === todayString ? labels.today : value)}
+                    />
+                  </View>
+
+                  <Pressable
+                    onPress={enterNoteMode}
+                    style={({ pressed }) => [
+                      styles.notePreview,
+                      { backgroundColor: pressed ? themeColors.surfacePressed : themeColors.inputBackground }
+                    ]}
+                  >
+                    <Text
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                      variant="bodyLarge"
+                      style={[
+                        styles.notePreviewText,
+                        { color: note.trim() ? themeColors.text : themeColors.textSecondary }
+                      ]}
+                    >
+                      {note.trim() || labels.note}
+                    </Text>
+                  </Pressable>
+
+                  <View style={styles.keypad}>
+                    {keypadItems.map((item) => (
+                      <Pressable
+                        key={item}
+                        delayLongPress={item === 'backspace' ? 420 : undefined}
+                        onLongPress={
+                          item === 'backspace'
+                            ? () => {
+                                didLongPressBackspace.current = true;
+                                clearAmountInput();
+                              }
+                            : undefined
+                        }
+                        onPress={() => {
+                          if (item === 'backspace') {
+                            handleBackspacePress();
+                            return;
+                          }
+
+                          handleKeyPress(item);
+                        }}
+                        onPressIn={() => {
+                          if (item === 'backspace') {
+                            didLongPressBackspace.current = false;
+                          }
+                        }}
+                        android_ripple={
+                          resolvedTheme === 'dark'
+                            ? {
+                                borderless: false,
+                                color: themeColors.ripple,
+                                radius: 18
+                              }
+                            : undefined
+                        }
+                        style={({ pressed }) => [
+                          styles.keypadButton,
+                          { backgroundColor: pressed ? themeColors.surfacePressed : themeColors.inputBackground },
+                          pressed && styles.keypadButtonPressed
+                        ]}
+                      >
+                        {item === 'backspace' ? (
+                          <MaterialCommunityIcons
+                            name="backspace-outline"
+                            size={22}
+                            color={themeColors.textSecondary}
+                          />
+                        ) : (
+                          <Text variant="titleMedium" style={[styles.keypadText, { color: themeColors.text }]}>
+                            {item}
+                          </Text>
+                        )}
+                      </Pressable>
+                    ))}
+                  </View>
+                </ScrollView>
+                <View
+                  style={[
+                    styles.footer,
+                    {
+                      backgroundColor: themeColors.card,
+                      paddingBottom: Math.max(insets.bottom, spacing.sm)
+                    }
+                  ]}
+                >
+                  <Button
+                    mode="contained"
+                    loading={saving}
+                    disabled={saving || !isAmountValid || !category}
+                    buttonColor={isAmountValid && category ? saveColor : themeColors.surfacePressed}
+                    textColor={
+                      isAmountValid && category
+                        ? recordType === 'expense'
+                          ? themeColors.text
+                          : themeColors.background
+                        : themeColors.textSecondary
+                    }
+                    onPress={handleSave}
+                    style={[styles.saveButton, !isAmountValid && styles.disabledSaveButton]}
+                    contentStyle={styles.saveButtonContent}
+                  >
+                    {saving ? labels.saving : labels.save}
+                  </Button>
+                </View>
+              </>
+            )}
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -678,11 +785,69 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontWeight: '800'
   },
-  noteInput: {
+  notePreview: {
     borderRadius: radius.lg,
+    justifyContent: 'center',
     marginTop: spacing.sm,
-    minHeight: 44,
+    minHeight: 48,
+    overflow: 'hidden',
+    paddingHorizontal: spacing.md
+  },
+  notePreviewText: {
+    fontWeight: '700'
+  },
+  noteMode: {
+    gap: spacing.sm,
+    paddingBottom: spacing.md
+  },
+  noteHeader: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  noteTitleWrap: {
+    flex: 1,
+    minWidth: 0
+  },
+  noteTitle: {
+    fontWeight: '900'
+  },
+  noteSubtitle: {
+    fontWeight: '700',
+    marginTop: 2
+  },
+  noteBackButton: {
+    alignItems: 'center',
+    borderRadius: radius.full,
+    height: 40,
+    justifyContent: 'center',
+    marginLeft: spacing.sm,
+    width: 40
+  },
+  noteContext: {
+    borderRadius: radius.lg,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm
+  },
+  noteContextAmount: {
+    fontWeight: '900'
+  },
+  noteContextMeta: {
+    fontWeight: '700',
+    marginTop: 2
+  },
+  noteEditor: {
+    borderRadius: radius.lg,
+    maxHeight: 116,
+    minHeight: 92,
     overflow: 'hidden'
+  },
+  noteDoneButton: {
+    borderRadius: radius.lg,
+    marginTop: 2
+  },
+  noteDoneButtonContent: {
+    minHeight: 46
   },
   dateWrap: {
     marginTop: spacing.sm
