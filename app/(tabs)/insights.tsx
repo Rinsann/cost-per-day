@@ -1,9 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import { ComponentProps, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ComponentProps, memo, useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
-  Animated,
   Modal,
   Pressable,
   ScrollView,
@@ -686,8 +685,6 @@ export default function InsightsTab() {
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth() + 1;
   const currentQuarter = getLedgerQuarterFromMonth(currentMonth);
-  const barAnimation = useRef(new Animated.Value(1)).current;
-  const donutAnimation = useRef(new Animated.Value(1)).current;
   const [rangeMode, setRangeMode] = useState<RangeMode>('month');
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
@@ -724,11 +721,6 @@ export default function InsightsTab() {
     [expenseCategories]
   );
 
-  const playChartAnimations = useCallback(() => {
-    barAnimation.setValue(1);
-    donutAnimation.setValue(1);
-  }, [barAnimation, donutAnimation]);
-
   useFocusEffect(
     useCallback(() => {
       refreshRecords().catch(() => {
@@ -739,8 +731,7 @@ export default function InsightsTab() {
         .catch(() => {
           setBudget(DEFAULT_MONTHLY_BUDGET);
         });
-      playChartAnimations();
-    }, [playChartAnimations, refreshRecords])
+    }, [refreshRecords])
   );
 
   useEffect(() => {
@@ -876,16 +867,12 @@ export default function InsightsTab() {
     rangeMode === 'month' &&
     selectedYear === currentYear &&
     selectedMonth === currentMonth;
-  const donutScale = donutAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.86, 1]
-  });
-  const donutRotation = donutAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['-80deg', '0deg']
-  });
 
   function changeRangeMode(mode: StandardRangeMode) {
+    if (rangeMode === mode) {
+      return;
+    }
+
     const nextSelection = clampLedgerTimeSelection({
       currentMonth,
       currentQuarter,
@@ -903,7 +890,6 @@ export default function InsightsTab() {
     setSelectedYear(nextSelection.year);
     setSelectedMonth(nextSelection.month);
     setSelectedQuarter(nextSelection.quarter);
-    playChartAnimations();
   }
 
   function openTimeSheet() {
@@ -942,7 +928,6 @@ export default function InsightsTab() {
     setSelectedMonth(nextSelection.month);
     setSelectedQuarter(nextSelection.quarter);
     setTimeSheetVisible(false);
-    playChartAnimations();
   }
 
   function changeDraftYear(nextYear: number) {
@@ -1021,12 +1006,12 @@ export default function InsightsTab() {
       setRangeMode(standardRangeMode);
     }
 
-    setFilters({
+    const nextFilters = {
       ...draftFilters,
       keyword: draftFilters.keyword.trim()
-    });
+    };
+    setFilters(nextFilters);
     setFilterSheetVisible(false);
-    playChartAnimations();
   }
 
   function resetFilters() {
@@ -1061,7 +1046,6 @@ export default function InsightsTab() {
     setDraftUseCustomRange(false);
     setDraftCustomStartDate(nextCustomRange.startDate);
     setDraftCustomEndDate(nextCustomRange.endDate);
-    playChartAnimations();
   }
 
   function applyDraftShortcut(shortcut: DateRangeShortcut) {
@@ -1201,19 +1185,9 @@ export default function InsightsTab() {
 
       {shouldShowBudget ? <BudgetProgressCard status={budgetStatus} /> : null}
 
-      <MonthlyBarChart
-        animation={barAnimation}
-        maxAmount={maxBarAmount}
-        stats={barStats}
-      />
+      <MonthlyBarChart maxAmount={maxBarAmount} stats={barStats} />
 
-      <ExpenseDonutChart
-        donutOpacity={donutAnimation}
-        donutRotation={donutRotation}
-        donutScale={donutScale}
-        items={expenseRank}
-        totalExpense={summary.expense}
-      />
+      <ExpenseDonutChart items={expenseRank} totalExpense={summary.expense} />
 
       <BillDetails groups={detailGroups} getCategoryIcon={getCategoryIcon} />
 
@@ -1370,11 +1344,9 @@ function BudgetStat({
 }
 
 const MonthlyBarChart = memo(function MonthlyBarChart({
-  animation,
   maxAmount,
   stats
 }: {
-  animation: Animated.Value;
   maxAmount: number;
   stats: BarStat[];
 }) {
@@ -1387,14 +1359,6 @@ const MonthlyBarChart = memo(function MonthlyBarChart({
       {stats.map((item) => {
         const incomeHeight = maxAmount > 0 ? Math.max(4, (item.income / maxAmount) * 118) : 4;
         const expenseHeight = maxAmount > 0 ? Math.max(4, (item.expense / maxAmount) * 118) : 4;
-        const animatedIncomeHeight = animation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [4, incomeHeight]
-        });
-        const animatedExpenseHeight = animation.interpolate({
-          inputRange: [0, 1],
-          outputRange: [4, expenseHeight]
-        });
 
         return (
           <View
@@ -1402,18 +1366,18 @@ const MonthlyBarChart = memo(function MonthlyBarChart({
             style={[styles.barBucket, shouldScroll && styles.barBucketScrollable]}
           >
             <View style={styles.barPair}>
-              <Animated.View
+              <View
                 style={[
                   styles.bar,
                   { backgroundColor: themeColors.income },
-                  { height: animatedIncomeHeight, width: barWidth }
+                  { height: incomeHeight, width: barWidth }
                 ]}
               />
-              <Animated.View
+              <View
                 style={[
                   styles.bar,
                   { backgroundColor: themeColors.expense },
-                  { height: animatedExpenseHeight, width: barWidth }
+                  { height: expenseHeight, width: barWidth }
                 ]}
               />
             </View>
@@ -1455,15 +1419,9 @@ const MonthlyBarChart = memo(function MonthlyBarChart({
 });
 
 const ExpenseDonutChart = memo(function ExpenseDonutChart({
-  donutOpacity,
-  donutRotation,
-  donutScale,
   items,
   totalExpense
 }: {
-  donutOpacity: Animated.Value;
-  donutRotation: Animated.AnimatedInterpolation<string>;
-  donutScale: Animated.AnimatedInterpolation<number>;
   items: CategoryRankItem[];
   totalExpense: number;
 }) {
@@ -1483,15 +1441,7 @@ const ExpenseDonutChart = memo(function ExpenseDonutChart({
         ) : (
           <View style={styles.donutRow}>
             <View style={styles.donutWrap}>
-              <Animated.View
-                style={[
-                  styles.donutAnimated,
-                  {
-                    opacity: donutOpacity,
-                    transform: [{ scale: donutScale }, { rotate: donutRotation }]
-                  }
-                ]}
-              >
+              <View style={styles.donutAnimated}>
                 <Svg height={DONUT_SIZE} width={DONUT_SIZE} viewBox={`0 0 ${DONUT_SIZE} ${DONUT_SIZE}`}>
                   <Circle
                     cx={DONUT_SIZE / 2}
@@ -1530,7 +1480,7 @@ const ExpenseDonutChart = memo(function ExpenseDonutChart({
                     );
                   })}
                 </Svg>
-              </Animated.View>
+              </View>
               <View style={styles.donutCenter}>
                 <Text style={[styles.donutCenterLabel, { color: themeColors.textSecondary }]}>
                   {labels.expense}
