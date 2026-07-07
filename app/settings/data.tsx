@@ -38,6 +38,7 @@ import {
   parseDataBackup,
   serializeDataBackup
 } from '@/utils/dataBackup';
+import { clearPerfLogs, exportPerfLogs, getPerfLogs } from '@/utils/perf';
 
 type PickedBackupAsset = {
   uri: string;
@@ -53,6 +54,7 @@ type BusyAction =
   | 'clear-products'
   | 'export-full'
   | 'export-ledger'
+  | 'export-perf'
   | 'export-products'
   | 'import-full'
   | 'import-ledger'
@@ -148,7 +150,12 @@ export default function DataSettingsScreen() {
   const { colors: themeColors } = useAppTheme();
   const { records, refreshRecords } = useExpenseRecords();
   const [busyAction, setBusyAction] = useState<BusyAction>(null);
+  const [perfLogVersion, setPerfLogVersion] = useState(0);
   const actionDisabled = busyAction !== null;
+  const perfLogCount = useMemo(
+    () => (__DEV__ ? getPerfLogs().length : 0),
+    [busyAction, perfLogVersion]
+  );
   const mockRecordCount = useMemo(
     () => records.filter(isMockLedgerRecord).length,
     [records]
@@ -454,6 +461,37 @@ export default function DataSettingsScreen() {
     ]);
   }
 
+  async function handleExportPerfLogs() {
+    try {
+      await runBusyAction('export-perf', async () => {
+        const result = await exportPerfLogs();
+
+        if (!result.ok) {
+          Alert.alert('导出性能日志', result.message);
+          return;
+        }
+
+        Alert.alert('性能日志已导出', `${result.count} 条性能日志已准备分享。`);
+      });
+    } catch {
+      Alert.alert(labels.exportFailed, labels.exportFailedDescription);
+    }
+  }
+
+  function confirmClearPerfLogs() {
+    Alert.alert('性能诊断', '确定要清空当前采集到的性能日志吗？', [
+      { style: 'cancel', text: labels.cancel },
+      {
+        text: labels.clear,
+        onPress: () => {
+          clearPerfLogs();
+          setPerfLogVersion((currentVersion) => currentVersion + 1);
+          Alert.alert('性能日志已清空', '当前性能日志已清空。');
+        }
+      }
+    ]);
+  }
+
   return (
     <AppScreen bottomPadding={32}>
       <Stack.Screen options={{ title: labels.title }} />
@@ -559,6 +597,27 @@ export default function DataSettingsScreen() {
               onPress={confirmClearMockData}
               title={labels.clearMock}
             />
+          </View>
+          <View style={[styles.perfPanel, { borderColor: themeColors.border }]}>
+            <Text style={[styles.devDescription, { color: themeColors.textSecondary }]}>
+              仅开发环境显示，用于导出计算耗时日志。
+            </Text>
+            <Text style={[styles.mockCount, { color: themeColors.textSecondary }]}>
+              当前性能日志: {perfLogCount}
+            </Text>
+            <View style={styles.devActions}>
+              <DevButton
+                disabled={actionDisabled}
+                onPress={handleExportPerfLogs}
+                primary
+                title="导出性能日志"
+              />
+              <DevButton
+                disabled={actionDisabled}
+                onPress={confirmClearPerfLogs}
+                title="清空性能日志"
+              />
+            </View>
           </View>
         </SectionCard>
       ) : null}
@@ -742,6 +801,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: spacing.sm,
     marginTop: spacing.xs
+  },
+  perfPanel: {
+    borderTopWidth: 1,
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    paddingTop: spacing.sm
   },
   devButton: {
     alignItems: 'center',

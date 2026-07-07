@@ -18,6 +18,7 @@ import { colors } from '@/theme/colors';
 import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { ExpenseRecordType } from '@/types/expense';
+import { measureAsyncTime, measureTime } from '@/utils/perf';
 
 type CategoryDraft = {
   categoryId?: string;
@@ -71,18 +72,26 @@ export default function CategoriesScreen() {
   const [saving, setSaving] = useState(false);
 
   const categoryGroups = useMemo(
-    () => [
-      {
-        categories: expenseCategories,
-        title: labels.expenseSection,
-        type: 'expense' as const
-      },
-      {
-        categories: incomeCategories,
-        title: labels.incomeSection,
-        type: 'income' as const
-      }
-    ],
+    () =>
+      measureTime(
+        'categories.groups',
+        () => [
+          {
+            categories: expenseCategories,
+            title: labels.expenseSection,
+            type: 'expense' as const
+          },
+          {
+            categories: incomeCategories,
+            title: labels.incomeSection,
+            type: 'income' as const
+          }
+        ],
+        {
+          expenseCategoriesCount: expenseCategories.length,
+          incomeCategoriesCount: incomeCategories.length
+        }
+      ),
     [expenseCategories, incomeCategories]
   );
 
@@ -141,22 +150,28 @@ export default function CategoriesScreen() {
     setSaving(true);
 
     try {
-      if (draft.mode === 'create') {
-        await addCategory({
-          icon: draft.icon,
-          label: nextLabel,
-          type: draft.type
-        });
-      } else if (draft.categoryId) {
-        await updateCategory(draft.categoryId, {
-          icon: draft.icon,
-          label: nextLabel
-        });
+      await measureAsyncTime(
+        'categories.saveDraft',
+        async () => {
+          if (draft.mode === 'create') {
+            await addCategory({
+              icon: draft.icon,
+              label: nextLabel,
+              type: draft.type
+            });
+          } else if (draft.categoryId) {
+            await updateCategory(draft.categoryId, {
+              icon: draft.icon,
+              label: nextLabel
+            });
 
-        if (draft.originalLabel && draft.originalLabel !== nextLabel) {
-          await ledgerRepository.renameCategory(draft.type, draft.originalLabel, nextLabel);
-        }
-      }
+            if (draft.originalLabel && draft.originalLabel !== nextLabel) {
+              await ledgerRepository.renameCategory(draft.type, draft.originalLabel, nextLabel);
+            }
+          }
+        },
+        { mode: draft.mode, type: draft.type }
+      );
 
       setDraft(null);
     } catch {

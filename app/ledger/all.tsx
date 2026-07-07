@@ -25,6 +25,7 @@ import {
   groupRecordsByDate,
   LedgerTypeFilter
 } from '@/utils/ledgerStats';
+import { measureTime } from '@/utils/perf';
 
 type RecordSection = {
   data: ExpenseRecord[];
@@ -145,7 +146,11 @@ export default function AllLedgerRecordsScreen() {
   );
 
   const availableMonths = useMemo(() => {
-    return getAvailableRecordMonths(records, today);
+    return measureTime(
+      'ledgerAll.availableMonths',
+      () => getAvailableRecordMonths(records, today),
+      { recordsCount: records.length }
+    );
   }, [records, today]);
 
   useEffect(() => {
@@ -155,7 +160,15 @@ export default function AllLedgerRecordsScreen() {
   }, [availableMonths, selectedMonth]);
 
   const categoryOptions = useMemo(() => {
-    return getCategoryOptions(typeFilter, expenseCategories, incomeCategories);
+    return measureTime(
+      'ledgerAll.categoryOptions',
+      () => getCategoryOptions(typeFilter, expenseCategories, incomeCategories),
+      {
+        expenseCategoriesCount: expenseCategories.length,
+        incomeCategoriesCount: incomeCategories.length,
+        typeFilter
+      }
+    );
   }, [expenseCategories, incomeCategories, typeFilter]);
 
   useEffect(() => {
@@ -223,24 +236,38 @@ export default function AllLedgerRecordsScreen() {
   const monthRecords = useMemo(() => {
     const { month, year } = getMonthParts(selectedMonth);
 
-    return filterRecordsByMonth(records, year, month);
+    return measureTime(
+      'ledgerAll.monthRecords',
+      () => filterRecordsByMonth(records, year, month),
+      { recordsCount: records.length, selectedMonth }
+    );
   }, [records, selectedMonth]);
 
   const filteredRecords = useMemo(() => {
-    return filterRecordsByTypeCategoryKeyword(monthRecords, {
-      category: categoryFilter,
-      keyword,
-      type: typeFilter
-    });
+    return measureTime(
+      'ledgerAll.filteredRecords',
+      () =>
+        filterRecordsByTypeCategoryKeyword(monthRecords, {
+          category: categoryFilter,
+          keyword,
+          type: typeFilter
+        }),
+      { keywordLength: keyword.length, recordsCount: monthRecords.length }
+    );
   }, [categoryFilter, keyword, monthRecords, typeFilter]);
 
   const sections = useMemo<RecordSection[]>(() => {
-    return groupRecordsByDate(filteredRecords, today).map((group) => ({
-      data: group.records,
-      date: group.date,
-      label: group.label,
-      summary: group.summary
-    }));
+    return measureTime(
+      'ledgerAll.sections',
+      () =>
+        groupRecordsByDate(filteredRecords, today).map((group) => ({
+          data: group.records,
+          date: group.date,
+          label: group.label,
+          summary: group.summary
+        })),
+      { recordsCount: filteredRecords.length }
+    );
   }, [filteredRecords, today]);
 
   const renderRecord = useCallback(

@@ -36,6 +36,7 @@ import {
   sortExpenseRecords
 } from '@/utils/expenseRecords';
 import { formatCompactMoney } from '@/utils/formatMoney';
+import { measureTime } from '@/utils/perf';
 
 const labels = {
   title: '\u8bb0\u8d26\u672c',
@@ -92,30 +93,44 @@ export default function LedgerTab() {
   );
 
   const monthSummary = useMemo(() => {
-    return records
-      .filter((record) => record.date.startsWith(currentMonth))
-      .reduce(
-        (summary, record) => {
-          if (getRecordType(record) === 'income') {
-            summary.income += record.amount;
-          } else {
-            summary.expense += record.amount;
-          }
+    return measureTime(
+      'ledger.monthSummary',
+      () =>
+        records
+          .filter((record) => record.date.startsWith(currentMonth))
+          .reduce(
+            (summary, record) => {
+              if (getRecordType(record) === 'income') {
+                summary.income += record.amount;
+              } else {
+                summary.expense += record.amount;
+              }
 
-          return summary;
-        },
-        { expense: 0, income: 0 }
-      );
+              return summary;
+            },
+            { expense: 0, income: 0 }
+          ),
+      { recordsCount: records.length }
+    );
   }, [currentMonth, records]);
 
   const recentRecords = useMemo(() => {
-    return sortExpenseRecords(
-      records.filter((record) => isRecordInDateRange(record, sevenDaysAgo, today))
+    return measureTime(
+      'ledger.recentRecords',
+      () =>
+        sortExpenseRecords(
+          records.filter((record) => isRecordInDateRange(record, sevenDaysAgo, today))
+        ),
+      { recordsCount: records.length }
     );
   }, [records, sevenDaysAgo, today]);
 
   const recordGroups = useMemo(() => {
-    return groupExpenseRecordsByDate(recentRecords, now);
+    return measureTime(
+      'ledger.recentRecordGroups',
+      () => groupExpenseRecordsByDate(recentRecords, now),
+      { recordsCount: recentRecords.length }
+    );
   }, [now, recentRecords]);
 
   const monthBalance = monthSummary.income - monthSummary.expense;
@@ -126,12 +141,17 @@ export default function LedgerTab() {
   const budgetEnabled = budget.enabled && budget.amount > 0;
   const budgetStatus = useMemo(
     () =>
-      calculateMonthlyBudgetStatus({
-        budgetAmount: budget.amount,
-        currentDate: now,
-        monthlyExpense: monthSummary.expense
-      }),
-    [budget.amount, monthSummary.expense, now]
+      measureTime(
+        'ledger.budgetStatus',
+        () =>
+          calculateMonthlyBudgetStatus({
+            budgetAmount: budget.amount,
+            currentDate: now,
+            monthlyExpense: monthSummary.expense
+          }),
+        { budgetEnabled: budget.enabled, recordsCount: records.length }
+      ),
+    [budget.amount, budget.enabled, monthSummary.expense, now, records.length]
   );
   const budgetAmountColor = budgetStatus.isOverBudget ? themeColors.expense : themeColors.text;
 

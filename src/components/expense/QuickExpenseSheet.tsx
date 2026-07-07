@@ -32,6 +32,7 @@ import { radius } from '@/theme/radius';
 import { spacing } from '@/theme/spacing';
 import { ExpenseRecordType } from '@/types/expense';
 import { getDateString } from '@/utils/formatDate';
+import { measureAsyncTime, measureTime } from '@/utils/perf';
 
 type QuickExpenseSheetProps = {
   visible: boolean;
@@ -132,7 +133,16 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
 
   const sourceCategories = recordType === 'expense' ? expenseCategories : incomeCategories;
   const categories = useMemo(
-    () => sortCategoriesByRecent(sourceCategories, recentCategories[recordType]),
+    () =>
+      measureTime(
+        'quickExpense.sortedCategories',
+        () => sortCategoriesByRecent(sourceCategories, recentCategories[recordType]),
+        {
+          categoriesCount: sourceCategories.length,
+          recentCount: recentCategories[recordType].length,
+          recordType
+        }
+      ),
     [recordType, recentCategories, sourceCategories]
   );
   const amount = getAmountValue(amountText);
@@ -336,13 +346,18 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     setSaving(true);
 
     try {
-      await addRecord({
-        type: recordType,
-        amount,
-        category,
-        note: note.trim() || undefined,
-        date: selectedDate
-      });
+      await measureAsyncTime(
+        'quickExpense.saveRecord',
+        () =>
+          addRecord({
+            type: recordType,
+            amount,
+            category,
+            note: note.trim() || undefined,
+            date: selectedDate
+          }),
+        { category, hasNote: note.trim().length > 0, recordType }
+      );
 
       saveRecentExpenseCategory(recordType, category)
         .then((nextRecentCategories) => {

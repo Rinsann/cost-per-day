@@ -65,6 +65,7 @@ import {
   isQuarterAfterCurrent as isLedgerQuarterAfterCurrent,
   isValidDateString as isLedgerValidDateText
 } from '@/utils/ledgerStats';
+import { measureTime } from '@/utils/perf';
 
 type StandardRangeMode = 'month' | 'quarter' | 'year';
 type RangeMode = StandardRangeMode | 'custom';
@@ -801,25 +802,48 @@ export default function InsightsTab() {
     [customEndDate, customStartDate, rangeMode, selectedMonth, selectedQuarter, selectedYear]
   );
   const rangeRecords = useMemo(
-    () => filterLedgerRecordsByDateRange(records, rangeInfo.startDate, rangeInfo.endDate),
+    () =>
+      measureTime(
+        'insights.rangeRecords',
+        () => filterLedgerRecordsByDateRange(records, rangeInfo.startDate, rangeInfo.endDate),
+        { recordsCount: records.length, rangeMode }
+      ),
     [rangeInfo.endDate, rangeInfo.startDate, records]
   );
   const filteredRecords = useMemo(
-    () => filterRecordsByTypeCategoryKeyword(rangeRecords, filters),
+    () =>
+      measureTime(
+        'insights.filteredRecords',
+        () => filterRecordsByTypeCategoryKeyword(rangeRecords, filters),
+        { recordsCount: rangeRecords.length }
+      ),
     [filters, rangeRecords]
   );
-  const summary = useMemo(() => calculateLedgerSummary(filteredRecords), [filteredRecords]);
+  const summary = useMemo(
+    () =>
+      measureTime(
+        'insights.summary',
+        () => calculateLedgerSummary(filteredRecords),
+        { recordsCount: filteredRecords.length }
+      ),
+    [filteredRecords]
+  );
   const barStats = useMemo(
     () =>
-      buildLedgerChartBuckets({
-        endDate: rangeInfo.endDate,
-        mode: rangeMode,
-        month: selectedMonth,
-        quarter: selectedQuarter,
-        records: filteredRecords,
-        startDate: rangeInfo.startDate,
-        year: selectedYear
-      }),
+      measureTime(
+        'insights.chartBuckets',
+        () =>
+          buildLedgerChartBuckets({
+            endDate: rangeInfo.endDate,
+            mode: rangeMode,
+            month: selectedMonth,
+            quarter: selectedQuarter,
+            records: filteredRecords,
+            startDate: rangeInfo.startDate,
+            year: selectedYear
+          }),
+        { recordsCount: filteredRecords.length, rangeMode }
+      ),
     [
       filteredRecords,
       rangeInfo.endDate,
@@ -832,15 +856,25 @@ export default function InsightsTab() {
   );
   const expenseRank = useMemo(
     () =>
-      calculateLedgerCategoryStats(filteredRecords, summary.expense, {
-        colors: DONUT_COLORS,
-        otherLabel: labels.other,
-        validCategories: expenseCategoryLabels
-      }),
+      measureTime(
+        'insights.categoryStats',
+        () =>
+          calculateLedgerCategoryStats(filteredRecords, summary.expense, {
+            colors: DONUT_COLORS,
+            otherLabel: labels.other,
+            validCategories: expenseCategoryLabels
+          }),
+        { recordsCount: filteredRecords.length }
+      ),
     [expenseCategoryLabels, filteredRecords, summary.expense]
   );
   const detailGroups = useMemo(
-    () => groupExpenseRecordsByDate(filteredRecords, today),
+    () =>
+      measureTime(
+        'insights.detailGroups',
+        () => groupExpenseRecordsByDate(filteredRecords, today),
+        { recordsCount: filteredRecords.length }
+      ),
     [filteredRecords, today]
   );
   const currentMonthExpense = useMemo(() => calculateLedgerSummary(rangeRecords).expense, [rangeRecords]);
