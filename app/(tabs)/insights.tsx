@@ -1,10 +1,9 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { router, useFocusEffect } from 'expo-router';
-import { ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ComponentProps, memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   Animated,
-  Easing,
   Modal,
   Pressable,
   ScrollView,
@@ -682,13 +681,13 @@ export default function InsightsTab() {
   const { records, refreshRecords } = useExpenseRecords();
   const { colors: themeColors } = useAppTheme();
   const { expenseCategories, getCategoryIcon, incomeCategories } = useExpenseCategories();
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
   const todayString = getDateString(today);
   const currentYear = today.getFullYear();
   const currentMonth = today.getMonth() + 1;
   const currentQuarter = getLedgerQuarterFromMonth(currentMonth);
-  const barAnimation = useRef(new Animated.Value(0)).current;
-  const donutAnimation = useRef(new Animated.Value(0)).current;
+  const barAnimation = useRef(new Animated.Value(1)).current;
+  const donutAnimation = useRef(new Animated.Value(1)).current;
   const [rangeMode, setRangeMode] = useState<RangeMode>('month');
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
@@ -716,8 +715,9 @@ export default function InsightsTab() {
     () => getLedgerMinSelectableDate(records, todayString),
     [records, todayString]
   );
-  const hasSelectableDateRecords = records.some(
-    (record) => isLedgerValidDateText(record.date) && record.date <= todayString
+  const hasSelectableDateRecords = useMemo(
+    () => records.some((record) => isLedgerValidDateText(record.date) && record.date <= todayString),
+    [records, todayString]
   );
   const expenseCategoryLabels = useMemo(
     () => expenseCategories.map((category) => category.label),
@@ -725,23 +725,8 @@ export default function InsightsTab() {
   );
 
   const playChartAnimations = useCallback(() => {
-    barAnimation.setValue(0);
-    donutAnimation.setValue(0);
-
-    Animated.stagger(90, [
-      Animated.timing(barAnimation, {
-        duration: 560,
-        easing: Easing.out(Easing.cubic),
-        toValue: 1,
-        useNativeDriver: false
-      }),
-      Animated.timing(donutAnimation, {
-        duration: 680,
-        easing: Easing.out(Easing.cubic),
-        toValue: 1,
-        useNativeDriver: true
-      })
-    ]).start();
+    barAnimation.setValue(1);
+    donutAnimation.setValue(1);
   }, [barAnimation, donutAnimation]);
 
   useFocusEffect(
@@ -1384,7 +1369,7 @@ function BudgetStat({
   );
 }
 
-function MonthlyBarChart({
+const MonthlyBarChart = memo(function MonthlyBarChart({
   animation,
   maxAmount,
   stats
@@ -1467,9 +1452,9 @@ function MonthlyBarChart({
       </View>
     </AppCard>
   );
-}
+});
 
-function ExpenseDonutChart({
+const ExpenseDonutChart = memo(function ExpenseDonutChart({
   donutOpacity,
   donutRotation,
   donutScale,
@@ -1578,9 +1563,9 @@ function ExpenseDonutChart({
       </View>
     </AppCard>
   );
-}
+});
 
-function BillDetails({
+const BillDetails = memo(function BillDetails({
   getCategoryIcon,
   groups
 }: {
@@ -1693,7 +1678,7 @@ function BillDetails({
       </View>
     </AppCard>
   );
-}
+});
 
 function TimeRangeSheet({
   currentMonth,
