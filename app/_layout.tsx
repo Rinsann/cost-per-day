@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { StatusBar } from 'react-native';
 import { PaperProvider } from 'react-native-paper';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 
 import { AppThemeProvider, useAppTheme } from '@/context/AppThemeContext';
 import { ExpenseCategoriesProvider } from '@/context/ExpenseCategoriesContext';
@@ -23,7 +23,10 @@ function RootLayoutContent() {
   const { colors, paperTheme, resolvedTheme } = useAppTheme();
 
   return (
-    <SafeAreaProvider style={{ backgroundColor: colors.background, flex: 1 }}>
+    <SafeAreaProvider
+      initialMetrics={initialWindowMetrics}
+      style={{ backgroundColor: colors.background, flex: 1 }}
+    >
       <PaperProvider theme={paperTheme}>
         <StatusBar
           backgroundColor={colors.background}
