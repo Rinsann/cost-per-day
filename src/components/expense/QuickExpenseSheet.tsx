@@ -39,22 +39,12 @@ type QuickExpenseSheetProps = {
   onClose: () => void;
 };
 
-type InputMode = 'amount' | 'note';
-type NoteInputHandle = {
-  blur: () => void;
-  focus: () => void;
-};
-
 const labels = {
   expense: '\u652f\u51fa',
   income: '\u6536\u5165',
   date: '日期',
   today: '今天',
   note: '\u5907\u6ce8\uff08\u9009\u586b\uff09',
-  noteTitle: '\u5907\u6ce8',
-  notePlaceholder: '\u8bf7\u8f93\u5165\u5907\u6ce8',
-  noteDone: '\u5b8c\u6210',
-  noteBack: '\u8fd4\u56de\u91d1\u989d\u8f93\u5165',
   save: '\u8bb0\u4e00\u7b14',
   saving: '\u4fdd\u5b58\u4e2d...',
   invalidTitle: '\u91d1\u989d\u65e0\u6548',
@@ -67,6 +57,9 @@ const labels = {
 
 const keypadItems = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '0', 'backspace'];
 const categoryGridVisibleHeight = 152;
+const keypadButtonHeight = 40;
+const keypadRowCount = 4;
+const keypadVisibleHeight = keypadButtonHeight * keypadRowCount + spacing.xs * (keypadRowCount - 1);
 
 function getAmountValue(amountText: string) {
   const amount = Number(amountText);
@@ -118,15 +111,13 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   const hasMountedAmount = useRef(false);
   const wasVisible = useRef(false);
   const didLongPressBackspace = useRef(false);
-  const noteInputRef = useRef<NoteInputHandle | null>(null);
-  const noteFocusTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [recordType, setRecordType] = useState<ExpenseRecordType>('expense');
   const [amountText, setAmountText] = useState('');
   const [category, setCategory] = useState(expenseCategories[0].label);
   const [note, setNote] = useState('');
   const [selectedDate, setSelectedDate] = useState(getDateString(new Date()));
   const [saving, setSaving] = useState(false);
-  const [inputMode, setInputMode] = useState<InputMode>('amount');
+  const [isNoteFocused, setIsNoteFocused] = useState(false);
   const [recentCategories, setRecentCategories] = useState<RecentExpenseCategories>(
     DEFAULT_RECENT_EXPENSE_CATEGORIES
   );
@@ -183,17 +174,6 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     ]).start();
   }, [amountFeedback]);
 
-  const setNoteInputRef = useCallback((ref: NoteInputHandle | null) => {
-    noteInputRef.current = ref;
-  }, []);
-
-  const clearPendingNoteFocus = useCallback(() => {
-    if (noteFocusTimeoutRef.current) {
-      clearTimeout(noteFocusTimeoutRef.current);
-      noteFocusTimeoutRef.current = null;
-    }
-  }, []);
-
   useEffect(() => {
     if (!hasMountedAmount.current) {
       hasMountedAmount.current = true;
@@ -205,8 +185,6 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
 
   const resetDraft = useCallback(() => {
     Keyboard.dismiss();
-    clearPendingNoteFocus();
-    noteInputRef.current?.blur();
     amountFeedback.stopAnimation();
     amountFeedback.setValue(0);
     setRecordType('expense');
@@ -215,14 +193,8 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     setNote('');
     setSelectedDate(getDateString(new Date()));
     setSaving(false);
-    setInputMode('amount');
-  }, [amountFeedback, clearPendingNoteFocus]);
-
-  useEffect(() => {
-    return () => {
-      clearPendingNoteFocus();
-    };
-  }, [clearPendingNoteFocus]);
+    setIsNoteFocused(false);
+  }, [amountFeedback]);
 
   useEffect(() => {
     if (!categories.some((item) => item.label === category)) {
@@ -267,7 +239,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
     }
 
     const keyboardHideSubscription = Keyboard.addListener('keyboardDidHide', () => {
-      setInputMode('amount');
+      setIsNoteFocused(false);
     });
 
     return () => {
@@ -277,39 +249,27 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
 
   function handleClose() {
     Keyboard.dismiss();
-    clearPendingNoteFocus();
-    noteInputRef.current?.blur();
     resetDraft();
     onClose();
   }
 
-  function enterAmountMode() {
-    clearPendingNoteFocus();
-    noteInputRef.current?.blur();
-    Keyboard.dismiss();
-    setInputMode('amount');
-  }
+  function exitNoteInput() {
+    if (isNoteFocused) {
+      Keyboard.dismiss();
+      return;
+    }
 
-  function enterNoteMode() {
-    setInputMode('note');
-    clearPendingNoteFocus();
-    noteFocusTimeoutRef.current = setTimeout(() => {
-      noteInputRef.current?.focus();
-      noteFocusTimeoutRef.current = null;
-    }, 140);
+    setIsNoteFocused(false);
   }
 
   function selectRecordType(nextType: ExpenseRecordType) {
-    enterAmountMode();
+    exitNoteInput();
     setRecordType(nextType);
     setCategory('');
   }
 
   function handleKeyPress(value: string) {
-    if (inputMode !== 'amount') {
-      setInputMode('amount');
-    }
-
+    setIsNoteFocused(false);
     setAmountText((currentValue) => getNextAmountText(currentValue, value));
   }
 
@@ -323,14 +283,14 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
   }
 
   function clearAmountInput() {
-    enterAmountMode();
+    exitNoteInput();
     setAmountText('');
   }
 
   async function handleSave() {
-    if (inputMode === 'note') {
-      clearPendingNoteFocus();
+    if (isNoteFocused) {
       Keyboard.dismiss();
+      setIsNoteFocused(false);
     }
 
     if (!isAmountValid || !category) {
@@ -384,89 +344,13 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
       <View style={styles.modalRoot}>
         <Pressable style={[styles.backdrop, { backgroundColor: themeColors.overlay }]} onPress={handleClose} />
         <KeyboardAvoidingView
-          behavior={Platform.OS === 'ios' ? 'padding' : inputMode === 'note' ? 'height' : undefined}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
           pointerEvents="box-none"
           style={styles.keyboardAvoidingSheet}
         >
           <View style={[styles.sheet, { backgroundColor: themeColors.card }]}>
             <View style={[styles.handle, { backgroundColor: themeColors.textSecondary }]} />
-            {inputMode === 'note' ? (
-              <View style={styles.noteMode}>
-                <View style={styles.noteHeader}>
-                  <View style={styles.noteTitleWrap}>
-                    <Text variant="titleLarge" style={[styles.noteTitle, { color: themeColors.text }]}>
-                      {labels.noteTitle}
-                    </Text>
-                    <Text
-                      variant="labelMedium"
-                      numberOfLines={1}
-                      style={[styles.noteSubtitle, { color: themeColors.textSecondary }]}
-                    >
-                      {labels.noteBack}
-                    </Text>
-                  </View>
-                  <Pressable
-                    accessibilityRole="button"
-                    onPress={enterAmountMode}
-                    style={({ pressed }) => [
-                      styles.noteBackButton,
-                      { backgroundColor: pressed ? themeColors.surfacePressed : themeColors.chipBackground }
-                    ]}
-                  >
-                    <MaterialCommunityIcons name="chevron-down" size={22} color={themeColors.textSecondary} />
-                  </Pressable>
-                </View>
-
-                <View style={[styles.noteContext, { backgroundColor: themeColors.chipBackground }]}>
-                  <Text
-                    adjustsFontSizeToFit
-                    minimumFontScale={0.72}
-                    numberOfLines={1}
-                    variant="titleMedium"
-                    style={[styles.noteContextAmount, { color: themeColors.text }]}
-                  >
-                    {amountLabel}
-                  </Text>
-                  <Text
-                    numberOfLines={1}
-                    variant="labelMedium"
-                    style={[styles.noteContextMeta, { color: themeColors.textSecondary }]}
-                  >
-                    {category || '-'} · {selectedDate === todayString ? labels.today : selectedDate}
-                  </Text>
-                </View>
-
-                <TextInput
-                  ref={setNoteInputRef}
-                  value={note}
-                  onChangeText={setNote}
-                  label={labels.note}
-                  placeholder={labels.notePlaceholder}
-                  mode="flat"
-                  multiline
-                  numberOfLines={3}
-                  scrollEnabled
-                  textAlignVertical="top"
-                  underlineColor="transparent"
-                  activeUnderlineColor="transparent"
-                  textColor={themeColors.text}
-                  placeholderTextColor={themeColors.textSecondary}
-                  style={[styles.noteEditor, { backgroundColor: themeColors.inputBackground }]}
-                />
-
-                <Button
-                  mode="contained"
-                  buttonColor={themeColors.primary}
-                  textColor={themeColors.background}
-                  onPress={enterAmountMode}
-                  style={styles.noteDoneButton}
-                  contentStyle={styles.noteDoneButtonContent}
-                >
-                  {labels.noteDone}
-                </Button>
-              </View>
-            ) : (
-              <>
+            <>
                 <ScrollView
                   contentContainerStyle={styles.sheetContent}
                   keyboardShouldPersistTaps="handled"
@@ -511,7 +395,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                   </View>
 
                   <Animated.View
-                    onTouchStart={enterAmountMode}
+                    onTouchStart={exitNoteInput}
                     style={[
                       styles.amountWrap,
                       {
@@ -531,6 +415,30 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                     </Text>
                   </Animated.View>
 
+                  <View style={[styles.noteInputWrap, { backgroundColor: themeColors.inputBackground }]}>
+                    <TextInput
+                      value={note}
+                      onChangeText={setNote}
+                      placeholder={labels.note}
+                      mode="flat"
+                      dense
+                      returnKeyType="done"
+                      blurOnSubmit
+                      disableFullscreenUI
+                      underlineColor="transparent"
+                      activeUnderlineColor="transparent"
+                      textColor={themeColors.text}
+                      placeholderTextColor={themeColors.textSecondary}
+                      onFocus={() => setIsNoteFocused(true)}
+                      onBlur={() => setIsNoteFocused(false)}
+                      onSubmitEditing={() => {
+                        Keyboard.dismiss();
+                      }}
+                      style={[styles.noteInput, { backgroundColor: 'transparent' }]}
+                      contentStyle={styles.noteInputContent}
+                    />
+                  </View>
+
                   <ScrollView
                     contentContainerStyle={styles.categoryGrid}
                     nestedScrollEnabled
@@ -544,7 +452,7 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                         <Pressable
                           key={item.label}
                           onPress={() => {
-                            enterAmountMode();
+                            exitNoteInput();
                             setCategory(item.label);
                           }}
                           style={[
@@ -577,88 +485,72 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                       value={selectedDate}
                       maxDate={todayString}
                       onChange={(value) => {
-                        enterAmountMode();
+                        exitNoteInput();
                         setSelectedDate(value);
                       }}
                       formatValue={(value) => (value === todayString ? labels.today : value)}
                     />
                   </View>
 
-                  <Pressable
-                    onPress={enterNoteMode}
-                    style={({ pressed }) => [
-                      styles.notePreview,
-                      { backgroundColor: pressed ? themeColors.surfacePressed : themeColors.inputBackground }
-                    ]}
-                  >
-                    <Text
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                      variant="bodyLarge"
-                      style={[
-                        styles.notePreviewText,
-                        { color: note.trim() ? themeColors.text : themeColors.textSecondary }
-                      ]}
-                    >
-                      {note.trim() || labels.note}
-                    </Text>
-                  </Pressable>
-
-                  <View style={styles.keypad}>
-                    {keypadItems.map((item) => (
-                      <Pressable
-                        key={item}
-                        delayLongPress={item === 'backspace' ? 420 : undefined}
-                        onLongPress={
-                          item === 'backspace'
-                            ? () => {
-                                didLongPressBackspace.current = true;
-                                clearAmountInput();
-                              }
-                            : undefined
-                        }
-                        onPress={() => {
-                          if (item === 'backspace') {
-                            handleBackspacePress();
-                            return;
+                  {!isNoteFocused ? (
+                    <View style={styles.keypad}>
+                      {keypadItems.map((item) => (
+                        <Pressable
+                          key={item}
+                          delayLongPress={item === 'backspace' ? 420 : undefined}
+                          onLongPress={
+                            item === 'backspace'
+                              ? () => {
+                                  didLongPressBackspace.current = true;
+                                  clearAmountInput();
+                                }
+                              : undefined
                           }
+                          onPress={() => {
+                            if (item === 'backspace') {
+                              handleBackspacePress();
+                              return;
+                            }
 
-                          handleKeyPress(item);
-                        }}
-                        onPressIn={() => {
-                          if (item === 'backspace') {
-                            didLongPressBackspace.current = false;
+                            handleKeyPress(item);
+                          }}
+                          onPressIn={() => {
+                            if (item === 'backspace') {
+                              didLongPressBackspace.current = false;
+                            }
+                          }}
+                          android_ripple={
+                            resolvedTheme === 'dark'
+                              ? {
+                                  borderless: false,
+                                  color: themeColors.ripple,
+                                  radius: 18
+                                }
+                              : undefined
                           }
-                        }}
-                        android_ripple={
-                          resolvedTheme === 'dark'
-                            ? {
-                                borderless: false,
-                                color: themeColors.ripple,
-                                radius: 18
-                              }
-                            : undefined
-                        }
-                        style={({ pressed }) => [
-                          styles.keypadButton,
-                          { backgroundColor: pressed ? themeColors.surfacePressed : themeColors.inputBackground },
-                          pressed && styles.keypadButtonPressed
-                        ]}
-                      >
-                        {item === 'backspace' ? (
-                          <MaterialCommunityIcons
-                            name="backspace-outline"
-                            size={22}
-                            color={themeColors.textSecondary}
-                          />
-                        ) : (
-                          <Text variant="titleMedium" style={[styles.keypadText, { color: themeColors.text }]}>
-                            {item}
-                          </Text>
-                        )}
-                      </Pressable>
-                    ))}
-                  </View>
+                          style={({ pressed }) => [
+                            styles.keypadButton,
+                            { backgroundColor: pressed ? themeColors.surfacePressed : themeColors.inputBackground },
+                            pressed && styles.keypadButtonPressed
+                          ]}
+                        >
+                          {item === 'backspace' ? (
+                            <MaterialCommunityIcons
+                              name="backspace-outline"
+                              size={22}
+                              color={themeColors.textSecondary}
+                            />
+                          ) : (
+                            <Text variant="titleMedium" style={[styles.keypadText, { color: themeColors.text }]}>
+                              {item}
+                            </Text>
+                          )}
+                        </Pressable>
+                      ))}
+                    </View>
+                  ) : (
+                    <View pointerEvents="none" style={styles.keypadPlaceholder} />
+                  )}
                 </ScrollView>
                 <View
                   style={[
@@ -689,7 +581,6 @@ export function QuickExpenseSheet({ visible, onClose }: QuickExpenseSheetProps) 
                   </Button>
                 </View>
               </>
-            )}
           </View>
         </KeyboardAvoidingView>
       </View>
@@ -800,69 +691,21 @@ const styles = StyleSheet.create({
     color: colors.background,
     fontWeight: '800'
   },
-  notePreview: {
+  noteInputWrap: {
     borderRadius: radius.lg,
     justifyContent: 'center',
     marginTop: spacing.sm,
     minHeight: 48,
-    overflow: 'hidden',
-    paddingHorizontal: spacing.md
-  },
-  notePreviewText: {
-    fontWeight: '700'
-  },
-  noteMode: {
-    gap: spacing.sm,
-    paddingBottom: spacing.md
-  },
-  noteHeader: {
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'space-between'
-  },
-  noteTitleWrap: {
-    flex: 1,
-    minWidth: 0
-  },
-  noteTitle: {
-    fontWeight: '900'
-  },
-  noteSubtitle: {
-    fontWeight: '700',
-    marginTop: 2
-  },
-  noteBackButton: {
-    alignItems: 'center',
-    borderRadius: radius.full,
-    height: 40,
-    justifyContent: 'center',
-    marginLeft: spacing.sm,
-    width: 40
-  },
-  noteContext: {
-    borderRadius: radius.lg,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm
-  },
-  noteContextAmount: {
-    fontWeight: '900'
-  },
-  noteContextMeta: {
-    fontWeight: '700',
-    marginTop: 2
-  },
-  noteEditor: {
-    borderRadius: radius.lg,
-    maxHeight: 116,
-    minHeight: 92,
     overflow: 'hidden'
   },
-  noteDoneButton: {
-    borderRadius: radius.lg,
-    marginTop: 2
+  noteInput: {
+    fontSize: 16,
+    minHeight: 48
   },
-  noteDoneButtonContent: {
-    minHeight: 46
+  noteInputContent: {
+    fontWeight: '700',
+    minHeight: 48,
+    paddingHorizontal: spacing.md
   },
   dateWrap: {
     marginTop: spacing.sm
@@ -873,10 +716,14 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginTop: spacing.sm
   },
+  keypadPlaceholder: {
+    height: keypadVisibleHeight,
+    marginTop: spacing.sm
+  },
   keypadButton: {
     alignItems: 'center',
     borderRadius: radius.lg,
-    height: 40,
+    height: keypadButtonHeight,
     justifyContent: 'center',
     overflow: 'hidden',
     width: '32.5%'
