@@ -204,74 +204,77 @@ export default function LedgerTab() {
               { backgroundColor: themeColors.cardAlt, width: heroCardWidth }
             ]}
           >
-            <Card.Content>
-              <View style={styles.heroCardHeader}>
-                <Text variant="labelLarge" style={styles.heroLabel}>
-                  {labels.monthlyBill}
+            <View style={styles.heroCardInner}>
+              <Card.Content style={styles.heroCardContent}>
+                <View style={styles.heroCardHeader}>
+                  <Text variant="labelLarge" style={styles.heroLabel}>
+                    {labels.monthlyBill}
+                  </Text>
+                  <MaterialCommunityIcons name="receipt-text-outline" color={themeColors.primary} size={20} />
+                </View>
+                <Text
+                  adjustsFontSizeToFit
+                  ellipsizeMode="tail"
+                  minimumFontScale={0.58}
+                  numberOfLines={1}
+                  variant="displaySmall"
+                  style={[styles.monthExpenseValue, { color: themeColors.text }]}
+                >
+                  {formatCompactMoney(monthSummary.expense)}
                 </Text>
-                <MaterialCommunityIcons name="receipt-text-outline" color={themeColors.primary} size={20} />
-              </View>
-              <Text
-                adjustsFontSizeToFit
-                ellipsizeMode="tail"
-                minimumFontScale={0.58}
-                numberOfLines={1}
-                variant="displaySmall"
-                style={[styles.monthExpenseValue, { color: themeColors.text }]}
-              >
-                {formatCompactMoney(monthSummary.expense)}
-              </Text>
-              <Text style={[styles.heroSubLabel, { color: themeColors.textSecondary }]}>
-                {labels.monthExpense}
-              </Text>
-              <View style={styles.summaryRow}>
-                <View style={styles.summaryItem}>
-                  <View style={styles.summaryIcon}>
-                    <MaterialCommunityIcons name="arrow-down-left" color={themeColors.primary} size={18} />
+                <Text style={[styles.heroSubLabel, { color: themeColors.textSecondary }]}>
+                  {labels.monthExpense}
+                </Text>
+                <View style={styles.summaryRow}>
+                  <View style={styles.summaryItem}>
+                    <View style={styles.summaryIcon}>
+                      <MaterialCommunityIcons name="arrow-down-left" color={themeColors.primary} size={18} />
+                    </View>
+                    <View style={styles.summaryTextWrap}>
+                      <Text variant="bodySmall" style={[styles.mutedText, { color: themeColors.textSecondary }]}>
+                        {labels.monthIncome}
+                      </Text>
+                      <Text
+                        adjustsFontSizeToFit
+                        ellipsizeMode="tail"
+                        minimumFontScale={0.72}
+                        numberOfLines={1}
+                        variant="titleSmall"
+                        style={styles.incomeValue}
+                      >
+                        {formatCompactMoney(monthSummary.income)}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={styles.summaryTextWrap}>
-                    <Text variant="bodySmall" style={[styles.mutedText, { color: themeColors.textSecondary }]}>
-                      {labels.monthIncome}
-                    </Text>
-                    <Text
-                      adjustsFontSizeToFit
-                      ellipsizeMode="tail"
-                      minimumFontScale={0.72}
-                      numberOfLines={1}
-                      variant="titleSmall"
-                      style={styles.incomeValue}
+                  <View style={styles.summaryItem}>
+                    <View
+                      style={[
+                        styles.summaryIcon,
+                        monthBalance < 0 && styles.negativeBalanceIcon
+                      ]}
                     >
-                      {formatCompactMoney(monthSummary.income)}
-                    </Text>
+                      <MaterialCommunityIcons name="wallet-outline" color={monthBalanceColor} size={18} />
+                    </View>
+                    <View style={styles.summaryTextWrap}>
+                      <Text variant="bodySmall" style={[styles.mutedText, { color: themeColors.textSecondary }]}>
+                        {labels.monthBalance}
+                      </Text>
+                      <Text
+                        adjustsFontSizeToFit
+                        ellipsizeMode="tail"
+                        minimumFontScale={0.72}
+                        numberOfLines={1}
+                        variant="titleSmall"
+                        style={[styles.balanceSummaryValue, { color: monthBalanceColor }]}
+                      >
+                        {formatCompactMoney(monthBalance, { sign: monthBalance < 0 ? 'auto' : 'none' })}
+                      </Text>
+                    </View>
                   </View>
                 </View>
-                <View style={styles.summaryItem}>
-                  <View
-                    style={[
-                      styles.summaryIcon,
-                      monthBalance < 0 && styles.negativeBalanceIcon
-                    ]}
-                  >
-                    <MaterialCommunityIcons name="wallet-outline" color={monthBalanceColor} size={18} />
-                  </View>
-                  <View style={styles.summaryTextWrap}>
-                    <Text variant="bodySmall" style={[styles.mutedText, { color: themeColors.textSecondary }]}>
-                      {labels.monthBalance}
-                    </Text>
-                    <Text
-                      adjustsFontSizeToFit
-                      ellipsizeMode="tail"
-                      minimumFontScale={0.72}
-                      numberOfLines={1}
-                      variant="titleSmall"
-                      style={[styles.balanceSummaryValue, { color: monthBalanceColor }]}
-                    >
-                      {formatCompactMoney(monthBalance, { sign: monthBalance < 0 ? 'auto' : 'none' })}
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            </Card.Content>
+              </Card.Content>
+              <HeroDots activeHeroIndex={activeHeroIndex} />
+            </View>
           </Card>
 
           <Card
@@ -281,96 +284,85 @@ export default function LedgerTab() {
               { backgroundColor: themeColors.cardAlt, width: heroCardWidth }
             ]}
           >
-            <Card.Content>
-              <View style={styles.heroCardHeader}>
-                <Text variant="labelLarge" style={[styles.heroLabel, { color: themeColors.primary }]}>
+            <View style={styles.heroCardInner}>
+              <Card.Content style={styles.heroCardContent}>
+                <View style={styles.heroCardHeader}>
+                  <Text variant="labelLarge" style={[styles.heroLabel, { color: themeColors.primary }]}>
+                    {budgetEnabled
+                      ? budgetStatus.isOverBudget
+                        ? labels.budgetOver
+                        : labels.budgetRemaining
+                      : labels.monthlyBudget}
+                  </Text>
+                  <MaterialCommunityIcons name="wallet-outline" color={themeColors.primary} size={20} />
+                </View>
+                <Text
+                  adjustsFontSizeToFit
+                  ellipsizeMode="tail"
+                  minimumFontScale={0.58}
+                  numberOfLines={1}
+                  variant="displaySmall"
+                  style={[styles.monthExpenseValue, { color: budgetAmountColor }]}
+                >
                   {budgetEnabled
-                    ? budgetStatus.isOverBudget
-                      ? labels.budgetOver
-                      : labels.budgetRemaining
-                    : labels.monthlyBudget}
+                    ? formatCompactMoney(
+                        budgetStatus.isOverBudget
+                          ? budgetStatus.overAmount
+                          : budgetStatus.remainingAmount
+                      )
+                    : labels.budgetSetup}
                 </Text>
-                <MaterialCommunityIcons name="wallet-outline" color={themeColors.primary} size={20} />
-              </View>
-              <Text
-                adjustsFontSizeToFit
-                ellipsizeMode="tail"
-                minimumFontScale={0.58}
-                numberOfLines={1}
-                variant="displaySmall"
-                style={[styles.monthExpenseValue, { color: budgetAmountColor }]}
-              >
-                {budgetEnabled
-                  ? formatCompactMoney(
-                      budgetStatus.isOverBudget
-                        ? budgetStatus.overAmount
-                        : budgetStatus.remainingAmount
-                    )
-                  : labels.budgetSetup}
-              </Text>
-              <Text style={[styles.heroSubLabel, { color: themeColors.textSecondary }]}>
-                {budgetEnabled
-                  ? `${labels.budgetUsed} ${Math.round(budgetStatus.usedPercent)}%`
-                  : labels.budgetSetupDescription}
-              </Text>
-
-              {budgetEnabled ? (
-                <>
-                  <View style={[styles.budgetTrack, { backgroundColor: themeColors.outline }]}>
-                    <View
-                      style={[
-                        styles.budgetFill,
-                        {
-                          backgroundColor: budgetStatus.isOverBudget
-                            ? themeColors.expense
-                            : themeColors.primary,
-                          width: `${Math.min(budgetStatus.usedPercent, 100)}%`
-                        }
-                      ]}
-                    />
-                  </View>
-                  <View style={styles.budgetMetaRow}>
-                    <BudgetMeta
-                      label={labels.budgetTotal}
-                      value={formatCompactMoney(budgetStatus.budgetAmount)}
-                    />
-                    <BudgetMeta
-                      label={labels.budgetDaily}
-                      value={formatCompactMoney(budgetStatus.remainingDailyAmount)}
-                    />
-                  </View>
-                </>
-              ) : null}
-
-              <Pressable
-                onPress={openBudgetSettings}
-                style={({ pressed }) => [
-                  styles.budgetButton,
-                  { backgroundColor: themeColors.primary },
-                  pressed && { opacity: 0.78 }
-                ]}
-              >
-                <Text style={[styles.budgetButtonText, { color: themeColors.background }]}>
-                  {labels.budgetSettings}
+                <Text style={[styles.heroSubLabel, { color: themeColors.textSecondary }]}>
+                  {budgetEnabled
+                    ? `${labels.budgetUsed} ${Math.round(budgetStatus.usedPercent)}%`
+                    : labels.budgetSetupDescription}
                 </Text>
-              </Pressable>
-            </Card.Content>
+
+                {budgetEnabled ? (
+                  <>
+                    <View style={[styles.budgetTrack, { backgroundColor: themeColors.outline }]}>
+                      <View
+                        style={[
+                          styles.budgetFill,
+                          {
+                            backgroundColor: budgetStatus.isOverBudget
+                              ? themeColors.expense
+                              : themeColors.primary,
+                            width: `${Math.min(budgetStatus.usedPercent, 100)}%`
+                          }
+                        ]}
+                      />
+                    </View>
+                    <View style={styles.budgetMetaRow}>
+                      <BudgetMeta
+                        label={labels.budgetTotal}
+                        value={formatCompactMoney(budgetStatus.budgetAmount)}
+                      />
+                      <BudgetMeta
+                        label={labels.budgetDaily}
+                        value={formatCompactMoney(budgetStatus.remainingDailyAmount)}
+                      />
+                    </View>
+                  </>
+                ) : null}
+
+                <Pressable
+                  onPress={openBudgetSettings}
+                  style={({ pressed }) => [
+                    styles.budgetButton,
+                    { backgroundColor: themeColors.primary },
+                    pressed && { opacity: 0.78 }
+                  ]}
+                >
+                  <Text style={[styles.budgetButtonText, { color: themeColors.background }]}>
+                    {labels.budgetSettings}
+                  </Text>
+                </Pressable>
+              </Card.Content>
+              <HeroDots activeHeroIndex={activeHeroIndex} />
+            </View>
           </Card>
         </ScrollView>
-        <View style={styles.heroDots}>
-          {[0, 1].map((index) => (
-            <View
-              key={index}
-              style={[
-                styles.heroDot,
-                {
-                  backgroundColor:
-                    activeHeroIndex === index ? themeColors.primary : themeColors.outline
-                }
-              ]}
-            />
-          ))}
-        </View>
       </View>
 
       <View style={styles.sectionHeader}>
@@ -529,6 +521,27 @@ function BudgetMeta({ label, value }: { label: string; value: string }) {
   );
 }
 
+function HeroDots({ activeHeroIndex }: { activeHeroIndex: number }) {
+  const { colors: themeColors } = useAppTheme();
+
+  return (
+    <View style={styles.heroDots}>
+      {[0, 1].map((index) => (
+        <View
+          key={index}
+          style={[
+            styles.heroDot,
+            {
+              backgroundColor:
+                activeHeroIndex === index ? themeColors.primary : themeColors.outline
+            }
+          ]}
+        />
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   header: {
     marginBottom: spacing.lg
@@ -538,11 +551,18 @@ const styles = StyleSheet.create({
     fontWeight: '900'
   },
   heroCard: {
-    borderRadius: 24,
-    minHeight: 218
+    borderRadius: 24
+  },
+  heroCardInner: {
+    minHeight: 210,
+    position: 'relative',
+    width: '100%'
+  },
+  heroCardContent: {
+    paddingTop: spacing.lg
   },
   heroCarousel: {
-    marginBottom: spacing.lg
+    marginBottom: spacing.md
   },
   heroScrollContent: {
     gap: spacing.md
@@ -563,10 +583,13 @@ const styles = StyleSheet.create({
   },
   heroDots: {
     alignItems: 'center',
+    bottom: spacing.md + spacing.xs,
     flexDirection: 'row',
     gap: spacing.xs,
     justifyContent: 'center',
-    marginTop: spacing.sm
+    left: 0,
+    position: 'absolute',
+    right: 0
   },
   heroDot: {
     borderRadius: radius.full,
@@ -624,7 +647,7 @@ const styles = StyleSheet.create({
   budgetTrack: {
     borderRadius: radius.full,
     height: 8,
-    marginTop: spacing.md,
+    marginTop: spacing.sm + spacing.xs,
     overflow: 'hidden'
   },
   budgetFill: {
@@ -634,7 +657,7 @@ const styles = StyleSheet.create({
   budgetMetaRow: {
     flexDirection: 'row',
     gap: spacing.sm,
-    marginTop: spacing.md
+    marginTop: spacing.sm + spacing.xs
   },
   budgetMetaItem: {
     flex: 1,
@@ -654,7 +677,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     borderRadius: radius.full,
     justifyContent: 'center',
-    marginTop: spacing.md,
+    marginTop: spacing.sm + spacing.xs,
     minHeight: 34,
     paddingHorizontal: spacing.md
   },
